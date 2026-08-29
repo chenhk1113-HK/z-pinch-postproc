@@ -1,0 +1,89 @@
+# Version Control Framework - Master .gitattributes
+# Project-agnostic git attributes: line-ending normalization + language-specific diff drivers.
+
+# ===== Line endings =====
+# Auto-detect text files and normalize to LF on commit, native on checkout.
+# This prevents the CRLF/LF nightmare when Windows editors and Linux tools
+# both edit the same file.
+* text=auto eol=lf
+
+# Specific binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.tar.gz binary
+*.gz binary
+*.bz2 binary
+*.7z binary
+*.exe binary
+*.dll binary
+*.so binary
+*.dylib binary
+*.o binary
+*.obj binary
+*.a binary
+*.lib binary
+*.npy binary
+*.npz binary
+*.h5 binary
+*.hdf5 binary
+*.pkl binary
+*.ipynb binary
+*.parquet binary
+
+# Python source: enforce LF, but don't normalize diff for binary .pyc
+*.py text eol=lf
+*.pyc binary
+*.pyd binary
+
+# Julia source
+*.jl text eol=lf
+
+# Shell scripts: enforce LF (CRLF breaks them with "bad interpreter" error)
+*.sh text eol=lf
+*.bash text eol=lf
+
+# Markdown: LF, but allow line ending variation for the rare Windows-edited case
+*.md text eol=lf
+
+# YAML, JSON, TOML: enforce LF
+*.yml text eol=lf
+*.yaml text eol=lf
+*.json text eol=lf
+*.toml text eol=lf
+
+# Makefiles: MUST be LF (tab-indented, CRLF breaks them)
+Makefile text eol=lf
+*.mk text eol=lf
+*.makefile text eol=lf
+
+# Windows-specific files: keep CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# ===== Diff drivers for special files =====
+
+# Jupyter notebooks: strip output before diff (otherwise trivial reruns make huge diffs)
+*.ipynb diff=ipynb-filter
+
+# Markdown: enable better word-diff (not character-diff) for prose
+*.md diff=markdown
+
+# SVG: ignore whitespace inside tags for cleaner diffs
+*.svg diff=svg
+
+# ===== Export config =====
+
+# Don't export the .git directory or build artifacts in archive exports
+.git export-ignore
+node_modules/ export-ignore
+target/ export-ignore
+dist/ export-ignore
+build/ export-ignore
+__pycache__/ export-ignore
+*.pyc export-ignore

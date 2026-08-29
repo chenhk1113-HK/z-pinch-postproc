@@ -1,0 +1,157 @@
+# Version Control Framework - Master .gitignore
+# This is the framework-level ignore patterns. Projects that symlink this file get these
+# patterns for free. Projects can add their own project-specific patterns in a
+# separate `.gitignore_local` (not symlinked, project-specific).
+
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+.uv-cache/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+
+# Jupyter
+.ipynb_checkpoints/
+profile_default/
+
+# pdm / uv
+.pdm.toml.bak
+
+# ===== Julia =====
+*.jl.cov
+*.jl.*.cov
+*.jl.mem
+Manifest.toml  # project-specific, may differ from .toml
+.julia/environments/
+
+# ===== Rust =====
+target/
+Cargo.lock  # for libraries; for binaries, COMMIT it (override below if needed)
+
+# ===== Node =====
+node_modules/
+.npm
+.yarn
+.pnp.*
+.parcel-cache/
+.next/
+.nuxt/
+.vite/
+.svelte-kit/
+dist/
+out/
+build/
+coverage/
+
+# ===== R =====
+.Rhistory
+.Rapp.history
+.RData
+.Ruserdata
+.Rproj.user/
+
+# ===== OS junk =====
+.DS_Store
+Thumbs.db
+desktop.ini
+ehthumbs.db
+ehthumbs_vista.db
+.Trashes
+$RECYCLE.BIN/
+
+# ===== Editor backups =====
+*~
+*.swp
+*.swo
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# ===== One-time throwaway / verification scripts =====
+_pdf_check.py
+_verify_*.py
+_check_*.py
+_audit_*.py
+_smoke_*.py  # if it's a one-off, not part of the test suite
+# Backup files (single segment OR multi-segment after .bak)
+*.bak
+*.bak.*
+*.BAK
+
+# ===== Large / output / shipping artifacts =====
+*.log
+*.tmp
+*.bak
+*.swp
+*.zip
+*.tar.gz
+*.pdf
+!docs/**/*.pdf  # committed PDFs in docs/ are fine (e.g., the bundle PDF)
+*.pkl
+*.h5
+*.hdf5
+*.npy
+*.npz
+
+# Hermes-specific: never commit agentmemory MCP state, cron state, or session DB
+.hermes/cron/state/
+*.sqlite
+*.sqlite3
+*.db
+
+# WSL-specific: never commit the dual-mount Windows copy artifact
+/mnt/c/Users/lamkuenai/wimpy_results_bundle.pdf
+
+# ===== z-pinch-postproc project-specific =====
+# Generated artifacts (re-run from code)
+outputs/
+*.pdf
+*.zip
+
+# Cached CSV/JSON results from upstream simulators (re-fetch via code)
+data/external_data/cache/
+*.h5
+*.hdf5
+
+# Per-shot post-processor runs (regenerate via python code/zpp_run.py)
+data/runs/cache/
+
+# Python notebook checkpoints
+.ipynb_checkpoints/
+
+# Local synthetic-shot test fixtures (committed separately under data/fixtures/)
+data/synthetic/*_tmp.*

@@ -1,0 +1,127 @@
+#!/usr/bin/env bash
+# Version Control Framework - Pre-commit hook
+# Runs on every `git commit` (after `git config core.hooksPath .githooks`).
+#
+# What this hook does (in order):
+#   1. Block any single file >5 MB from being committed (catches accidentally-staged
+#      data files, PDFs, ZIPs, etc. that should be in .gitignore or LFS).
+#   2. Smoke-test any modified Python files with `py_compile`. Catches the
+#      "SyntaxError hidden because the file is imported as a module" failure.
+#   3. Smoke-test any modified Julia files with `Meta.parseall`. Catches
+#      multi-expression syntax errors that `Meta.parse` rejects.
+#   4. Reject the commit if any check fails. Output is exit code 1 + diagnostic
+#      message. The commit is NOT made; user fixes the issue and re-runs.
+#
+# To skip this hook for a specific commit (e.g., a WIP commit), use:
+#   git commit --no-verify
+# But document WHY in the commit message.
+
+set -e
+
+# 1. Block large files
+MAX_FILE_BYTES=$((5 * 1024 * 1024))  # 5 MB
+large_files=()
+while IFS= read -r -d '' staged; do
+    # Skip deleted files
+    [ -f "$staged" ] || continue
+    size=$(stat -c%s "$staged" 2>/dev/null || stat -f%z "$staged" 2>/dev/null || echo 0)
+    if [ "$size" -gt "$MAX_FILE_BYTES" ]; then
+        large_files+=("$staged ($size bytes)")
+    fi
+done < <(git diff --cached --name-only --diff-filter=ACMR -z)
+
+if [ ${#large_files[@]} -gt 0 ]; then
+    echo "❌ pre-commit: refusing to commit files >5 MB:"
+    for f in "${large_files[@]}"; do
+        echo "  - $f"
+    done
+    echo ""
+    echo "If these should NOT be in the repo, add them to .gitignore and re-stage:"
+    echo "  git rm --cached <file>"
+    echo "  echo '<file>' >> .gitignore"
+    echo ""
+    echo "If you REALLY want to commit them (rare; e.g., a test fixture), use:"
+    echo "  git commit --no-verify"
+    exit 1
+fi
+
+# 2. Python smoke test
+py_changed=()
+while IFS= read -r -d '' staged; do
+    case "$staged" in
+        *.py) py_changed+=("$staged") ;;
+    esac
+done < <(git diff --cached --name-only --diff-filter=ACMR -z)
+
+if [ ${#py_changed[@]} -gt 0 ]; then
+    # Find a python that has the project's deps. The venv at ~/wimpy is the
+    # canonical WIMpy venv. For non-WIMpy projects, this is a no-op if no venv
+    # is on PATH.
+    PY="${PY:-python3}"
+    for venv_path in "$HOME/wimpy/bin/python" "$HOME/.venv/bin/python" "venv/bin/python" ".venv/bin/python"; do
+        if [ -x "$venv_path" ]; then
+            PY="$venv_path"
+            break
+        fi
+    done
+
+    echo "🐍 pre-commit: py_compile check on ${#py_changed[@]} Python file(s)..."
+    py_errors=()
+    for py in "${py_changed[@]}"; do
+        if ! "$PY" -m py_compile "$py" 2>/dev/null; then
+            py_errors+=("$py")
+        fi
+    done
+
+    if [ ${#py_errors[@]} -gt 0 ]; then
+        echo "❌ pre-commit: SyntaxError in:"
+        for f in "${py_errors[@]}"; do
+            echo "  - $f"
+        done
+        echo "Run:  $PY -m py_compile <file>"
+        echo "Then re-stage and commit. Or use --no-verify if you know what you're doing."
+        exit 1
+    fi
+    echo "  ✅ Python files compile OK"
+fi
+
+# 3. Julia smoke test (only if julia is on PATH)
+if command -v julia >/dev/null 2>&1; then
+    jl_changed=()
+    while IFS= read -r -d '' staged; do
+        case "$staged" in
+            *.jl) jl_changed+=("$staged") ;;
+        esac
+    done < <(git diff --cached --name-only --diff-filter=ACMR -z)
+
+    if [ ${#jl_changed[@]} -gt 0 ]; then
+        echo "🟪 pre-commit: Julia parse check on ${#jl_changed[@]} .jl file(s)..."
+        jl_errors=()
+        for jl in "${jl_changed[@]}"; do
+            # Meta.parseall handles multi-expression files; Meta.parse rejects them.
+            if ! julia -e "
+                try
+                    Meta.parseall(read(\"$jl\", String))
+                    exit(0)
+                catch e
+                    println(stderr, \"ParseError in $jl: \", e)
+                    exit(1)
+                end
+            " 2>/dev/null; then
+                jl_errors+=("$jl")
+            fi
+        done
+
+        if [ ${#jl_errors[@]} -gt 0 ]; then
+            echo "❌ pre-commit: Julia ParseError in:"
+            for f in "${jl_errors[@]}"; do
+                echo "  - $f"
+            done
+            exit 1
+        fi
+        echo "  ✅ Julia files parse OK"
+    fi
+fi
+
+echo "✅ pre-commit: all checks passed"
+exit 0

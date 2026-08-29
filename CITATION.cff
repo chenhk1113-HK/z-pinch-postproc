@@ -1,0 +1,52 @@
+cff-version: 1.2.0
+message: >-
+  If you use this code in published work, please cite the underlying
+  physics references (Bosch & Hale 1992 for D-T reactivity) and the
+  relevant upstream simulator (FLASH, ESTHER, WarpX, Smilei) that
+  produced the input profile. v0.0.1-prelim (2026-08-29): initial scaffold
+  + synthetic-shot smoke test. No real-data validation yet.
+title: "z-pinch-postproc"
+type: software
+version: 0.0.1-prelim
+date-released: 2026-08-29
+authors:
+  - family-names: Lam
+    given-names: K.
+    alias: chenhk1113-HK
+    affiliation: chenhk1113-HK/z-pinch-postproc
+license: MIT
+repository-code: "https://github.com/chenhk1113-HK/z-pinch-postproc"
+keywords:
+  - fusion
+  - z-pinch
+  - maglif
+  - inertial-confinement-fusion
+  - pulsed-power
+  - sandia-z
+  - post-processor
+  - python
+references:
+  - type: article
+    title: "Improved formulas for fusion cross-sections and thermal reactivities"
+    authors:
+      - family-names: Bosch
+        given-names: H.-S.
+      - family-names: Hale
+        given-names: G. M.
+    journal: "Nuclear Fusion"
+    volume: 32
+    year: 1992
+    start: 611
+  - type: article
+    title: "Magnetized Liner Inertial Fusion on the Z machine at Sandia"
+    authors:
+      - family-names: Gomez
+        given-names: M. R.
+      - family-names: Slutz
+        given-names: S. A.
+      - family-names: Jennings
+        given-names: C. A.
+      - et al.
+    journal: "Nuclear Fusion"
+    volume: 64
+    year: 2024
