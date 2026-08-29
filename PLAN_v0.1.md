@@ -1,7 +1,7 @@
 # z-pinch-postproc — PLAN v0.1
 
-> **Standing version**: `0.0.1-prelim` (2026-08-29)
-> **Status**: Pre-flight + scaffold. First real-data validation deferred to v0.1.
+> **Standing version**: `0.1.0` (2026-08-29)
+> **Status**: v0.1.0 shipped (47 tests passing). Real-data validation via Gomez 2020 anchor in place. Tier 2 (laser preheat / rep-rate / 2D mix / ZN scaling) in progress.
 > **Per**: Z_Machine_plan.pdf (user-uploaded, 2026-08-29) + open-source survey
 > (see `docs/OPEN_SOURCE_LANDSCAPE.md`).
 

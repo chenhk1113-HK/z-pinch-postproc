@@ -16,7 +16,7 @@
 
 See `docs/TODO.md` for the full list.
 
-## [0.1.0-prelim] — 2026-08-29
+## [0.1.0] — 2026-08-29
 
 ### Added
 - **Tier 1.2 — Bosch-Hale 1992 form**: replaced the ±30% Hively 1983
