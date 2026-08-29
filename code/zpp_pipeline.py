@@ -13,6 +13,7 @@ import numpy as np
 
 from zpp_bosch_hale import reactivity_DT_cm3s, E_DT_J, E_DT_MeV
 from zpp_lawson import burn_weighted_lawson, lawson_criterion_classic_DT
+from zpp_wallplug import WallPlugChain, wallplug_chain_z_present
 
 
 # Physical constants
@@ -22,7 +23,11 @@ MOLAR_MASS_DT = 2.5  # equimolar D-T average mass, g/mol
 # NumPy 2.0+ renamed np.trapz -> np.trapezoid. Compat shim.
 _trapz = getattr(np, "trapezoid", None) or getattr(np, "trapz", None)
 
-# Defaults — overridable in zpp_run.py CLI
+# Backward-compat alias: in v0.0.1-prelim, eta_helper was a single scalar
+# representing plant thermal-to-electric. In v0.1.0+, the wall-plug chain
+# replaces this with a 6-stage model; eta_helper is interpreted as the
+# plant thermal-to-electric efficiency and used as the eta_E_plant field
+# of the chain. Default 0.40 (Brayton cycle).
 DEFAULT_ETA_HELPER = 0.40  # thermal-to-electric, Brayton cycle typical
 
 
@@ -143,26 +148,53 @@ def gain_chain(
     E_fus_J: float,
     E_stored_J: float,
     E_kinetic_J: float,
+    wallplug: WallPlugChain | None = None,
     eta_helper: float = DEFAULT_ETA_HELPER,
 ) -> dict:
-    """Compute Q_target, Q_eng, and eta_wallplug.
+    """Compute Q_target, Q_eng, eta_wallplug, and G_required.
 
-    Q_target = E_fus / E_kinetic  (driver efficiency stripped out)
-    Q_eng    = E_fus / E_stored  (raw engineering gain)
-    eta_wp   = E_fus / E_grid    (wall-plug efficiency)
+    Q_target       = E_fus / E_kinetic  (driver efficiency stripped out)
+    Q_eng_stored   = E_fus / E_stored   (raw engineering gain vs electrical stored)
+    Q_eng_grid     = E_fus / E_grid     (E_grid = E_stored / eta_wallplug_to_liner)
+    eta_wallplug   = E_kinetic / E_grid (full chain, Marx -> fuel)
+    G_required     = 1 / (eta_E * f_recirc * eta_wallplug)
     """
     E_fus = max(E_fus_J, 0.0)
     E_kin = max(E_kinetic_J, 1e-30)  # avoid div-by-zero
     E_st = max(E_stored_J, 1e-30)
-    eta = max(min(eta_helper, 1.0), 0.0)
+
+    if wallplug is None:
+        # Backward-compat: build a default chain with eta_helper as
+        # plant thermal-to-electric. v0.0.1-prelim callers that pass
+        # `eta_helper=0.40` will get the same Q_eng behaviour as before.
+        wallplug = WallPlugChain(eta_E_plant=eta_helper)
+    else:
+        # If a chain is provided, override eta_E_plant with eta_helper for
+        # backward-compat (so existing CLI invocations still work).
+        wallplug = WallPlugChain(**{**wallplug.__dict__, "eta_E_plant": eta_helper})
+
     Q_target = E_fus / E_kin
-    Q_eng = E_fus / E_st
-    eta_wp = Q_eng * eta
+    Q_eng_stored = E_fus / E_st
+
+    # E_grid = E_kinetic / eta_wallplug_to_liner (which is everything
+    # except the fuel-coupling stage, since E_kinetic is the energy at
+    # the liner, before fuel PdV).
+    eta_to_liner = wallplug.eta_wallplug_to_liner()
+    eta_to_fuel = wallplug.eta_wallplug()
+    E_grid_J = E_kin / max(eta_to_liner, 1e-30)
+    Q_eng_grid = E_fus / E_grid_J
+    G_required = wallplug.required_target_gain()
+
     return {
         "Q_target": Q_target,
-        "Q_eng": Q_eng,
-        "eta_wallplug": eta_wp,
-        "eta_helper_used": eta,
+        "Q_eng_stored": Q_eng_stored,
+        "Q_eng": Q_eng_grid,           # alias for backward compat
+        "E_grid_J": E_grid_J,
+        "E_grid_MJ": E_grid_J / 1e6,
+        "eta_wallplug": eta_to_fuel,
+        "eta_wallplug_to_liner": eta_to_liner,
+        "G_required": G_required,
+        "eta_helper_used": eta_helper,
     }
 
 
@@ -225,7 +257,10 @@ def run_pipeline(
     E_kinetic_J: float,
     radius_cm: np.ndarray | None = None,
     R_initial_cm: float | None = None,
+    wallplug: WallPlugChain | None = None,
     eta_helper: float = DEFAULT_ETA_HELPER,
+    T_burn_thresh_keV: float = 1.0,
+    rho_burn_thresh_gcc: float = 0.1,
     input_provenance: dict | None = None,
 ) -> dict:
     """Top-level pipeline: ingest inputs, compute all engineering metrics, return report dict.
@@ -240,8 +275,12 @@ def run_pipeline(
         Optional radial profile (cm) for stagnation pressure and CR.
     R_initial_cm : float, optional
         Required if radius_cm is given (for CR calculation).
+    wallplug : WallPlugChain, optional
+        6-stage wall-plug chain. Default: Sandia Z present-day (Z
+        present chain, ~4% wall-plug).
     eta_helper : float
-        Thermal-to-electric efficiency (default 0.40 Brayton cycle).
+        Plant thermal-to-electric efficiency. Default 0.40 (Brayton
+        cycle). Used as `eta_E_plant` in the chain.
     input_provenance : dict, optional
         Caller-supplied provenance info (e.g. shot_id, source_file).
 
@@ -251,13 +290,26 @@ def run_pipeline(
         Full engineering-metric report; serialise via zpp_io.write_report.
     """
     # 1. Yield + burn stats
-    burn = burn_yield(T_keV, rho_gcc, time_ns, radius_cm=radius_cm)
+    burn = burn_yield(
+        T_keV, rho_gcc, time_ns, radius_cm=radius_cm,
+        T_burn_thresh_keV=T_burn_thresh_keV,
+        rho_burn_thresh_gcc=rho_burn_thresh_gcc,
+    )
 
-    # 2. Gain chain
-    gains = gain_chain(burn["E_fusion_J"], E_stored_J, E_kinetic_J, eta_helper=eta_helper)
+    # 2. Gain chain (with wall-plug chain)
+    if wallplug is None:
+        wallplug = wallplug_chain_z_present()
+    gains = gain_chain(
+        burn["E_fusion_J"], E_stored_J, E_kinetic_J,
+        wallplug=wallplug, eta_helper=eta_helper,
+    )
 
-    # 3. Lawson
-    lawson = burn_weighted_lawson(T_keV, rho_gcc, time_ns)
+    # 3. Lawson (use the same burn thresholds as the yield integration)
+    lawson = burn_weighted_lawson(
+        T_keV, rho_gcc, time_ns,
+        T_thresh_keV=T_burn_thresh_keV,
+        rho_thresh_gcc=rho_burn_thresh_gcc,
+    )
     lawson_class = lawson_criterion_classic_DT(lawson["lawson_nTtau_keVs_per_m3"])
 
     # 4. Stagnation pressure
@@ -276,8 +328,12 @@ def run_pipeline(
             "E_fusion_MJ": burn["E_fusion_MJ"],
             "E_fusion_J": burn["E_fusion_J"],
             "Q_target": gains["Q_target"],
+            "Q_eng_stored": gains["Q_eng_stored"],
             "Q_eng": gains["Q_eng"],
+            "E_grid_MJ": gains["E_grid_MJ"],
             "eta_wallplug": gains["eta_wallplug"],
+            "eta_wallplug_to_liner": gains["eta_wallplug_to_liner"],
+            "G_required": gains["G_required"],
             "tau_burn_ns": burn["tau_burn_ns"],
             "lawson_nTtau_keVs_per_m3": lawson["lawson_nTtau_keVs_per_m3"],
             "lawson_nTtau_atoms_cm3_keV_s": lawson["lawson_nTtau_atoms_cm3_keV_s"],
@@ -296,4 +352,5 @@ def run_pipeline(
             "E_DT_MeV": E_DT_MeV,
             "A_avg_DT": MOLAR_MASS_DT,
         },
+        "wallplug_chain": wallplug.summary(),
     }
