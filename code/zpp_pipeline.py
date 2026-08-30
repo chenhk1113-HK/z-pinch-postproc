@@ -12,6 +12,7 @@ import json
 import numpy as np
 
 from zpp_bosch_hale import reactivity_DT_cm3s, E_DT_J, E_DT_MeV
+from zpp_laser import LaserPreheat, no_laser
 from zpp_lawson import burn_weighted_lawson, lawson_criterion_classic_DT
 from zpp_wallplug import WallPlugChain, wallplug_chain_z_present
 
@@ -258,6 +259,7 @@ def run_pipeline(
     radius_cm: np.ndarray | None = None,
     R_initial_cm: float | None = None,
     wallplug: WallPlugChain | None = None,
+    laser: LaserPreheat | None = None,
     eta_helper: float = DEFAULT_ETA_HELPER,
     T_burn_thresh_keV: float = 1.0,
     rho_burn_thresh_gcc: float = 0.1,
@@ -278,6 +280,10 @@ def run_pipeline(
     wallplug : WallPlugChain, optional
         6-stage wall-plug chain. Default: Sandia Z present-day (Z
         present chain, ~4% wall-plug).
+    laser : LaserPreheat, optional
+        Laser preheat parameters for MagLIF-class shots. Default:
+        no laser (bare Z-pinch). Pass `z_present_zbeamlet()` or
+        `zn_design_laser()` for MagLIF.
     eta_helper : float
         Plant thermal-to-electric efficiency. Default 0.40 (Brayton
         cycle). Used as `eta_E_plant` in the chain.
@@ -295,6 +301,40 @@ def run_pipeline(
         T_burn_thresh_keV=T_burn_thresh_keV,
         rho_burn_thresh_gcc=rho_burn_thresh_gcc,
     )
+
+    # 1b. Laser preheat energy balance (MagLIF-class shots).
+    # This section reports the energy budget only; the *physics* of
+    # the laser coupling is handled by the McBride generator (which
+    # uses the laser energy to raise T_preheat_eV before generating
+    # the T_keV profile that gets passed in here). The pipeline-level
+    # laser parameter is a report-only annotation: it confirms the
+    # laser was modelled and reports the energy flows.
+    if laser is None:
+        laser = no_laser()
+    # Energy budget: report E_laser, E_fuel_preheat, E_fuel / E_fusion.
+    # T_preheat_floor_keV is reported only when we have a known
+    # preheat volume (i.e. caller passed rho_preheat_gcc + V_preheat_cm3
+    # via input_provenance['preheat']); otherwise we just report the
+    # energy flow and leave T_preheat_floor as None.
+    preheat_meta = (
+        (input_provenance or {}).get("preheat", {}) if input_provenance else {}
+    )
+    if "rho_preheat_gcc" in preheat_meta and "V_preheat_cm3" in preheat_meta:
+        T_floor = laser.T_preheat_floor_keV(
+            rho_fuel_gcc=float(preheat_meta["rho_preheat_gcc"]),
+            V_fuel_cm3=float(preheat_meta["V_preheat_cm3"]),
+        )
+        laser_summary = laser.energy_balance_summary(
+            rho_fuel_gcc=float(preheat_meta["rho_preheat_gcc"]),
+            V_fuel_cm3=float(preheat_meta["V_preheat_cm3"]),
+            E_fusion_J=burn["E_fusion_J"],
+            T_preheat_floor_keV_override=T_floor,
+        )
+    else:
+        # No preheat metadata: report energy budget only.
+        laser_summary = laser.energy_balance_summary_energy_only(
+            E_fusion_J=burn["E_fusion_J"]
+        )
 
     # 2. Gain chain (with wall-plug chain)
     if wallplug is None:
@@ -353,4 +393,5 @@ def run_pipeline(
             "A_avg_DT": MOLAR_MASS_DT,
         },
         "wallplug_chain": wallplug.summary(),
+        "laser_preheat": laser_summary,
     }
