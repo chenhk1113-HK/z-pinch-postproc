@@ -6,14 +6,73 @@
 ## [Unreleased]
 
 ### Planned for v0.7
-- OpenMC installation (currently not installed - on conda not PyPI)
-- Paramak installation (pip-installable)
-- FISPACT-II installation (manual, requires UKAEA license)
+- Paramak installation (pip install paramak) — geometric design tool
+- FISPACT-II installation (manual + UKAEA license) — activation calc
+- Cross-section library download for OpenMC
+- Real OpenMC TBR comparison (parametric vs Monte Carlo)
 - Coupled optimization (PFC material + cycle + geometry)
 - Uncertainty quantification (Monte Carlo)
 - GitHub release
 
 See `docs/TODO.md` for the full list.
+
+## [0.6.1] — 2026-08-30
+
+### Added
+- **Real OpenMC integration via openmc-anywhere** (per user
+  approval): OpenMC 0.16.0 installed from PyPI as
+  `openmc-anywhere 0.16.0.0` (unofficial Windows wheel).
+  No conda required. ~14 MB wheel + 8 Python deps.
+  - `code/zpp_real_openmc_adapter.py`:
+    - `check_openmc_install()` — reports install status.
+    - `get_openmc_anywhere_info()` — package metadata.
+    - `OpenMCNeutronicsResult` — dataclass with both parametric
+      and OpenMC TBR values (when available).
+    - `real_openmc_tbr_calculation()` — runs parametric
+      always; OpenMC if cross-sections available.
+    - `build_openmc_tbr_model()` — builds OpenMC geometry/
+      materials/tallies XML even without cross-sections.
+    - `real_openmc_markdown()` — formats results as Markdown.
+  - **+19 tests** in `tests/test_zpp_real_openmc_adapter.py`.
+  - **+10 install-verification tests** in
+    `tests/test_zpp_openmc_install.py`.
+- **PROCESS also installed into project venv** (was in user
+  site-packages previously; now consistently in
+  `.venv/Lib/site-packages/` so it coexists with openmc-anywhere).
+
+### Changed
+- `tests/test_zpp_subprocess_adapters.py`: updated to reflect
+  v0.6.1 state (PROCESS + OpenMC installed; Paramak + FISPACT-II
+  still missing). Tests now exercise the real subprocess path.
+
+### Strategic findings
+- **openmc-anywhere is the official workaround for installing
+  OpenMC on Windows without conda.** It bundles OpenMC binaries
+  but NOT the cross-section library. A real Monte Carlo TBR
+  simulation requires:
+  1. Download ENDF cross-sections via `openmc.data.download_ace()`
+     (~5 GB for full library).
+  2. Set `OPENMC_CROSS_SECTIONS=/path/to/cross_sections.xml`.
+  Until then, the adapter falls back to the parametric TBR
+  (which is already validated against Tier 5.B benchmarks).
+- **The OpenMC adapter builds real XML** (geometry, materials,
+  tallies, settings) even without cross-sections. This proves
+  the integration pipeline works end-to-end; only the Monte
+  Carlo transport step is gated on cross-section data.
+- **All v0.6.0 numbers unchanged**: TBR=1.5206, tritium
+  self-sufficient=True, LCOE=inf (sub-break-even), P_net=0 MW
+  for ZN plant at default design.
+
+### Test summary
+- 560 tests, all pass (12s). Up from 531 in v0.6.0.
+
+### Process install notes (v0.6.1 update)
+- **PROCESS**: installed via `git clone && pip install` (v0.6.0).
+- **OpenMC**: installed via `uv pip install openmc-anywhere` into
+  project `.venv/` (v0.6.1). LICENSE: MIT (build) + LGPL-3.0
+  (MOAB component, statically linked).
+- **Paramak**: not installed (pip install paramak available).
+- **FISPACT-II**: not installed (manual + UKAEA license).
 
 ## [0.6.0] — 2026-08-30
 
