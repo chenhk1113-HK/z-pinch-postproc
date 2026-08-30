@@ -1,5 +1,27 @@
+# Core scientific stack
 numpy>=2.0
 scipy>=1.11
 pandas>=2.0
-pytest>=7.0
 matplotlib>=3.7
+
+# Testing
+pytest>=7.0
+
+# Fusion engineering codes (installed in v0.6-v0.7, optional)
+
+# Tier 6.E (v0.6.0): PROCESS for BOP wall-plug chain
+# Install: git clone https://github.com/ukaea/PROCESS && cd PROCESS && pip install .
+
+# Tier 6.F (v0.6.1): OpenMC for neutronics via unofficial PyPI wheel
+# Install: uv pip install openmc-anywhere (or pip install openmc-anywhere)
+# Cross-sections: requires ~5 GB ENDF library (manual download).
+
+# Tier 7.A (v0.7.0): Paramak for geometric design
+# Install: pip install paramak (note: tokamak-centric; Z-pinch uses revolved_shape)
+
+# Tier 7.E (v0.7.0): FISPACT-II for activation/transmutation (NOT auto-installable)
+# Install: Manual download from https://fispact.ukaea.uk/ + UKAEA license.
+
+# Optional dev tooling
+# black>=23.0
+# ruff>=0.1

@@ -1,7 +1,7 @@
 # z-pinch-postproc — PLAN v0.1
 
-> **Standing version**: `0.6.1` (2026-08-30)
-> **Status**: v0.6.1 shipped (560 tests passing). v0.6.0 (subprocess adapters, coupled plant sim, extended cost model, optimization, real PROCESS integration). v0.6.1 adds Real OpenMC integration via openmc-anywhere (unofficial PyPI package, no conda required). PROCESS + OpenMC installed; Paramak + FISPACT-II still pending. v0.7 planned for OpenMC cross-sections download + Paramak + FISPACT-II + uncertainty quantification.
+> **Standing version**: `0.7.0` (2026-08-30)
+> **Status**: v0.7.0 shipped (609 tests passing). v0.6.0/v0.6.1 added subprocess adapters, coupled plant sim, cost model, optimization, real PROCESS + OpenMC + Paramak integration. v0.7 adds MC uncertainty quantification, cross-sections management, FISPACT-II probe (license blocked). Three of four upstream codes installed; FISPACT-II pending UKAEA license. GitHub release prep complete; awaiting user approval to push.
 > **Per**: Z_Machine_plan.pdf (user-uploaded, 2026-08-29) + open-source survey
 > (see `docs/OPEN_SOURCE_LANDSCAPE.md`).
 

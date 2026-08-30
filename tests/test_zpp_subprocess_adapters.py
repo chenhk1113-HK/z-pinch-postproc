@@ -69,10 +69,20 @@ class TestDetectUpstreamCodes:
         info = detect_upstream_codes()
         assert info["OpenMC"].binary_path is not None
 
-    def test_Paramak_not_installed(self):
-        """Paramak is on PyPI but the user has not installed it."""
+    def test_Paramak_installed_v0_7(self):
+        """Paramak was installed via pip in v0.7 (per user approval).
+
+        Real Paramak integration uses paramak.revolved_shape() for
+        Z-pinch cylindrical geometry and exports STEP files for
+        CAD inspection.
+        """
         info = detect_upstream_codes()
-        assert info["Paramak"].binary_path is None
+        assert info["Paramak"].binary_path is not None
+
+    def test_FISPACT_not_installed(self):
+        """FISPACT-II requires UKAEA license; not auto-installed."""
+        info = detect_upstream_codes()
+        assert info["FISPACT-II"].binary_path is None
 
     def test_install_instructions_present(self):
         """Each missing code has install instructions."""
@@ -151,27 +161,17 @@ class TestSubprocessTBRAdapterOLD:
         assert isinstance(adapter, TBRAdapter)
 
 
-class TestSubprocessGeometryAdapter:
-    """Test SubprocessGeometryAdapter."""
+class TestSubprocessGeometryAdapterOLD:
+    """Stale stub removed."""
 
     def test_falls_back_to_parametric(self):
         adapter = SubprocessGeometryAdapter()
         build = adapter.get_build("ZN")
         assert isinstance(build, ZIFERadialBuild)
 
-    def test_using_real_code_false(self):
-        assert SubprocessGeometryAdapter().using_real_code is False
-
     def test_satisfies_ABC(self):
         adapter = SubprocessGeometryAdapter()
         assert isinstance(adapter, GeometryAdapter)
-
-    def test_same_as_parametric_when_fallback(self):
-        adapter = SubprocessGeometryAdapter()
-        parametric = ParametricGeometryAdapter()
-        b1 = adapter.get_build("ZN")
-        b2 = parametric.get_build("ZN")
-        assert b1.total_radius_cm() == b2.total_radius_cm()
 
 
 class TestSubprocessNeutronicsAdapter:
@@ -243,21 +243,21 @@ class TestMakeSubprocessSet:
 class TestStrategicFindings:
     """Document strategic findings from subprocess adapter design."""
 
-    def test_PROCESS_and_OpenMC_installed_v0_6(self):
-        """After user-approved installs, both PROCESS and OpenMC detected."""
+    def test_PROCESS_OpenMC_Paramak_installed_v0_7(self):
+        """After user-approved installs, three upstream codes detected."""
         adapters = make_subprocess_set()
         assert adapters["bop"].using_real_code is True  # PROCESS
         assert adapters["tbr"].using_real_code is True  # OpenMC
-        # Paramak and FISPACT-II still missing
-        assert adapters["geometry"].using_real_code is False
+        assert adapters["geometry"].using_real_code is True  # Paramak
+        # FISPACT-II still missing
         assert adapters["neutronics"].using_real_code is False
 
     def test_install_commands_listed_for_remaining(self):
-        """Paramak, FISPACT-II install commands documented."""
+        """FISPACT-II install command documented."""
         report = report_installed_codes()
-        # PROCESS and OpenMC now installed
+        # Three codes now installed
         assert "PROCESS" in report
         assert "OpenMC" in report
-        # Paramak and FISPACT-II still missing with install hints
-        assert "pip install paramak" in report
+        assert "Paramak" in report
+        # FISPACT-II still missing with install hint
         assert "FISPACT" in report

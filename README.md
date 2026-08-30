@@ -86,8 +86,11 @@ z-pinch-postproc/
 
 ## Standing version
 
-`0.0.1-prelim` (2026-08-29) — initial scaffold, synthetic-shot smoke test passes.
-The first real-data validation is deferred to v0.1 (Z-shot 2960 benchmark).
+`0.7.0` (2026-08-30) — v0.7 shipped with 609 tests. Three of four upstream
+fusion engineering codes now integrated (PROCESS + OpenMC + Paramak).
+Monte Carlo uncertainty quantification. FISPACT-II requires UKAEA license
+(manual install only). See `docs/RELEASE_v0.7.0.md` for full release notes
+and `CHANGELOG.md` for per-tier history.
 
 ## Where to start reading
 

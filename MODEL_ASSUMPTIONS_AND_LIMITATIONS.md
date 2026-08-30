@@ -1,7 +1,7 @@
 # MODEL ASSUMPTIONS AND LIMITATIONS — z-pinch-postproc
 
-**Version:** v0.6.1 (2026-08-30)
-**Status:** v0.6.1 ships real OpenMC integration via openmc-anywhere (PyPI wheel; no conda). Tier 6.A-E in full. 560 tests passing. PROCESS + OpenMC installed. OpenMC adapter builds real geometry/materials/tallies XML; full Monte Carlo TBR pending cross-section library (~5 GB ENDF download).
+**Version:** v0.7.0 (2026-08-30)
+**Status:** v0.7.0 ships Tier 7.A-E: Real Paramak integration (3D CAD geometry + STEP export), OpenMC cross-sections management, Monte Carlo uncertainty quantification, FISPACT-II probe (manual UKAEA license path documented). 609 tests passing. Three of four upstream codes installed (PROCESS, OpenMC, Paramak). GitHub release artifacts prepared (CITATION.cff, docs/RELEASE_v0.7.0.md, docs/z-pinch-postproc-v0.7.0.zip) — awaiting user approval for push.
 **Per:** `Z_Machine_plan.pdf` (user-uploaded plan, 7,441 chars), `BUCKY 1-D radiation hydrodynamics code reference` (UWFDM-1268, 2005), `An overview of magneto-inertial fusion on the Z machine` (Yager-Elorriaga et al. 2022, Nucl. Fusion 62 042015), `Pulsed power: A precision hammer for high energy density science` (Hansen 2021, Princeton SULI).
 
 ## 1. Scope and intent

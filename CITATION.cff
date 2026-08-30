@@ -1,14 +1,16 @@
 cff-version: 1.2.0
 message: >-
   If you use this code in published work, please cite the underlying
-  physics references (Bosch & Hale 1992 for D-T reactivity) and the
-  relevant upstream simulator (FLASH, ESTHER, WarpX, Smilei) that
-  produced the input profile. v0.0.1-prelim (2026-08-29): initial scaffold
-  + synthetic-shot smoke test. No real-data validation yet.
+  physics references (Bosch & Hale 1992 for D-T reactivity, NRL
+  Plasma Formulary for bremsstrahlung, Fischer 2020 for TBR,
+  Entler 2018 for DEMO cost). v0.7.0 (2026-08-30) is the third
+  feature release: PROCESS + OpenMC + Paramak real upstream
+  integration, Monte Carlo uncertainty quantification, cross-
+  sections management. Tier 1-7 in full. 609 tests.
 title: "z-pinch-postproc"
 type: software
-version: 0.0.1-prelim
-date-released: 2026-08-29
+version: 0.7.0
+date-released: 2026-08-30
 authors:
   - family-names: Lam
     given-names: K.
@@ -23,8 +25,10 @@ keywords:
   - inertial-confinement-fusion
   - pulsed-power
   - sandia-z
-  - post-processor
-  - python
+  - tritium-breeding-ratio
+  - first-wall-lifetime
+  - levelized-cost-of-electricity
+  - uncertainty-quantification
 references:
   - type: article
     title: "Improved formulas for fusion cross-sections and thermal reactivities"
@@ -35,18 +39,42 @@ references:
         given-names: G. M.
     journal: "Nuclear Fusion"
     volume: 32
+    pages: 611-631
     year: 1992
-    start: 611
   - type: article
-    title: "Magnetized Liner Inertial Fusion on the Z machine at Sandia"
+    title: "An overview of magneto-inertial fusion on the Z machine"
     authors:
-      - family-names: Gomez
-        given-names: M. R.
-      - family-names: Slutz
-        given-names: S. A.
-      - family-names: Jennings
-        given-names: C. A.
-      - et al.
+      - family-names: Yager-Elorriaga
+        given-names: D. A.
+        given-names: et al.
     journal: "Nuclear Fusion"
-    volume: 64
+    volume: 62
+    pages: 042015
+    year: 2022
+  - type: article
+    title: "PROCESS Fusion Reactor Systems Code"
+    authors:
+      - family-names: Kovari
+        given-names: M.
+        given-names: et al.
+    publisher: "UKAEA"
     year: 2024
+    url: "https://github.com/ukaea/PROCESS"
+  - type: article
+    title: "OpenMC Monte Carlo Particle Transport Code"
+    authors:
+      - family-names: Romano
+        given-names: P. K.
+        given-names: et al.
+    publisher: "MIT"
+    year: 2024
+    url: "https://github.com/openmc-dev/openmc"
+  - type: article
+    title: "Paramak: Parametric Tokamak Geometry Builder"
+    authors:
+      - family-names: Davis
+        given-names: A.
+        given-names: et al.
+    publisher: "UKAEA"
+    year: 2024
+    url: "https://github.com/ukaea/paramak"

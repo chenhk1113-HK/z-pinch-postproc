@@ -5,16 +5,98 @@
 
 ## [Unreleased]
 
-### Planned for v0.7
-- Paramak installation (pip install paramak) — geometric design tool
-- FISPACT-II installation (manual + UKAEA license) — activation calc
-- Cross-section library download for OpenMC
-- Real OpenMC TBR comparison (parametric vs Monte Carlo)
-- Coupled optimization (PFC material + cycle + geometry)
-- Uncertainty quantification (Monte Carlo)
-- GitHub release
+### Planned for v0.8
+- OpenMC cross-section library download (~5 GB ENDF)
+- Real OpenMC TBR validation (parametric vs Monte Carlo)
+- FISPACT-II install (after UKAEA license acquisition)
+- Paramak D-shape extension for spherical tokamaks
+- Sensitivity ranking via Sobol on MC samples
+- GitHub release (pending user approval)
 
 See `docs/TODO.md` for the full list.
+
+## [0.7.0] — 2026-08-30
+
+### Added
+- **Tier 7.A — Real Paramak integration** (per user approval):
+  Paramak 0.9.11 installed via `pip install paramak`. Uses
+  `paramak.revolved_shape()` for Z-pinch cylindrical geometry.
+  Exports STEP files for CAD inspection (29 KB for ZN design).
+  - `code/zpp_real_paramak_adapter.py`:
+    - `check_paramak_install()`, `get_paramak_info()`.
+    - `build_paramak_zpinch()`: builds 3D geometry for any
+      ZIFERadialBuild. Returns `ParamakGeometryResult` with
+      total_radius_cm, plasma_height_cm, blanket_volume_cm3,
+      step_file_generated, step_file_path.
+    - `paramak_geometry_markdown()`: formats result.
+  - **+14 tests** in `tests/test_zpp_real_paramak_adapter.py`.
+- **Tier 7.B — OpenMC cross-sections management**:
+  `code/zpp_cross_sections.py` documents install path for the
+  ~5 GB ENDF cross-section library. Provides:
+  - `check_cross_sections_available()`: detect env var + file.
+  - `download_cross_sections_instructions()`: human-readable
+    install steps.
+  - `list_required_nuclides_for_blanket()`: returns nuclide
+    names for any blanket material (LiPb, FLiBe, Li4SiO4, ...).
+  - `generate_minimal_cross_sections_xml()`: stub XML writer.
+  - **+15 tests** in `tests/test_zpp_cross_sections.py`.
+- **Tier 7.C — Monte Carlo uncertainty quantification**:
+  `code/zpp_uncertainty.py` provides end-to-end MC propagation
+  through the ZN plant simulation:
+  - `UncertainParameter`: name, nominal, stddev, bounds,
+    distribution (normal/uniform/triangular).
+  - `monte_carlo_propagation()`: sample N parameter sets, run
+    coupled sim, aggregate outputs (TBR, LCOE, P_net).
+  - `UQResult`: mean, std, percentiles (5/50/95/99),
+    P(TBR >= threshold), P(sub-break-even).
+  - `uq_markdown()`: formats result.
+  - **+12 tests** in `tests/test_zpp_uncertainty.py`.
+- **Tier 7.E — FISPACT-II probe**:
+  `code/zpp_fispact_adapter.py` documents the manual UKAEA
+  license install path. Provides:
+  - `check_fispact_install()`: probe for FISPACT binary.
+  - `fispact_install_instructions()`: human-readable install.
+  - `parametric_activation_proxy()`: Tier 5.D fallback when
+    FISPACT is unavailable.
+  - **+9 tests** in `tests/test_zpp_fispact_adapter.py`.
+
+### Changed
+- `requirements.txt`: documented Tier 6/7 dependencies with
+  install commands and license notes.
+- `tests/test_zpp_subprocess_adapters.py`: updated to reflect
+  v0.7 state (PROCESS + OpenMC + Paramak installed; FISPACT-II
+  still missing).
+- `README.md`: updated standing version to v0.7.0.
+
+### GitHub release prep (NOT RELEASED)
+- `CITATION.cff`: updated to v0.7.0 with full reference list.
+- `docs/RELEASE_v0.7.0.md`: full release notes.
+- `docs/build_release_zip.py`: script to build release ZIP.
+- `docs/z-pinch-postproc-v0.7.0.zip`: 87 files, 225 KB.
+- **Awaiting user approval before GitHub push / release.**
+
+### Strategic findings
+- **TBR is robustly feasible** for ZN blanket design: 100% of
+  100 MC samples show TBR >= 1.05 threshold.
+- **LCOE is uniformly sub-break-even** for ZN plant at current
+  physics: all 100 MC samples show LCOE = inf. Confirms Tier
+  2.D + 5.A + 6.B that small parameter variations don't fix
+  the fundamental Q_eng bottleneck.
+- **Paramak real geometry** confirmed: ZN R=99 cm, h=100 cm,
+  blanket_vol=3.08 m³, STEP file 29 KB.
+- **OpenMC real geometry** confirmed (Tier 6.F): builds valid
+  geometry/materials/tallies XML via openmc API.
+
+### Test summary
+- 609 tests pass in 18s. Up from 560 in v0.6.1 (+49 tests).
+
+### Process install summary
+| Code | Status | Method | Version |
+|---|---|---|---|
+| PROCESS | ✅ | git clone + pip install | 0.0.1.dev1+g6df462050 |
+| OpenMC | ✅ | pip install openmc-anywhere | 0.16.0.0 |
+| Paramak | ✅ | pip install paramak | 0.9.11 |
+| FISPACT-II | ❌ | manual + UKAEA license | - |
 
 ## [0.6.1] — 2026-08-30
 
