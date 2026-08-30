@@ -1,0 +1,18 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<cross_sections>
+  <library materials="Be7" path="Be_004_007.h5" type="neutron"/>
+  <library materials="Be9" path="Be_004_009.h5" type="neutron"/>
+  <library materials="Fe54" path="Fe_026_054.h5" type="neutron"/>
+  <library materials="Fe55" path="Fe_026_055.h5" type="neutron"/>
+  <library materials="Fe56" path="Fe_026_056.h5" type="neutron"/>
+  <library materials="Fe57" path="Fe_026_057.h5" type="neutron"/>
+  <library materials="Fe58" path="Fe_026_058.h5" type="neutron"/>
+  <library materials="H1" path="H_001_001.h5" type="neutron"/>
+  <library materials="Li6" path="Li_003_006.h5" type="neutron"/>
+  <library materials="Li7" path="Li_003_007.h5" type="neutron"/>
+  <library materials="Pb204" path="Pb_082_204.h5" type="neutron"/>
+  <library materials="Pb205" path="Pb_082_205.h5" type="neutron"/>
+  <library materials="Pb206" path="Pb_082_206.h5" type="neutron"/>
+  <library materials="Pb207" path="Pb_082_207.h5" type="neutron"/>
+  <library materials="Pb208" path="Pb_082_208.h5" type="neutron"/>
+</cross_sections>

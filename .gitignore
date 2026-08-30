@@ -155,3 +155,20 @@ data/runs/cache/
 
 # Local synthetic-shot test fixtures (committed separately under data/fixtures/)
 data/synthetic/*_tmp.*
+
+# ===== Nuclear data files (regenerable via scripts/download_cross_sections.py) =====
+# Do NOT commit the ENDF tapes or the NJOY-converted ACE files — they total
+# ~660 MB across 15 nuclides and are produced by running the download script.
+# Only the small cross_sections.xml manifest is committed.
+# (Tier 5 transport module + Tier 7.B download_cross_sections.py: 2026-08-31)
+data/nuclear_data/endf_viii0/*.endf
+data/nuclear_data/ace/*.ace
+data/nuclear_data/ace/broadr
+data/nuclear_data/ace/gaspr
+data/nuclear_data/ace/heatr
+data/nuclear_data/ace/heatr_local
+data/nuclear_data/ace/pendf
+data/nuclear_data/ace/purr
+/data/nuclear_data/ace/xsdir
+/H_001_001.ace
+/xsdir

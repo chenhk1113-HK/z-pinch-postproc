@@ -15,6 +15,83 @@
 
 See `docs/TODO.md` for the full list.
 
+## [0.7.1] — 2026-08-31
+
+### Added
+- **Tier 5 — Real OpenMC TBR transport**: end-to-end OpenMC
+  continuous-energy Monte Carlo simulation of tritium breeding in
+  a Z-pinch LiPb/Be blanket, with parametric Tier 5.B fallback.
+  - `code/zpp_real_openmc_transport.py`:
+    - `_build_blanket_materials()`: builds `openmc.Material` for
+      LiPb (Li6 + Li7 + Pb204/206/207/208, 90% Li-6 enrichment),
+      Be9 multiplier, RAFM steel (Fe54/56/57/58). All 15 nuclides
+      present in `data/nuclear_data/ace/cross_sections.xml`.
+    - `_build_zpinch_geometry()`: 4-layer cylinder (vacuum / LiPb /
+      Be / RAFM) with height_cm=100 cm. Plasma cell is left as void
+      (`cell.fill = None`) — an empty `Material(name="vacuum")` is
+      rejected by OpenMC at runtime with `ERROR: No macroscopic data
+      or nuclides specified on material N`.
+    - `_build_tally()`: 14.1 MeV D-T point source at plasma axis,
+      `(n,Xt)` reaction tally on Li6 + Li7 + Be9 over the blanket
+      cell. `batches` and `particles` parameters propagate into
+      `settings.batches` / `settings.particles`.
+    - `run_real_openmc_tbr(n_particles, n_batches)`: returns
+      `RealOpenMCTBRResult` with `openmc_TBR`, `openmc_TBR_stddev`
+      (relative), `openmc_TBR_uncertainty` (absolute),
+      `parametric_TBR` (always computed for comparison), plus a
+      notes list that captures both stdout AND stderr on failure.
+      `openmc.StatePoint` is closed in a `finally` block so the
+      HDF5 file lock is released before the `TemporaryDirectory`
+      is torn down (Windows raises PermissionError otherwise).
+    - `real_openmc_tbr_markdown()`: human-readable report with the
+      relative σ as a percentage and an explicit honest note that
+      a large parametric-vs-Monte-Carlo disagreement is real
+      physics (geometry-dependent leakage), not a code bug.
+  - **First run (2026-08-31, 20k particles × 20 batches)**:
+    OpenMC 0.16.0 / ENDF/B-VIII.0 produced **TBR = 1.1381
+    ± 0.09% (σ_abs = 0.0010)** vs parametric Tier 5.B
+    **TBR = 2.5567** — a +124.7% parametric overestimate.
+    This is the expected physical gap: the cylindrical geometry
+    leaks ~67% of source neutrons out the radial/axial vacuum
+    boundaries; the parametric estimate assumes a thick,
+    leak-free blanket. The point of the run is to confirm the
+    pipeline lands a real Monte Carlo number; tighter blanket
+    coverage (a wraparound geometry or larger R_blanket) is a
+    Tier 6 follow-up.
+  - **No new dependencies**: uses the existing `openmc` venv
+    package + the cross-sections downloaded via Tier 7.B
+    (`scripts/download_cross_sections.py`).
+
+### Fixed
+- `_build_zpinch_geometry`: plasma cell was assigned
+  `openmc.Material(name="vacuum")` which is rejected at runtime
+  with `ERROR: No macroscopic data or nuclides specified on
+  material 6`. Replaced with `cell.fill = None` (OpenMC void).
+  Without this fix OpenMC exited with return code 4294967295
+  (= -1) on every run and produced no statepoint. (Originally
+  introduced in v0.6.1 real-openmc stub; surfaced once Tier 5
+  transport actually ran the geometry.)
+- `run_real_openmc_tbr`: dropped `n_particles` / `n_batches`
+  args — they were never propagated into `settings.batches` /
+  `settings.particles`. Both now flow through `_build_tally`.
+- `run_real_openmc_tbr`: hard-coded `statepoint.10.h5` filename
+  replaced with `f"statepoint.{n_batches}.h5"` so changing the
+  batch count doesn't silently fail to find the statepoint.
+- `run_real_openmc_tbr`: stderr was discarded on OpenMC failure;
+  now appended to the notes list (400 chars). Without stderr,
+  the fatal `ERROR: ...` message was unreachable.
+- `real_openmc_tbr_markdown`: table cell labelled the uncertainty
+  as `±{absolute σ}` which is misleading; now shows relative σ
+  as `±X.XX% (σ_abs=Y)` so the user can read the magnitude
+  directly.
+
+### Verified
+- All **609** existing tests still pass (`pytest tests/ -q`).
+- `python -m py_compile code/zpp_real_openmc_transport.py` clean.
+- End-to-end smoke run: `run_real_openmc_tbr(n_particles=20000,
+  n_batches=20)` returns `transport_completed=True`, TBR =
+  1.1381, no Traceback, no NaN, no Inf.
+
 ## [0.7.0] — 2026-08-30
 
 ### Added
