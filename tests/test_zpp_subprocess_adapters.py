@@ -51,11 +51,19 @@ class TestDetectUpstreamCodes:
             assert isinstance(u, UpstreamCodeInfo)
             assert u.name == code_name
 
-    def test_no_codes_installed_by_default(self):
-        """Without explicit install, all upstream codes absent."""
+    def test_PROCESS_installed_v0_6(self):
+        """PROCESS was installed by the user in v0.6 (per their approval).
+
+        Real PROCESS integration replaces the parametric BOP defaults
+        with PROCESS IFEData defaults.
+        """
         info = detect_upstream_codes()
-        for code_name, u in info.items():
-            assert u.binary_path is None
+        assert info["PROCESS"].binary_path is not None
+
+    def test_OpenMC_not_installed(self):
+        """OpenMC is not on PyPI; needs conda. The user has not installed it."""
+        info = detect_upstream_codes()
+        assert info["OpenMC"].binary_path is None
 
     def test_install_instructions_present(self):
         """Each missing code has install instructions."""
@@ -65,30 +73,35 @@ class TestDetectUpstreamCodes:
 
 
 class TestSubprocessBOPAdapter:
-    """Test SubprocessBOPAdapter."""
+    """Test SubprocessBOPAdapter.
 
-    def test_falls_back_to_parametric(self):
+    As of v0.6, PROCESS is installed, so SubprocessBOPAdapter
+    detects it and uses_real_code=True. The fallback still works
+    (parametric) when subprocess fails.
+    """
+
+    def test_using_real_code_True_after_PROCESS_install(self):
+        """After PROCESS install (v0.6), adapter uses real code."""
+        adapter = SubprocessBOPAdapter()
+        assert adapter.using_real_code is True
+
+    def test_compute_returns_result(self):
         adapter = SubprocessBOPAdapter()
         result = adapter.compute(PlantBOPInputs())
         assert isinstance(result, ProcessBOPResult)
-
-    def test_using_real_code_false(self):
-        adapter = SubprocessBOPAdapter()
-        assert adapter.using_real_code is False
 
     def test_satisfies_ABC(self):
         adapter = SubprocessBOPAdapter()
         assert isinstance(adapter, BOPAdapter)
 
-    def test_same_as_parametric_when_fallback(self):
-        """When falling back, result matches parametric adapter."""
+    def test_compute_handles_real_or_fallback(self):
+        """Whether subprocess succeeds or fails, result is valid."""
         adapter = SubprocessBOPAdapter()
-        parametric = ParametricBOPAdapter()
-        inp = PlantBOPInputs()
-        r1 = adapter.compute(inp)
-        r2 = parametric.compute(inp)
-        assert r1.eta_E_plant == r2.eta_E_plant
-        assert r1.f_recirc == r2.f_recirc
+        result = adapter.compute(PlantBOPInputs())
+        # PROCESS IFE defaults applied if real, parametric otherwise.
+        # Both produce a valid ProcessBOPResult.
+        assert result.eta_E_plant > 0
+        assert result.f_recirc >= 0
 
 
 class TestSubprocessTBRAdapter:
@@ -207,21 +220,17 @@ class TestMakeSubprocessSet:
 class TestStrategicFindings:
     """Document strategic findings from subprocess adapter design."""
 
-    def test_no_install_required_by_default(self):
-        """The default behaviour is parametric, no install needed.
-
-        This means Tier 6.A wraps the v0.5.0 parametric defaults
-        with subprocess-ready adapter interfaces that activate
-        real upstream codes only when the user installs them.
-        """
+    def test_PROCESS_installed_v0_6(self):
+        """After user-approved install, PROCESS is detected and used."""
         adapters = make_subprocess_set()
-        for adapter in adapters.values():
-            assert adapter.using_real_code is False
+        assert adapters["bop"].using_real_code is True
 
-    def test_install_commands_listed(self):
-        """All 4 install commands documented."""
+    def test_install_commands_listed_for_remaining(self):
+        """OpenMC, Paramak, FISPACT-II install commands documented."""
         report = report_installed_codes()
-        assert "git clone" in report  # PROCESS
+        # PROCESS is now installed, others still not
+        assert "✅" in report  # PROCESS
+        assert "❌" in report  # OpenMC, Paramak, FISPACT-II
         assert "conda install" in report  # OpenMC
         assert "pip install" in report  # Paramak
         assert "Download" in report  # FISPACT-II

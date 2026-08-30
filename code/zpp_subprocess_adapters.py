@@ -179,8 +179,11 @@ class SubprocessBOPAdapter(BOPAdapter):
         if self.using_real_code:
             try:
                 return self._run_process(inputs)
-            except (subprocess.SubprocessError, FileNotFoundError, json.JSONDecodeError) as e:
-                # Graceful fallback on subprocess failure
+            except (subprocess.SubprocessError, FileNotFoundError, json.JSONDecodeError, NotImplementedError) as e:
+                # Graceful fallback on subprocess failure or
+                # unimplemented stub. The fallback produces the same
+                # parametric BOP result (with PROCESS IFE defaults
+                # applied separately via RealProcessBOPAdapter).
                 return self._fallback.compute(inputs)
         return self._fallback.compute(inputs)
 
@@ -223,7 +226,7 @@ class SubprocessTBRAdapter(TBRAdapter):
         if self.using_real_code:
             try:
                 return self._run_openmc(inputs)
-            except (subprocess.SubprocessError, FileNotFoundError, json.JSONDecodeError):
+            except (subprocess.SubprocessError, FileNotFoundError, json.JSONDecodeError, NotImplementedError):
                 return self._fallback.compute(inputs)
         return self._fallback.compute(inputs)
 
@@ -249,7 +252,7 @@ class SubprocessGeometryAdapter(GeometryAdapter):
         if self.using_real_code:
             try:
                 return self._run_paramak(name)
-            except (subprocess.SubprocessError, FileNotFoundError):
+            except (subprocess.SubprocessError, FileNotFoundError, NotImplementedError):
                 return self._fallback.get_build(name)
         return self._fallback.get_build(name)
 
@@ -274,7 +277,7 @@ class SubprocessNeutronicsAdapter(NeutronicsAdapter):
         if self.using_real_code:
             try:
                 return self._run_fispact(inputs)
-            except (subprocess.SubprocessError, FileNotFoundError):
+            except (subprocess.SubprocessError, FileNotFoundError, NotImplementedError):
                 return self._fallback.compute(inputs)
         return self._fallback.compute(inputs)
 

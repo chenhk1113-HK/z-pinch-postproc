@@ -1,7 +1,7 @@
 # MODEL ASSUMPTIONS AND LIMITATIONS — z-pinch-postproc
 
-**Version:** v0.5.0 (2026-08-30)
-**Status:** Tier 5 complete — integrated plant simulation (BOP × TBR × geometry × LCOE), geometry-aware TBR sweep, sensitivity analysis (tornado + Sobol), PFC lifetime (DPA + MHD erosion), adapter interfaces for real upstream codes. 433 tests passing.
+**Version:** v0.6.0 (2026-08-30)
+**Status:** Tier 6 complete — subprocess-ready upstream wrappers, coupled plant sim (PFC replacement into LCOE), extended plant cost model (19 capex + 9 opex categories), plant design optimization (multi-objective grid search), real PROCESS integration (PROCESS installed; IFE defaults seed parametric BOP). 531 tests passing.
 **Per:** `Z_Machine_plan.pdf` (user-uploaded plan, 7,441 chars), `BUCKY 1-D radiation hydrodynamics code reference` (UWFDM-1268, 2005), `An overview of magneto-inertial fusion on the Z machine` (Yager-Elorriaga et al. 2022, Nucl. Fusion 62 042015), `Pulsed power: A precision hammer for high energy density science` (Hansen 2021, Princeton SULI).
 
 ## 1. Scope and intent

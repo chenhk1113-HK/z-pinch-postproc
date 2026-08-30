@@ -1,7 +1,7 @@
 # z-pinch-postproc — PLAN v0.1
 
-> **Standing version**: `0.5.0` (2026-08-30)
-> **Status**: v0.5.0 shipped (433 tests passing). Tier 5 (integrated simulation, geometry-aware TBR, sensitivity, PFC lifetime, adapter interfaces) in full. v0.6 planned for real upstream code integration (requires user approval).
+> **Standing version**: `0.6.0` (2026-08-30)
+> **Status**: v0.6.0 shipped (531 tests passing). Tier 6 (subprocess adapters, coupled plant sim, extended cost model, optimization, real PROCESS integration) in full. PROCESS installed. v0.7 planned for OpenMC/Paramak/FISPACT install + uncertainty quantification.
 > **Per**: Z_Machine_plan.pdf (user-uploaded, 2026-08-29) + open-source survey
 > (see `docs/OPEN_SOURCE_LANDSCAPE.md`).
 

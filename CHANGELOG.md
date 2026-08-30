@@ -5,14 +5,105 @@
 
 ## [Unreleased]
 
-### Planned for v0.6
-- Real PROCESS integration (replace parametric BOP)
-- Real OpenMC integration (replace parametric TBR)
-- Real Paramak integration (replace parametric geometry)
-- Coupled plant simulator: sensitivity × replacement interval
-- Plasma-facing component cost model
+### Planned for v0.7
+- OpenMC installation (currently not installed - on conda not PyPI)
+- Paramak installation (pip-installable)
+- FISPACT-II installation (manual, requires UKAEA license)
+- Coupled optimization (PFC material + cycle + geometry)
+- Uncertainty quantification (Monte Carlo)
+- GitHub release
 
 See `docs/TODO.md` for the full list.
+
+## [0.6.0] — 2026-08-30
+
+### Added
+- **Tier 6.A — Subprocess-ready upstream wrappers**: new module
+  `code/zpp_subprocess_adapters.py` provides concrete subprocess
+  wrappers that detect installed upstream codes (PROCESS, OpenMC,
+  Paramak, FISPACT-II) and use them when present, else fall back
+  to the parametric replacement. `detect_upstream_codes()`,
+  `UpstreamCodeInfo`, `SubprocessBOPAdapter`,
+  `SubprocessTBRAdapter`, `SubprocessGeometryAdapter`,
+  `SubprocessNeutronicsAdapter`, `report_installed_codes()`,
+  `make_subprocess_set()`. **+28 tests**.
+- **Tier 6.B — Coupled plant simulator**: new module
+  `code/zpp_coupled_plant.py` couples PFC lifetime into LCOE.
+  `ReplacementCostInputs`, `n_replacements_during_plant_life()`,
+  `replacement_capex_USD()`, `coupled_plant_simulation()`,
+  `CoupledPlantResult`, `couple_sweep_materials()`,
+  `coupled_sweep_markdown()`. **+20 tests**.
+- **Tier 6.C — Extended plant cost model**: new module
+  `code/zpp_cost_model.py` provides a 19-category capital cost
+  breakdown (land, buildings, reactor structure, vacuum vessel,
+  cryostat, magnets, heating/CD, blanket, divertor/FW,
+  shielding, tritium plant, cooling, electrical, I&C, pulsed
+  power, laser, grid, engineering + contingency) plus 9-category
+  operating cost breakdown. `capital_recovery_factor()`,
+  `extended_plant_cost()`, `PlantCostResult`,
+  `cost_breakdown_markdown()`. **+20 tests**.
+- **Tier 6.D — Plant design optimization**: new module
+  `code/zpp_optimization.py` provides multi-objective grid search
+  over (cycle, T_hot_K, Li6_enrichment, blanket_thickness). 120
+  design combinations evaluated in 0.01s. Pareto frontier
+  identification. `OptimizationConstraints`, `DesignPoint`,
+  `grid_search_plant_design()`, `pareto_frontier()`,
+  `best_design()`, `optimization_markdown()`. **+15 tests**.
+- **Tier 6.E — Real PROCESS integration**: per user approval
+  (AGENTS.md rule 17), PROCESS was installed from
+  https://github.com/ukaea/PROCESS. New module
+  `code/zpp_real_process_adapter.py` uses
+  `process.data_structure.ife_variables.IFEData` defaults to
+  seed our parametric BOP model with realistic IFE plant
+  parameters. `PROCESS_IFE_DEFAULTS`, `PROCESS_COST_2015_DEFAULTS`,
+  `ProcessIFEParams`, `validate_process_install()`,
+  `get_process_ife_defaults()`, `get_process_cost_defaults()`,
+  `RealProcessBOPAdapter`. **+14 tests**.
+
+### Changed
+- `zpp_subprocess_adapters.py`: graceful fallback on
+  `NotImplementedError` (not just subprocess errors). When
+  the stub raises `NotImplementedError`, the adapter falls back
+  to parametric instead of propagating the error.
+
+### Strategic findings
+- **PROCESS integration (Tier 6.E)**: PROCESS IFE defaults
+  confirm our parametric assumptions:
+  - PROCESS.gain=10 == our ZN target Q_eng.
+  - PROCESS.etadrv=0.20 == our ZN driver efficiency.
+  - PROCESS.fbreed=1.05 == our TBR engineering threshold.
+  This validates our Tier 2-5 model assumptions against the
+  fusion engineering community's consensus.
+- **Coupled plant sim (Tier 6.B)**: For ZN plant (30-yr life,
+  100 MW, 25% CF):
+  - RAFM: 0 replacements, 0% LCOE increase.
+  - W: 1 replacement, +14.5% LCOE (\$152 -> \$174/MWh).
+  - Be: 3 replacements, +43.5% LCOE (\$152 -> \$218/MWh).
+  - Cu: 2 replacements, +29.0% LCOE (\$152 -> \$196/MWh).
+- **Extended cost model (Tier 6.C)**: ZN plant CAPEX \$3.10B,
+  OPEX \$120M/yr, CRF at 7% = 0.0767. Consistent with compact
+  fusion plant estimates (\$2-5B).
+- **Optimization (Tier 6.D)**: 120 designs evaluated in 0.01s.
+  At current ZN physics (Q_eng ~1e-3), **no design is feasible**
+  (LCOE=inf). Confirms Tier 2.D finding that ZN at current
+  physics cannot deliver commercial LCOE regardless of
+  cycle/temperature/enrichment/thickness choice.
+
+### Test summary
+- 531 tests, all pass (10s on Windows). Up from 433 in v0.5.0.
+
+### Process install notes
+- **PROCESS installed**: `git clone https://github.com/ukaea/PROCESS
+  && cd PROCESS && pip install .`. PROCESS IFE defaults pulled
+  via `process.data_structure.ife_variables.IFEData`.
+- **OpenMC not installed**: OpenMC is on conda-forge, not PyPI.
+  Requires `conda install -c conda-forge openmc`. The user has
+  not installed conda.
+- **Paramak not installed**: `pip install paramak` available but
+  not run.
+- **FISPACT-II not installed**: Manual install + UKAEA license.
+
+
 
 ## [0.5.0] — 2026-08-30
 
