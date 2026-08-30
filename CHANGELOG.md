@@ -5,13 +5,102 @@
 
 ## [Unreleased]
 
-### Planned for v0.5
-- Real PROCESS/OpenMC integration (replace parametric replacements)
-- Coupled plant simulation: BOP × TBR × LCOE end-to-end
-- Geometry-aware blanket coverage from real Paramak builds
-- Plasma-facing component lifetime estimates (neutron damage, MHD)
+### Planned for v0.6
+- Real PROCESS integration (replace parametric BOP)
+- Real OpenMC integration (replace parametric TBR)
+- Real Paramak integration (replace parametric geometry)
+- Coupled plant simulator: sensitivity × replacement interval
+- Plasma-facing component cost model
 
 See `docs/TODO.md` for the full list.
+
+## [0.5.0] — 2026-08-30
+
+### Added
+- **Tier 5.A — Integrated plant simulation**: new module
+  `code/zpp_plant_simulation.py` wires BOP × TBR × geometry × LCOE
+  into a single `PlantSimulation`. `PlantDesign` dataclass holds
+  cycle/blanket/geometry params; `PlantSimulationResult` bundles
+  BOPResult, TBRResult, geometry summary, LCOE, tritium self-
+  sufficiency, commercial power, pass/fail flags. **+15 tests**.
+- **Tier 5.B — Geometry-aware TBR sweep**: new module
+  `code/zpp_geometry_tbr.py` generalizes coverage-informed TBR
+  into a systematic blanket-thickness sweep for each radial build.
+  `tbr_vs_thickness()`, `sweep_blanket_thickness()`,
+  `build_compare_at_thickness()`, `compare_table_markdown()`,
+  `saturation_curve_csv()`. **+23 tests**.
+- **Tier 5.C — Sensitivity analysis (tornado + Sobol)**: new
+  module `code/zpp_sensitivity.py` provides OAT tornado analysis
+  (perturb each input ±10%, rank by sensitivity) and Sobol
+  variance-based indices (Saltelli sampling + Jansen estimator).
+  `tornado_analysis()`, `tornado_markdown()`, `saltelli_sample()`,
+  `sobol_indices()`. **+22 tests**.
+- **Tier 5.D — Plasma-facing component lifetime**: new module
+  `code/zpp_pfc_lifetime.py` computes PFC lifetime via two damage
+  mechanisms: neutron displacement damage (NRT model) and MHD-
+  driven erosion (Smolentsev power-law). `DPA_rate_per_FPY()`,
+  `MHD_Hartmann_number()`, `MHD_wall_shear_stress()`,
+  `MHD_erosion_rate_mm_per_year()`, `first_wall_lifetime()`.
+  Material constants for W, SS316, RAFM, Be, Cu, Mo. Liquid-metal
+  properties for LiPb, FLiBe, Li. **+22 tests**.
+- **Tier 5.E — Adapter interfaces for real upstream codes**: new
+  module `code/zpp_adapters.py` adds abstract base classes
+  (`BOPAdapter`, `TBRAdapter`, `GeometryAdapter`,
+  `NeutronicsAdapter`), parametric defaults, and stubs for real
+  upstream codes (`RealProcessBOPAdapter`, `RealOpenMCTBRAdapter`,
+  `RealParamakGeometryAdapter`, `RealFISPACTNeutronicsAdapter`).
+  `AdapterSet` bundle, `swap_adapter()`, `list_install_instructions()`.
+  All real adapters require explicit user approval per AGENTS.md
+  rule 17. **+27 tests**.
+
+### Changed
+- `zpp_plant_simulation.PlantSimulation` wires the four v0.4 modules
+  end-to-end via adapters. Can be configured to use real upstream
+  codes via `AdapterSet`.
+
+### Strategic findings
+- **Integrated plant simulation (Tier 5.A)**: ZN plant at default
+  design (Brayton 1200K, 30% Li-6 enrichment, MHD=0.9): TBR=1.52
+  (sufficient), LCOE=∞ (sub-break-even). Pass/fail: TBR=True,
+  LCOE=False, Power=False. The TBR is engineering-feasible; the
+  bottleneck is LCOE.
+- **Geometry-aware TBR (Tier 5.B)**: ZN reaches TBR≥1.05 at ~30 cm
+  blanket thickness. ZN TBR saturation ~2.4 at 200 cm. Zap-SFZ has
+  the highest TBR (1.80 at 50 cm) due to highest coverage (0.98).
+  Tokamak/GF-MTF in between.
+- **Sensitivity (Tier 5.C)**: For ZN plant simulation:
+  - TBR tornado: MHD_effect_factor (10%) > blanket_thickness_cm
+    (6%) > Li6_enrichment_frac (3%) > others (0%).
+  - η_E tornado: T_hot_K (3.7%) > T_cold_K (3.3%) > others (0%).
+  Strategic implication: MHD losses (flow channel design) are the
+  dominant uncertainty for TBR; hot-side temperature of the BOP
+  cycle is the dominant uncertainty for plant efficiency.
+- **PFC lifetime (Tier 5.D)**: For ZN plant (RAFM at 1 MW/m²,
+  25% CF): DPA per FPY=11.6, DPA lifetime=12.9 FPY, calendar
+  replacement interval=41 yr. ZN plant doesn't need first-wall
+  replacement during its 30-yr plant life. This is a strategic
+  positive for ZN economics (no replacement CAPEX during plant
+  life). Be is too soft (2.8 FPY lifetime, needs replacement
+  every ~10 yr calendar). W is brittle at low T (5.4 FPY).
+- **Adapter infrastructure (Tier 5.E)**: All 4 v0.4-v0.5 modules
+  (BOP, TBR, geometry, neutronics) have adapter interfaces. Real
+  upstream codes can be swapped in by replacing parametric adapters.
+  All real adapters require explicit user approval (per AGENTS.md
+  rule 17) before installation.
+
+### Test summary
+- 433 tests, all pass (9s on Windows). Up from 324 in v0.4.0.
+
+### Known limitations
+- McBride 2015 model is plausibly equivalent, not exact.
+- 2D mix correction is parametric.
+- α-heating model uses bremsstrahlung as only loss channel.
+- LCOE model uses fixed CAPEX_per_GWe.
+- BOP, TBR, geometry, neutronics are all parametric replacements.
+- Real upstream codes (PROCESS, OpenMC, Paramak, FISPACT-II)
+  require explicit user approval to install (AGENTS.md rule 17).
+
+
 
 ## [0.4.0] — 2026-08-30
 
