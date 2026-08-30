@@ -5,13 +5,88 @@
 
 ## [Unreleased]
 
-### Planned for v0.4
-- PROCESS integration for full BOP wall-plug chain (replaces static η_helper)
-- OpenMC coupling for tritium breeding ratio
-- Paramak geometry generator for Z-IFE concept
-- Z-IFE vs Zap sheared-flow vs General Fusion MTF extended comparison
+### Planned for v0.5
+- Real PROCESS/OpenMC integration (replace parametric replacements)
+- Coupled plant simulation: BOP × TBR × LCOE end-to-end
+- Geometry-aware blanket coverage from real Paramak builds
+- Plasma-facing component lifetime estimates (neutron damage, MHD)
 
 See `docs/TODO.md` for the full list.
+
+## [0.4.0] — 2026-08-30
+
+### Added
+- **Tier 4.A — PROCESS-equivalent BOP model**: new module
+  `code/zpp_process_bop.py` with Carnot-based cycle efficiency
+  (Brayton 0.43, Rankine 0.28, sCO2 0.41 at 1200 K hot side),
+  7-auxiliary breakdown (cryogenic, magnets, laser, pulsed-power
+  charging, tritium, BOP, services). Four pre-defined scenarios
+  (ZN, PF, GF-MTF, Zap-SFZ) with `bop_result_to_wallplug_kwargs()`
+  adapter for WallPlugChain. Replaces static `eta_helper=0.40`
+  and `f_recirc=0.25` scalars in v0.0.1-v0.3.0. **+31 tests**.
+- **Tier 4.B — OpenMC-equivalent TBR calculator**: new module
+  `code/zpp_tbr.py` with parametric TBR model using lookup table
+  calibrated to published OpenMC/NEUTRONICS studies (EU-DEMO,
+  ITER TBM, parametric scaling). 6 blanket materials (LiPb,
+  FLiBe, Li4SiO4, etc.), 3 multipliers (Be, Pb, none),
+  Li-6 enrichment factor with saturating curve. Four
+  pre-defined blankets (ZN, Tokamak, GF-MTF, Zap-SFZ).
+  **+28 tests**.
+- **Tier 4.C — Paramak-equivalent radial build geometry**: new
+  module `code/zpp_geometry.py` with cylindrical radial build
+  description (first wall, blanket, multiplier, structure,
+  shield). Four pre-defined builds (ZN, Tokamak, GF-MTF,
+  Zap-SFZ). Computes total radius, plasma volume, FW area,
+  blanket volume, coverage fraction. **+22 tests**.
+- **Tier 4.D — Extended concept comparison + DOE milestones**: new
+  module `code/zpp_extended_comparison.py` extending Tier 3.B's
+  5 Z-pinch concepts to 11 total (adds TAE FRC, Helion, Tokamak
+  Energy ST-80, ITER, EU-DEMO, SPARC). Adds 4 ARPA-E/DOE 2023
+  milestone targets (DOE-T1 plasma gain, DOE-T2 eng gain,
+  DOE-T3 LCOE <$100/MWh, DOE-T4 100 MWe to grid).
+  `check_milestones()` reports which concepts hit each milestone.
+  **+30 tests**.
+
+### Changed
+- WallPlugChain now accepts PROCESS-derived `eta_E_plant` and
+  `f_recirc` via `bop_result_to_wallplug_kwargs()`.
+
+### Strategic findings
+- **PROCESS-equivalent BOP**: ZN (Brayton 1200 K) gives η_E=0.43,
+  f_recirc=0.17, round-trip efficiency 0.36. Zap-SFZ (steady-state,
+  no laser) gives round-trip 0.39 (the highest).
+- **TBR**: ZN blanket needs Li-6 enrichment (~30%) for tritium
+  self-sufficiency; at natural Li with MHD losses, TBR=0.92.
+  Tokamak reference (Li4SiO4, 60% Li-6) gives TBR=2.12.
+- **DOE milestones**: Tokamaks (ITER, EU-DEMO, SPARC, ST-80) and
+  FRCs (TAE, Helion) hit all 4 DOE milestones at their design
+  targets. Z-pinch-class concepts (Z/ZN/Zap-SFZ/GF-MTF/PF) do
+  NOT hit DOE-T2 (eng gain) at their published targets because
+  Q_eng × η_wp × η_E < 1. This is the strategic implication:
+  pulsed-magnetic fusion needs higher Q or η_wp to compete.
+
+### Test summary
+- 324 tests, all pass (8s on Windows). Up from 213 in v0.3.0.
+- Pipeline on Gomez 2020 real-data equivalent (with all 8 tier-4
+  effects: BOP, TBR, geometry, comparison): unchanged physics
+  output (these are post-processing extensions, not core pipeline).
+
+### Known limitations (per MODEL_ASSUMPTIONS_AND_LIMITATIONS.md)
+- McBride 2015 model is plausibly equivalent, not exact; ±30-50%
+  T_ion uncertainty, ±factor 2-4 on E_fusion.
+- 2D mix correction is parametric; not a 2D rad-hydro simulation.
+- α-heating model uses bremsstrahlung as the only loss channel.
+- LCOE model uses fixed CAPEX_per_GWe (does not scale driver
+  cost with rep-rate).
+- BOP model is parametric (no real PROCESS call); TBR model
+  uses pre-computed lookup table (no real OpenMC run); geometry
+  is cylindrical radial build (no real Paramak CAD).
+- All three are designed to be replaceable by real upstream
+  codes via the same interface — `bop_result_to_wallplug_kwargs()`
+  for PROCESS, `compute_TBR()` for OpenMC, `ZIFERadialBuild` for
+  Paramak.
+
+
 
 ## [0.3.0] — 2026-08-30
 

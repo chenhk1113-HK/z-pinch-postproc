@@ -1,7 +1,7 @@
 # MODEL ASSUMPTIONS AND LIMITATIONS — z-pinch-postproc
 
-**Version:** v0.3.0 (2026-08-30)
-**Status:** Tier 3 complete — α-heating bootstrap, comparative analysis (Z/ZN/Zap/GF-MTF/PF), ZN-65 extended sweep. 213 tests passing.
+**Version:** v0.4.0 (2026-08-30)
+**Status:** Tier 4 complete — PROCESS-equivalent BOP, OpenMC-equivalent TBR, Paramak-equivalent geometry, extended fusion concept comparison + DOE milestones. 324 tests passing.
 **Per:** `Z_Machine_plan.pdf` (user-uploaded plan, 7,441 chars), `BUCKY 1-D radiation hydrodynamics code reference` (UWFDM-1268, 2005), `An overview of magneto-inertial fusion on the Z machine` (Yager-Elorriaga et al. 2022, Nucl. Fusion 62 042015), `Pulsed power: A precision hammer for high energy density science` (Hansen 2021, Princeton SULI).
 
 ## 1. Scope and intent
