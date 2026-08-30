@@ -1,7 +1,7 @@
 # MODEL ASSUMPTIONS AND LIMITATIONS — z-pinch-postproc
 
-**Version:** v0.2.0 (2026-08-30)
-**Status:** Tier 2 complete — laser preheat (MagLIF), rep-rate + LCOE, 2D mix correction, ZN scaling sweep. 136 tests passing.
+**Version:** v0.3.0 (2026-08-30)
+**Status:** Tier 3 complete — α-heating bootstrap, comparative analysis (Z/ZN/Zap/GF-MTF/PF), ZN-65 extended sweep. 213 tests passing.
 **Per:** `Z_Machine_plan.pdf` (user-uploaded plan, 7,441 chars), `BUCKY 1-D radiation hydrodynamics code reference` (UWFDM-1268, 2005), `An overview of magneto-inertial fusion on the Z machine` (Yager-Elorriaga et al. 2022, Nucl. Fusion 62 042015), `Pulsed power: A precision hammer for high energy density science` (Hansen 2021, Princeton SULI).
 
 ## 1. Scope and intent
@@ -28,7 +28,15 @@ The project scope is bounded by what a post-processor can defensibly compute:
   `eta_mix_empirical(CR, B_z0)` correction** (Tier 2.C, Slutz 2010 /
   Sinars 2020). Sausage/kink instabilities and wall-mode effects
   remain deferred to v0.3+.
-- No α-heating bootstrap. Deferred to v0.3.
+- No α-heating bootstrap. **Implemented in Tier 3.A as a
+  parametric scoping model** (`zpp_alpha_heating.py`). Uses
+  bremsstrahlung as the only loss channel; no conduction.
+  For ICF hot-spot this is too simplistic, hence the 50 keV
+  T cap as a "ignition indicator" rather than a true T_eq.
+- No 2D mix in Tier 1. **Implemented in Tier 2.C as a parametric
+  correction** (`zpp_mix.py`); see Section 2.1 above.
+- No MagLIF laser preheat in Tier 1. **Implemented in Tier 2.A**
+  (`zpp_laser.py`); see Section 2.6 below.
 
 ### 2.2 Bosch-Hale 1992 R-matrix fit
 - Coefficients from UWFDM-1268 Appendix II (Heltemes, Moses,

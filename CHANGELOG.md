@@ -5,12 +5,83 @@
 
 ## [Unreleased]
 
-### Planned for v0.3
-- α-heating bootstrap model (parametric, not full rad-hydro)
-- Z-pinch vs Zap sheared-flow Z-pinch vs General Fusion MTF comparison
-- ZN scaling at 65 MA (extended parameter sweep)
+### Planned for v0.4
+- PROCESS integration for full BOP wall-plug chain (replaces static η_helper)
+- OpenMC coupling for tritium breeding ratio
+- Paramak geometry generator for Z-IFE concept
+- Z-IFE vs Zap sheared-flow vs General Fusion MTF extended comparison
 
 See `docs/TODO.md` for the full list.
+
+## [0.3.0] — 2026-08-30
+
+### Added
+- **Tier 3.A — α-heating bootstrap**: new module
+  `code/zpp_alpha_heating.py` with parametric α-deposition +
+  iterative T_eq solve. The 3.5 MeV α from D-T deposits energy in
+  the fuel via f_dep(ρR) = 1 - exp(-ρR/ρR_α), raising T_stag to T_eq.
+  Pipeline `apply_alpha_heating=True` (default), reports
+  `alpha_heating` block (T_eq, boost_factor, ignited, f_dep,
+  ρR_alphas, P_alpha, P_brem, Q_with_alpha, Lawson ignition margin).
+  Bug fix: ρR computation changed from trapz(rho, R) parametric
+  integral to per-timestep 2*ρ*R averaged over burn window.
+  **+33 tests** (test_zpp_alpha_heating.py).
+- **Tier 3.B — Comparative analysis**: new module
+  `code/zpp_comparison.py` with `ConceptParameters` dataclass
+  and 5 reference design points (Z present, ZN, Zap-SFZ, GF-MTF,
+  PF). `compare_concepts()` returns side-by-side table with
+  current + target LCOE; `comparison_markdown_table()` formats
+  as Markdown. **+24 tests** (test_zpp_comparison.py).
+- **Tier 3.C — Extended ZN sweep at 65 MA**: new module
+  `code/zpp_zn65.py` with 125-point 3D sweep around the actual
+  ZN design (Yager-Elorriaga 2022: I=65 MA). Includes
+  `mix_aware_pareto`, `scaling_law_regression`, and `zn_65_summary`.
+  **+20 tests** (test_zpp_zn65.py).
+
+### Changed
+- `run_pipeline` accepts new `apply_alpha_heating=True` parameter
+  (default ON).
+- Output gains `alpha_heating` block with T_eq, boost factor,
+  ignited flag, and Lawson ignition margin.
+
+### Strategic findings
+- **Z present (Gomez 2020 anchor)**: α boost ~1.0 (no effect;
+  ρR ~0.005 g/cm² → only 1.6% of α energy deposited). Matches
+  published expectation.
+- **ZN design**: α boost 0.81x (T drops from 5.0 to 4.07 keV).
+  ρR ~0.024 g/cm² → 2.3% deposition. α heating insufficient.
+  Consistent with Tier 2.D: ZN sub-break-even.
+- **ICF hot spot** (T=10, ρ=200 g/cc, ρR=1.0): T_eq=50 keV cap,
+  ignited. Lawson margin 1.6e1 (16x above threshold). Matches NIF.
+- **Comparative analysis**: All 5 concepts (Z, ZN, Zap-SFZ, GF-MTF,
+  PF) are sub-break-even with current published parameters.
+  LCOE_target columns show the gap to design targets. GF-MTF is
+  closest to ignition (nTτ ~1e22 vs threshold 3e21).
+- **ZN-65 scaling laws**: Q_eng scales linearly with I_peak
+  (R²=0.995), B_z0 (R²=0.918), and weakly with E_laser (R²=0.62).
+  Even at the highest (75 MA, 40 T, 12 kJ) corner, Q_eng ~ 2e-4,
+  still 5 orders of magnitude below break-even (27.8 for ZN eta_wp).
+
+### Test summary
+- 213 tests, all pass (8s on Windows). Up from 136 in v0.2.0.
+- Pipeline on Gomez 2020 real-data equivalent (with all 4 tier-3
+  effects: laser preheat + 2D mix + α heating + scaling):
+  E_fus_2D = 268 J, T_eq = 2.52 keV (no α boost, ρR too low).
+
+### Known limitations (per MODEL_ASSUMPTIONS_AND_LIMITATIONS.md)
+- McBride 2015 model is plausibly equivalent, not exact; ±30-50%
+  T_ion uncertainty, ±factor 2-4 on E_fusion.
+- 2D mix correction is parametric; not a 2D rad-hydro simulation.
+- α-heating model uses bremsstrahlung as the only loss channel
+  (no conduction, no radiation). For ICF hot-spot this is too
+  simplistic, hence the 50 keV T cap as a "ignition indicator".
+- LCOE model uses fixed CAPEX_per_GWe (does not scale driver cost
+  with rep-rate).
+- ZN scaling sweep (both Tier 2.D and Tier 3.C) shows the McBride
+  model cannot reach break-even with current Z/ZN design
+  parameters. This is the honest finding, not a model failure.
+
+
 
 ## [0.2.0] — 2026-08-30
 
