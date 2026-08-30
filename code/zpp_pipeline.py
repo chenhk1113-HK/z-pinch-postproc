@@ -14,6 +14,7 @@ import numpy as np
 from zpp_bosch_hale import reactivity_DT_cm3s, E_DT_J, E_DT_MeV
 from zpp_laser import LaserPreheat, no_laser
 from zpp_lawson import burn_weighted_lawson, lawson_criterion_classic_DT
+from zpp_mix import eta_mix_empirical, apply_mix_correction
 from zpp_wallplug import WallPlugChain, wallplug_chain_z_present
 
 
@@ -263,6 +264,7 @@ def run_pipeline(
     eta_helper: float = DEFAULT_ETA_HELPER,
     T_burn_thresh_keV: float = 1.0,
     rho_burn_thresh_gcc: float = 0.1,
+    apply_2d_mix: bool = True,
     input_provenance: dict | None = None,
 ) -> dict:
     """Top-level pipeline: ingest inputs, compute all engineering metrics, return report dict.
@@ -284,6 +286,14 @@ def run_pipeline(
         Laser preheat parameters for MagLIF-class shots. Default:
         no laser (bare Z-pinch). Pass `z_present_zbeamlet()` or
         `zn_design_laser()` for MagLIF.
+    apply_2d_mix : bool
+        If True (default), apply the 2D-mix efficiency correction
+        (Slutz 2021 / Sinars 2020) to the burn yield. The correction
+        factor is eta_mix(CR, B_z0). If the caller does not pass
+        B_z0_T via input_provenance['maglif']['B_z0_T'], the
+        correction uses a default B_z0=16 T (Z present-day).
+        Set to False for the bare 1D pipeline output (e.g. synthetic
+        tests).
     eta_helper : float
         Plant thermal-to-electric efficiency. Default 0.40 (Brayton
         cycle). Used as `eta_E_plant` in the chain.
@@ -301,6 +311,43 @@ def run_pipeline(
         T_burn_thresh_keV=T_burn_thresh_keV,
         rho_burn_thresh_gcc=rho_burn_thresh_gcc,
     )
+
+    # 1a. 2D mix correction (Slutz 2021 / Sinars 2020).
+    # The 1D pipeline over-predicts yield because it cannot capture
+    # MRT instabilities and fuel-axial-B-field loss to mix. We
+    # multiply E_fusion by eta_mix(CR, B_z0) which captures the
+    # leading-order effect. Default B_z0=16 T (Z present-day);
+    # the caller can override via input_provenance['maglif']['B_z0_T'].
+    B_z0_T_mix = float((input_provenance or {}).get("maglif", {}).get("B_z0_T", 16.0))
+    if apply_2d_mix and radius_cm is not None and R_initial_cm is not None:
+        CR_for_mix = float(R_initial_cm) / float(np.min(radius_cm))
+        mix_result = apply_mix_correction(
+            E_fusion_1D_J=burn["E_fusion_J"],
+            CR=CR_for_mix,
+            B_z0_T=B_z0_T_mix,
+        )
+        E_fusion_2D_J = mix_result.E_fusion_2D_J
+        mix_summary = {
+            "eta_mix": mix_result.eta_mix,
+            "E_fusion_1D_J": mix_result.E_fusion_1D_J,
+            "E_fusion_2D_J": mix_result.E_fusion_2D_J,
+            "CR_used": mix_result.CR_used,
+            "B_z0_used_T": mix_result.B_z0_used,
+            "correction_factor": 1.0 / mix_result.eta_mix if mix_result.eta_mix > 0 else float("inf"),
+            "notes": mix_result.notes,
+        }
+    else:
+        # No mix correction (synthetic tests, or no radius profile)
+        E_fusion_2D_J = burn["E_fusion_J"]
+        mix_summary = {
+            "eta_mix": 1.0,
+            "E_fusion_1D_J": burn["E_fusion_J"],
+            "E_fusion_2D_J": burn["E_fusion_J"],
+            "CR_used": 0.0,
+            "B_z0_used_T": B_z0_T_mix,
+            "correction_factor": 1.0,
+            "notes": "2D mix correction not applied (no radius profile, or apply_2d_mix=False)",
+        }
 
     # 1b. Laser preheat energy balance (MagLIF-class shots).
     # This section reports the energy budget only; the *physics* of
@@ -327,20 +374,20 @@ def run_pipeline(
         laser_summary = laser.energy_balance_summary(
             rho_fuel_gcc=float(preheat_meta["rho_preheat_gcc"]),
             V_fuel_cm3=float(preheat_meta["V_preheat_cm3"]),
-            E_fusion_J=burn["E_fusion_J"],
+            E_fusion_J=E_fusion_2D_J,
             T_preheat_floor_keV_override=T_floor,
         )
     else:
         # No preheat metadata: report energy budget only.
         laser_summary = laser.energy_balance_summary_energy_only(
-            E_fusion_J=burn["E_fusion_J"]
+            E_fusion_J=E_fusion_2D_J
         )
 
-    # 2. Gain chain (with wall-plug chain)
+    # 2. Gain chain (with wall-plug chain) — uses the 2D-corrected E_fusion
     if wallplug is None:
         wallplug = wallplug_chain_z_present()
     gains = gain_chain(
-        burn["E_fusion_J"], E_stored_J, E_kinetic_J,
+        E_fusion_2D_J, E_stored_J, E_kinetic_J,
         wallplug=wallplug, eta_helper=eta_helper,
     )
 
@@ -394,4 +441,5 @@ def run_pipeline(
         },
         "wallplug_chain": wallplug.summary(),
         "laser_preheat": laser_summary,
+        "mix_correction_2d": mix_summary,
     }

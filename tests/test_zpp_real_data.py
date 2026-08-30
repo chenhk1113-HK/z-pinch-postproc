@@ -224,6 +224,9 @@ def test_real_data_zn_design_higher_Q_eng():
         E_stored_J=11.5e6 * 6.0, E_kinetic_J=0.45e6 * 6.0,
         radius_cm=p_zn["radius_cm"], R_initial_cm=0.5,
         wallplug=wallplug_chain_z_present(),  # use present chain for fair compare
+        # Pass the ZN B-field (30 T) so the 2D mix correction
+        # reflects the ZN design, not the default 16 T.
+        input_provenance={"maglif": {"B_z0_T": 30.0}},
     )
 
     Q_present = rep_present["results"]["Q_eng"]

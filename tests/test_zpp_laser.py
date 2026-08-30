@@ -43,14 +43,20 @@ from zpp_mcbride import (
 from zpp_pipeline import run_pipeline
 
 
-# A simple triangular Z-pinch profile for pipeline tests
+# A simple triangular Z-pinch profile for pipeline tests.
+# Defaults are physically plausible for a Z-pinch fuel:
+#   - R_initial = 0.435 cm (Z-Beamlet standard)
+#   - R_stag    = 0.145 cm (fuel CR = 3, matches Gomez 2020 anchor)
+# Avoid CR=20+ profiles here: those correspond to LINER CR (not
+# fuel CR) and trigger the 2D mix correction to ~0, which is not
+# what these tests want to exercise.
 def _triangular_profile(
     n: int = 21,
     T_peak_keV: float = 3.0,
     rho_peak_gcc: float = 1.0,
     tau_burn_ns: float = 5.0,
-    R_stag_cm: float = 0.02,
-    R_initial_cm: float = 0.4,
+    R_stag_cm: float = 0.145,
+    R_initial_cm: float = 0.435,
 ):
     """Generate a triangular profile for testing run_pipeline."""
     time_ns = np.linspace(-3 * tau_burn_ns, 3 * tau_burn_ns, n)
