@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 import numpy as np
 
+from zpp_alpha_heating import apply_alpha_heating_to_shot, alpha_ignition_criterion
 from zpp_bosch_hale import reactivity_DT_cm3s, E_DT_J, E_DT_MeV
 from zpp_laser import LaserPreheat, no_laser
 from zpp_lawson import burn_weighted_lawson, lawson_criterion_classic_DT
@@ -265,6 +266,7 @@ def run_pipeline(
     T_burn_thresh_keV: float = 1.0,
     rho_burn_thresh_gcc: float = 0.1,
     apply_2d_mix: bool = True,
+    apply_alpha_heating: bool = True,
     input_provenance: dict | None = None,
 ) -> dict:
     """Top-level pipeline: ingest inputs, compute all engineering metrics, return report dict.
@@ -294,6 +296,11 @@ def run_pipeline(
         correction uses a default B_z0=16 T (Z present-day).
         Set to False for the bare 1D pipeline output (e.g. synthetic
         tests).
+    apply_alpha_heating : bool
+        If True (default), compute the α-heating bootstrap on the
+        stagnation profile and report T_eq, boost factor, and
+        Q_with_alpha. Set to False for the bare 1D+2D pipeline
+        output (e.g. for shots that are obviously below ignition).
     eta_helper : float
         Plant thermal-to-electric efficiency. Default 0.40 (Brayton
         cycle). Used as `eta_E_plant` in the chain.
@@ -409,6 +416,91 @@ def run_pipeline(
         else 0.0
     )
 
+    # 6. α-heating bootstrap (Tier 3.A).
+    # The McBride 1D pipeline gives T_stag from the input profile.
+    # α-heating raises this to T_eq, increasing fusion yield. We
+    # report the boost factor, ignition flag, and updated Q_target
+    # / Q_eng / E_fusion_with_alpha.
+    # By default this is ON; set apply_alpha_heating=False for
+    # below-ignition shots where the boost is trivially ~1.
+    # For rho_R, use the per-timestep areal density 2*rho*R (cylindrical
+    # thin-shell approximation), averaged over the burn window.
+    # This is more correct than the trapz(rho, R) parametric integral,
+    # which gives ~zero for profiles where rho and R are not colinear.
+    rho_arr = np.asarray(rho_gcc, dtype=float)
+    R_arr = np.asarray(radius_cm, dtype=float) if radius_cm is not None else None
+    if R_arr is not None and len(rho_arr) == len(R_arr):
+        rho_R_per_t = 2.0 * rho_arr * R_arr  # g/cm² at each timestep
+        # Use the burn-window subset for averaging
+        in_burn_for_alpha = (T_keV > T_burn_thresh_keV) & (rho_arr > rho_burn_thresh_gcc)
+        if in_burn_for_alpha.sum() >= 2:
+            rho_R_gccm_for_alpha = float(np.mean(rho_R_per_t[in_burn_for_alpha]))
+        elif len(rho_R_per_t) > 0:
+            rho_R_gccm_for_alpha = float(np.max(rho_R_per_t))
+        else:
+            rho_R_gccm_for_alpha = 0.0
+    else:
+        # No radius profile: fall back to the trapz value (may be ~0)
+        rho_R_gccm_for_alpha = float(burn["rho_R_gccm"])
+
+    if apply_alpha_heating and rho_R_gccm_for_alpha > 0 and len(T_keV) > 0:
+        # Use peak values from the burn-window profile (T and rho at
+        # peak nT). For the McBride generator, this is roughly the
+        # stagnation values; for a synthetic profile it's whatever
+        # the user provided.
+        rho_stag_gcc = float(burn["rho_peak_gcc"])
+        T_stag_keV = float(burn["T_peak_keV"])
+        # τ_burn from the burn-window detection
+        tau_burn_ns = float(burn["tau_burn_ns"])
+        Q_target_base = float(gains["Q_target"])
+        alpha_res = apply_alpha_heating_to_shot(
+            T_stag_keV=T_stag_keV,
+            rho_stag_gcc=rho_stag_gcc,
+            rho_R_gccm=rho_R_gccm_for_alpha,
+            Q_target_base=Q_target_base,
+            E_fusion_2D_J=E_fusion_2D_J,
+            E_stored_J=E_stored_J,
+        )
+        # Update gain chain with alpha-boosted Q_target
+        E_fusion_with_alpha_J = E_fusion_2D_J * alpha_res.boost_factor ** 1.5
+        gains_with_alpha = gain_chain(
+            E_fusion_with_alpha_J, E_stored_J, E_kinetic_J,
+            wallplug=wallplug, eta_helper=eta_helper,
+        )
+        # Lawson ignition criterion check
+        ignition_check = alpha_ignition_criterion(
+            rho_gcc=rho_stag_gcc, T_keV=T_stag_keV, tau_burn_ns=tau_burn_ns
+        )
+        alpha_summary = {
+            "T_stag_keV": alpha_res.T_initial_keV,
+            "T_eq_keV": alpha_res.T_eq_keV,
+            "boost_factor": alpha_res.boost_factor,
+            "ignited": alpha_res.ignited,
+            "rho_R_gccm": alpha_res.rho_R_gccm,
+            "rho_R_alphas": alpha_res.rho_R_alphas,
+            "f_dep": alpha_res.f_dep,
+            "P_alpha_W_per_cm3": alpha_res.P_alpha_W_per_cm3,
+            "P_brem_W_per_cm3": alpha_res.P_brem_W_per_cm3,
+            "P_net_W_per_cm3": alpha_res.P_net_W_per_cm3,
+            "E_fusion_with_alpha_J": E_fusion_with_alpha_J,
+            "Q_target_with_alpha": gains_with_alpha["Q_target"],
+            "Q_eng_with_alpha": gains_with_alpha["Q_eng"],
+            "lawson_ignition_margin": ignition_check["margin"],
+            "lawson_above_ignition": ignition_check["above_ignition"],
+            "notes": alpha_res.notes,
+        }
+    else:
+        # No α-heating applied (or insufficient data)
+        alpha_summary = {
+            "applied": False,
+            "T_stag_keV": float(burn["T_peak_keV"]) if len(T_keV) else 0.0,
+            "T_eq_keV": float(burn["T_peak_keV"]) if len(T_keV) else 0.0,
+            "boost_factor": 1.0,
+            "ignited": False,
+            "rho_R_gccm": rho_R_gccm_for_alpha,
+            "notes": "α-heating not applied (apply_alpha_heating=False, or insufficient data)",
+        }
+
     return {
         "input_provenance": input_provenance or {},
         "results": {
@@ -442,4 +534,5 @@ def run_pipeline(
         "wallplug_chain": wallplug.summary(),
         "laser_preheat": laser_summary,
         "mix_correction_2d": mix_summary,
+        "alpha_heating": alpha_summary,
     }
