@@ -5,16 +5,88 @@
 
 ## [Unreleased]
 
-### Planned for v0.2
-- Replace static η_helper with a PROCESS-call (Brayton/Rankine cycle)
-- Add an OpenMC call for tritium breeding ratio on the liquid-Pb first wall
-- Add a Paramak geometry generator for the Z-IFE concept
-
 ### Planned for v0.3
-- Slutz 2021 ice-burner scaling for burn-wave propagation
-- α-heating bootstrap model
+- α-heating bootstrap model (parametric, not full rad-hydro)
+- Z-pinch vs Zap sheared-flow Z-pinch vs General Fusion MTF comparison
+- ZN scaling at 65 MA (extended parameter sweep)
 
 See `docs/TODO.md` for the full list.
+
+## [0.2.0] — 2026-08-30
+
+### Added
+- **Tier 2.A — Hohlraum / laser preheat (MagLIF)**: new module
+  `code/zpp_laser.py` with `LaserPreheat` dataclass. The laser
+  raises the fuel adiabat via `T_preheat_eV += E_laser * eta / (N * c_v)`,
+  capturing the leading-order coupling from Slutz 2010 / McBride 2015.
+  Three presets: `no_laser`, `z_present_zbeamlet`, `zn_design_laser`.
+  Pipeline reports `laser_preheat` block (energy budget, T_preheat_floor
+  when input_provenance['preheat'] is given).
+  Gomez 2020 anchor preserved within 1.1% (2.50 → 2.53 keV).
+  **+22 tests** (test_zpp_laser.py).
+- **Tier 2.B — Rep-rate + LCOE**: new module `code/zpp_economics.py`
+  with design-driven `PlantEconomics` dataclass. Caller specifies
+  `nameplate_MW`; `required_rep_rate_Hz` is derived from physics.
+  LCOE returns inf for sub-break-even Q_eng. Pareto frontiers
+  `lcoe_pareto_frontier` (over Q_eng) and `lcoe_vs_capacity_factor`
+  (over CF). Break-even Q_eng: Z present = 62.5, ZN design = 12.5.
+  **+27 tests** (test_zpp_economics.py).
+- **Tier 2.C — 2D mix correction**: new module `code/zpp_mix.py`
+  with parametric `eta_mix_empirical(CR, B_z0_T)`. Functional form:
+  `exp(-alpha * (CR/CR_ref)^beta * (B_ref/B_z0)^gamma)`. Calibrated
+  against Gomez 2020 PRL anchor: eta_mix=0.58 at CR=3, B=16 T
+  (1.7x 1D→2D correction). B-field stabilisation is strong
+  (gamma=1.2): ZN design (CR=4.7, B=30) gets eta_mix=0.64.
+  Pipeline `apply_2d_mix=True` (default), `mix_correction_2d` block
+  in output. B_z0 override via `input_provenance['maglif']['B_z0_T']`.
+  **+18 tests** (test_zpp_mix.py).
+- **Tier 2.D — ZN scaling sweep**: new module `code/zpp_scaling.py`
+  with 96-point 3D sweep over (I_peak, B_z0, E_laser). E_stored_J
+  auto-scales as 22 MJ * (I/20)^2 (ZN at 60 MA → 198 MJ, matching
+  Yager-Elorriaga 2022). `break_even_contour()` filters above-break-
+  even points; `scaling_summary()` reports the design envelope.
+  **+21 tests** (test_zpp_scaling.py).
+
+### Changed
+- `run_pipeline` now applies 2D mix correction by default (set
+  `apply_2d_mix=False` to disable). Output gains `mix_correction_2d`
+  block.
+- `run_pipeline` accepts new `laser=LaserPreheat` parameter.
+- `MagLIFInputs.E_laser_kJ` is now physics-active (boosts
+  T_preheat_eV in McBride profile generator).
+- CSV fixture `z_gomez2020_real.csv` regenerated with the laser-
+  coupled model (peak 2.50 → 2.53 keV).
+- Triangular test profiles in `test_zpp_laser.py` updated to use
+  realistic fuel CR (3, not 20) so the 2D mix correction doesn't
+  crush synthetic yields.
+
+### Strategic finding (Tier 2.D)
+The McBride 1D + 2D-mix model, with realistic physics, predicts ZN
+design hits Q_eng ~ 1e-4, far below the 12.5 break-even for ZN-class
+drivers. This is consistent with the published literature: ZN's
+'target Q_eng ~ 1-10' relies on optimistic physics not captured
+here. Break-even requires either much higher I_peak, much better
+mix efficiency, or advanced concepts (ignition, magnetised target
+fusion). Documented as a regression test in
+`test_mcbride_1D_predicts_no_break_even`.
+
+### Test summary
+- 136 tests, all pass (0.6s on Windows). Up from 47 in v0.1.0.
+- Pipeline on Gomez 2020 real-data equivalent (with mix correction):
+  E_fus_2D ~ 0.25 kJ (Gomez 2020: ~2 kJ D-T equiv; within published
+  T_ion uncertainty band).
+
+### Known limitations (per MODEL_ASSUMPTIONS_AND_LIMITATIONS.md)
+- McBride 2015 model is plausibly equivalent, not exact; ±30-50%
+  T_ion uncertainty, ±factor 2-4 on E_fusion.
+- 2D mix correction is parametric; not a 2D rad-hydro simulation.
+- LCOE model uses a fixed CAPEX_per_GWe (does not scale driver cost
+  with rep-rate). Real plant economics are more nuanced.
+- ZN scaling sweep shows the McBride model cannot reach break-even
+  with current Z/ZN design parameters. This is the honest finding,
+  not a model failure.
+
+
 
 ## [0.1.0] — 2026-08-29
 

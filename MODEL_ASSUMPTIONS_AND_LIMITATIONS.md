@@ -1,7 +1,7 @@
 # MODEL ASSUMPTIONS AND LIMITATIONS — z-pinch-postproc
 
-**Version:** v0.1.0-prelim (2026-08-29)
-**Status:** Tier 1 complete — Bosch-Hale 1992, 6-stage wall-plug chain, real-data validation against Gomez 2020 PRL 125 155002.
+**Version:** v0.2.0 (2026-08-30)
+**Status:** Tier 2 complete — laser preheat (MagLIF), rep-rate + LCOE, 2D mix correction, ZN scaling sweep. 136 tests passing.
 **Per:** `Z_Machine_plan.pdf` (user-uploaded plan, 7,441 chars), `BUCKY 1-D radiation hydrodynamics code reference` (UWFDM-1268, 2005), `An overview of magneto-inertial fusion on the Z machine` (Yager-Elorriaga et al. 2022, Nucl. Fusion 62 042015), `Pulsed power: A precision hammer for high energy density science` (Hansen 2021, Princeton SULI).
 
 ## 1. Scope and intent
@@ -24,8 +24,11 @@ The project scope is bounded by what a post-processor can defensibly compute:
 - The imploded fuel volume is set by **min(R)** (stagnation radius),
   not the time-varying R. This is a thin-shell approximation; the
   exact imploded volume depends on the radial density profile.
-- No axial variation, no 2D effects (sausage, kink, mix), no
-  α-heating bootstrap. These are deferred to v0.3+.
+- No axial variation. **2D mix is now modelled via the parametric
+  `eta_mix_empirical(CR, B_z0)` correction** (Tier 2.C, Slutz 2010 /
+  Sinars 2020). Sausage/kink instabilities and wall-mode effects
+  remain deferred to v0.3+.
+- No α-heating bootstrap. Deferred to v0.3.
 
 ### 2.2 Bosch-Hale 1992 R-matrix fit
 - Coefficients from UWFDM-1268 Appendix II (Heltemes, Moses,

@@ -1,7 +1,7 @@
 # z-pinch-postproc — PLAN v0.1
 
-> **Standing version**: `0.1.0` (2026-08-29)
-> **Status**: v0.1.0 shipped (47 tests passing). Real-data validation via Gomez 2020 anchor in place. Tier 2 (laser preheat / rep-rate / 2D mix / ZN scaling) in progress.
+> **Standing version**: `0.2.0` (2026-08-30)
+> **Status**: v0.2.0 shipped (136 tests passing). Tier 2 (laser preheat / LCOE / 2D mix / ZN scaling) in full. v0.3 planned for α-heating bootstrap model.
 > **Per**: Z_Machine_plan.pdf (user-uploaded, 2026-08-29) + open-source survey
 > (see `docs/OPEN_SOURCE_LANDSCAPE.md`).
 
