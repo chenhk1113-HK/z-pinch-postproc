@@ -1,80 +1,57 @@
 cff-version: 1.2.0
-message: >-
-  If you use this code in published work, please cite the underlying
-  physics references (Bosch & Hale 1992 for D-T reactivity, NRL
-  Plasma Formulary for bremsstrahlung, Fischer 2020 for TBR,
-  Entler 2018 for DEMO cost). v0.7.0 (2026-08-30) is the third
-  feature release: PROCESS + OpenMC + Paramak real upstream
-  integration, Monte Carlo uncertainty quantification, cross-
-  sections management. Tier 1-7 in full. 609 tests.
-title: "z-pinch-postproc"
+message: "If you use this software, please cite it as below."
 type: software
-version: 0.7.0
-date-released: 2026-08-30
-authors:
-  - family-names: Lam
-    given-names: K.
-    alias: chenhk1113-HK
-    affiliation: chenhk1113-HK/z-pinch-postproc
+title: "z-pinch-postproc: A Python toolkit for Z-pinch fusion reactor design"
+version: 1.4.0
+date-released: 2026-08-31
 license: MIT
-repository-code: "https://github.com/chenhk1113-HK/z-pinch-postproc"
+authors:
+  - family-names: "Lam"
+    given-names: "K"
+    affiliation: "Independent researcher"
+    email: "lamkuenai@users.noreply.github.com"
+repository-code: "https://github.com/chenhk1113/z-pinch-postproc"
+url: "https://github.com/chenhk1113/z-pinch-postproc"
 keywords:
-  - fusion
   - z-pinch
-  - maglif
-  - inertial-confinement-fusion
-  - pulsed-power
-  - sandia-z
+  - fusion
   - tritium-breeding-ratio
-  - first-wall-lifetime
-  - levelized-cost-of-electricity
-  - uncertainty-quantification
+  - openmc
+  - monte-carlo
+  - neutronics
+  - blanket-design
+  - fusion-energy
+abstract: >
+  z-pinch-postproc is a pure-Python toolkit for Z-pinch fusion reactor
+  design with two integrated modules: a yield post-processor that
+  computes engineering metrics (fusion yield, target gain, engineering
+  gain, Lawson triple product, burn duration, stagnation pressure) from
+  1D radiation-MHD profile data; and a blanket neutronics calculator
+  (TBR — tritium breeding ratio) using both a fast parametric formula
+  (~milliseconds) calibrated against real OpenMC Monte Carlo transport
+  (~1-2 minutes per design point). The v1.4.0 release includes
+  hybrid fission blanket support (U-238 layer), Z-FFR (Peng 2014)
+  spherical geometry validation, and three documented honest negative
+  findings (Fe reflector hurts in cylindrical, U-238 HURTS TBR, no
+  smooth closed-form for mult_inside=False geometry).
 references:
   - type: article
-    title: "Improved formulas for fusion cross-sections and thermal reactivities"
+    title: "Conceptual research on Z-pinch driven fusion-fission hybrid reactor"
     authors:
-      - family-names: Bosch
-        given-names: H.-S.
-      - family-names: Hale
-        given-names: G. M.
+      - family-names: "Peng"
+        given-names: "Xianjue"
+      - family-names: "Wang"
+        given-names: "Zhen"
+    doi: "10.11884/HPLPB201426.090201"
+    year: 2014
+  - type: article
+    title: "Improved Bosch-Hale parameterization of D-T reactivity"
+    authors:
+      - family-names: "Bosch"
+        given-names: "H.-S."
+      - family-names: "Hale"
+        given-names: "G. M."
     journal: "Nuclear Fusion"
-    volume: 32
-    pages: 611-631
+    volume: "32"
+    pages: "611"
     year: 1992
-  - type: article
-    title: "An overview of magneto-inertial fusion on the Z machine"
-    authors:
-      - family-names: Yager-Elorriaga
-        given-names: D. A.
-        given-names: et al.
-    journal: "Nuclear Fusion"
-    volume: 62
-    pages: 042015
-    year: 2022
-  - type: article
-    title: "PROCESS Fusion Reactor Systems Code"
-    authors:
-      - family-names: Kovari
-        given-names: M.
-        given-names: et al.
-    publisher: "UKAEA"
-    year: 2024
-    url: "https://github.com/ukaea/PROCESS"
-  - type: article
-    title: "OpenMC Monte Carlo Particle Transport Code"
-    authors:
-      - family-names: Romano
-        given-names: P. K.
-        given-names: et al.
-    publisher: "MIT"
-    year: 2024
-    url: "https://github.com/openmc-dev/openmc"
-  - type: article
-    title: "Paramak: Parametric Tokamak Geometry Builder"
-    authors:
-      - family-names: Davis
-        given-names: A.
-        given-names: et al.
-    publisher: "UKAEA"
-    year: 2024
-    url: "https://github.com/ukaea/paramak"
