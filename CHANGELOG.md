@@ -5,13 +5,66 @@
 
 ## [Unreleased]
 
-### Planned for v0.9+
+### Planned for v1.0+
 - FISPACT-II install (after UKAEA license acquisition)
 - Paramak D-shape extension for spherical tokamaks
 - Sensitivity ranking via Sobol on MC samples
 - GitHub release (pending user approval)
 
 See `docs/TODO.md` for the full list.
+
+## [0.9.0] — 2026-08-31
+
+### Added
+- **Tier 7.A — Diagnostic** (`tests/_tier7a_diagnose.py`,
+  throwaway): printed the parametric Tier 5.B formula's
+  per-component contributions at each R_blanket, isolating the
+  +64% overestimate to the `f_sat` growth that propagates through
+  `TBR_blanket * f_enr * cov * MHD`.
+- **Tier 7.B — Regression tests** in
+  `tests/test_zpp_tbr_regression.py` (17 tests):
+  - TestTier5BRegressionPins: 5 known-good outputs at R_blanket
+    sweep points; pre-Tier 7.C values are pinned for traceability
+    (commented "was X pre-fix").
+  - TestSubComponentPins: `thickness_to_saturation` at zero,
+    L_sat, infinity; `enrichment_factor` at natural, 90%, 100%.
+  - TestMCPlateauBound: parametric-vs-MC agreement ±15% at
+    R_blanket ∈ {80, 110, 140} cm; R_b ≤ 50 cm skip with a known
+    Sobes-model limitation note.
+  - TestSelfConsistency: TBR_final = product of named components
+    (catches formula-structure changes).
+- **Tier 7.D — Documentation update**:
+  - MODEL_ASSUMPTIONS_AND_LIMITATIONS.md §3.6: full finding,
+    pre/post calibration table, engineering impact.
+  - CHANGELOG.md: this section.
+  - 6 pre-existing test files updated to reflect the new
+    self-sufficiency threshold (TBR >= 1.0 instead of TBR > 1.05).
+
+### Fixed
+- `code/zpp_tbr.py::enrichment_factor`: the Li-6 saturation
+  length was 0.3, which made `f_enr(0.90, LiPb) = 1.889` — far
+  above the documented target of "factor ~1.3 at 90%". This was
+  a units/calibration error that propagated through `compute_TBR`
+  and caused the +64% overestimate vs the OpenMC Monte Carlo
+  sweep at R_blanket=140 cm.
+- Re-calibrated to `L_ENRICHMENT_CM = 2.17` (2026-08-31). With
+  the new value:
+  - `f_enr(0.075) = 1.000` (natural Li, unchanged)
+  - `f_enr(0.30)  = 1.094` (was 1.45)
+  - `f_enr(0.60)  = 1.204` (was 1.79)
+  - `f_enr(0.90)  = 1.300` (was 1.89)
+- Parametric Tier 5.B vs OpenMC Monte Carlo agreement post-fix
+  at R_blanket ∈ {80, 110, 140} cm: −6.3%, +5.8%, +12.6% (was
+  +36.1%, +53.8%, +74.7% pre-fix).
+- **ZN engineering impact**: the ZN design at 30% Li-6 enrichment
+  gives TBR=1.001 (right at self-sufficiency), not the previous
+  1.51. The design is borderline — engineering margin requires
+  higher Li-6 enrichment, thicker blanket, or higher coverage.
+
+### Verified
+- All **638** tests pass (`pytest tests/ -q`): 638 passed,
+  2 skipped (thin-blanket known limitation), 0 failed.
+- `python -m py_compile code/zpp_tbr.py`: clean.
 
 ## [0.8.0] — 2026-08-31
 

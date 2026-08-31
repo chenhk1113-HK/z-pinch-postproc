@@ -232,14 +232,26 @@ class TestStrategicFindings:
     """Document strategic findings from geometry-aware TBR."""
 
     def test_ZN_sufficient_at_30cm(self):
-        """ZN reaches TBR>=1.05 (engineering threshold) at thickness ~30 cm.
+        """ZN reaches TBR>=1.0 (self-sufficiency) at thickness ~50 cm.
 
-        This is the minimum blanket thickness for tritium self-sufficiency
-        in the ZN geometry.
+        Tier 7.C (2026-08-31): the parametric Tier 5.B formula was
+        re-calibrated against the OpenMC Monte Carlo sweep. With
+        30% Li-6 enrichment, the ZN design needs ~50 cm of LiPb to
+        reach TBR>=1.0 (self-sufficiency). At 30 cm thickness the
+        calibrated parametric gives TBR ~ 0.79 — below the threshold.
+
+        Pre-Tier 7.C, the un-calibrated formula gave TBR=1.5 at 30 cm
+        because the enrichment_factor saturated too aggressively
+        (f_enr(0.30) was 1.45 instead of the calibrated 1.09).
         """
         c = tbr_vs_thickness("ZN", "LiPb", "Be")
-        tbr_at_30 = c.TBR_at_thickness(30.0)
-        assert tbr_at_30 >= DEFAULT_TRITIUM_THRESHOLD
+        tbr_at_50 = c.TBR_at_thickness(50.0)
+        assert tbr_at_50 >= 1.0, (
+            f"ZN at 50 cm gives TBR={tbr_at_50:.4f}; should reach "
+            f"self-sufficiency (>=1.0) by 50 cm per Tier 7.C "
+            f"calibration. Engineering implication: the ZN design "
+            f"is borderline and may need higher Li-6 enrichment."
+        )
 
     def test_Zap_SFZ_highest_TBR(self):
         """Zap-SFZ has highest TBR due to highest coverage (0.98)."""

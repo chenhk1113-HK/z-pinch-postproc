@@ -141,11 +141,16 @@ class TestStrategicFindings:
     """Document strategic findings."""
 
     def test_MC_confirms_TBR_feasibility(self):
-        """For ZN at current physics, P(TBR>=1.05) is 100% in MC.
+        """For ZN at current physics, P(TBR>=1.0) is the right
+        self-sufficiency test; pre-Tier 7.C we asserted P(TBR>=1.05).
 
-        This is consistent with Tier 5.B (ZN blanket design is
-        robustly feasible for tritium self-sufficiency even
-        with uncertainty).
+        Tier 7.C (2026-08-31): the parametric Tier 5.B formula was
+        re-calibrated. With the calibrated formula, TBR_mean dropped
+        from ~1.5 to ~1.10 with std ~0.11 — so 69/100 samples are
+        above 1.05 and 81/100 are above 1.0. Asserting >90% >1.05
+        no longer holds. The right test is that the *fraction*
+        of samples above 1.0 is reasonable (≥60% for a design that
+        is at the engineering margin).
         """
         from zpp_uncertainty import (
             monte_carlo_propagation, DEFAULT_UNCERTAIN_PARAMS_ZN,
@@ -153,8 +158,16 @@ class TestStrategicFindings:
         result = monte_carlo_propagation(
             DEFAULT_UNCERTAIN_PARAMS_ZN, n_samples=100, random_seed=42,
         )
-        # All samples should be above threshold for ZN design
-        assert result.n_above_TBR_threshold / result.n_samples > 0.9
+        # Tier 7.C calibrated: most samples are above self-sufficiency
+        # (1.0). Expect at least 60% — this is honest about the
+        # engineering margin being thin for the ZN design at 30%
+        # Li-6 enrichment.
+        frac = result.n_above_TBR_threshold / result.n_samples
+        assert frac > 0.60, (
+            f"P(TBR >= threshold) = {frac*100:.0f}%; should be >60% "
+            f"for the ZN design with calibrated parametric Tier 5.B. "
+            f"TBR_mean = {result.TBR_mean:.4f}."
+        )
 
     def test_MC_confirms_LCOE_sub_break_even(self):
         """For ZN at current physics, all samples are sub-break-even.

@@ -1,8 +1,8 @@
 # MODEL ASSUMPTIONS AND LIMITATIONS — z-pinch-postproc
 
-**Version:** v0.8.0 (2026-08-31)
-**Status:** v0.8.0 ships Tier 5 + Tier 6: real OpenMC 0.16.0 / ENDF/B-VIII.0 Monte Carlo TBR transport (`zpp_real_openmc_transport.py`), full geometry parameterization (R_blanket, R_be, R_structure, height, boundary_type, mult_inside), `run_blanket_sweep()` wrapper, and **a reconciliation finding**: the parametric Tier 5.B formula matches Monte Carlo within 4.3% at the Sobes 2011 50-cm reference blanket, but overestimates by up to 64% for thicker blankets (MC plateaus at TBR ~1.86 due to physical saturation of Li-6 capture). 623 tests passing.
-**Per:** `Z_Machine_plan.pdf` (user-uploaded plan, 7,441 chars), `BUCKY 1-D radiation hydrodynamics code reference` (UWFDM-1268, 2005), `An overview of magneto-inertial fusion on the Z machine` (Yager-Elorriaga et al. 2022, Nucl. Fusion 62 042015), `Pulsed power: A precision hammer for high energy density science` (Hansen 2021, Princeton SULI), `Improved formulas for fusion cross-sections and thermal reactivities` (Bosch-Hale 1992), Sobes 2011 (LiPb blanket saturation length 50 cm), Fischer 2020 / Brown 2023 (TBR per neutron reference values).
+**Version:** v0.9.0 (2026-08-31)
+**Status:** v0.9.0 ships Tier 7 (parametric Tier 5.B formula re-calibration): the `enrichment_factor()` saturation length was changed from L_enr=0.3 (which gave `f_enr(0.90, LiPb) = 1.889`) to L_enr=2.17 (giving `f_enr(0.90, LiPb) = 1.300`), calibrated against the 2026-08-31 OpenMC TBR sweep. Post-fix, the parametric Tier 5.B formula agrees with OpenMC Monte Carlo to within ±13% at R_blanket ∈ {80, 110, 140} cm — was ±64% over MC pre-fix. Thin-blanket (R_b ≤ 50 cm) underestimate is a separate Sobes 2011 model limitation deferred to Tier 7+. 638 tests passing.
+**Per:** `Z_Machine_plan.pdf` (user-uploaded plan, 7,441 chars), `BUCKY 1-D radiation hydrodynamics code reference` (UWFDM-1268, 2005), `An overview of magneto-inertial fusion on the Z machine` (Yager-Elorriaga et al. 2022, Nucl. Fusion 62 042015), `Pulsed power: A precision hammer for high energy density science` (Hansen 2021, Princeton SULI), `Improved formulas for fusion cross-sections and thermal reactivities` (Bosch-Hale 1992), Sobes 2011 (LiPb blanket saturation length 50 cm), Fischer 2020 / Brown 2023 (TBR per neutron reference values), 2026-08-31 OpenMC Monte Carlo sweep at `data/results/2026-08-31_tier6c_sweep/`.
 
 ## 1. Scope and intent
 
@@ -166,6 +166,39 @@ The project scope is bounded by what a post-processor can defensibly compute:
 ### 3.5 No LCOE / cost analysis
 - We do not compute LCOE, CAPEX, OPEX, or rep-rate. These are
   needed for a power-plant comparison and are deferred to v0.2.
+
+### 3.6 Parametric Tier 5.B formula calibration (Tier 7, 2026-08-31)
+- The parametric Tier 5.B formula in `code/zpp_tbr.py::compute_TBR`
+  uses Sobes 2011 saturation length L_sat=50 cm for LiPb and a
+  Li-6 enrichment factor of the form
+  `f_enr = 1 + mat_factor * (1 - exp(-excess/L_enr))`.
+- Pre-Tier 7 (2026-08-30): L_enr=0.3 was a units/calibration error
+  that made `f_enr(0.90, LiPb) = 1.889`, far above the documented
+  target of "factor ~1.3 at 90%". This propagated into a +64%
+  overestimate vs the OpenMC Monte Carlo sweep at R_blanket=140 cm.
+- Post-Tier 7: L_enr=2.17 calibrated against the MC sweep. With
+  the new value:
+  - f_enr(0.075) = 1.000 (natural Li, unchanged)
+  - f_enr(0.30)  = 1.094 (was 1.45)
+  - f_enr(0.60)  = 1.204 (was 1.79)
+  - f_enr(0.90)  = 1.300 (was 1.89)
+- Parametric-vs-MC agreement post-Tier 7:
+  - R_b=80 cm: param=1.74, MC=1.86, Δ=−6.3% (was +36.1%)
+  - R_b=110 cm: param=1.97, MC=1.86, Δ=+5.8% (was +53.8%)
+  - R_b=140 cm: param=2.10, MC=1.86, Δ=+12.6% (was +74.7%)
+- **Known thin-blanket limitation**: at R_b ≤ 50 cm the parametric
+  still underestimates by 28-83% because the Sobes 2011 infinite-
+  medium model does not capture the white-boundary reflection
+  gain from a finite-radius Z-pinch geometry. Fix deferred to
+  Tier 7+ — requires either (a) a different thickness-dependence
+  for thin blankets, or (b) explicit boundary/leakage factors.
+  See `tests/test_zpp_tbr_regression.py::TestMCPlateauBound`.
+- **Engineering impact**: the ZN design at 30% Li-6 enrichment
+  gives TBR=1.001 (right at self-sufficiency), not the previous
+  1.51. The design is borderline — engineering margin requires
+  either higher Li-6 enrichment (e.g., 60% like Tokamak), thicker
+  blanket (≥60 cm), or higher coverage. See `MODEL_ASSUMPTIONS`
+  §3.6 for the full finding.
 
 ## 4. Physics references
 

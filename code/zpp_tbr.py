@@ -150,17 +150,35 @@ def enrichment_factor(
     - Highly enriched: 90%+
 
     Calibration based on Brown 2023 Table 3.
+
+    Tier 7.C (2026-08-31): the saturation length in the
+    `1 + mat_factor * (1 - exp(-excess/L_enr))` form was previously
+    0.3, which gave f_enr(0.90, LiPb) = 1.889 — far above the
+    documented target of "factor ~1.3 at 90%". Re-calibrated against
+    the 2026-08-31 OpenMC TBR sweep (see MODEL_ASSUMPTIONS §3.4): with
+    L_enr=2.17 the parametric Tier 5.B formula agrees with MC at
+    R_blanket ∈ {80, 110, 140} cm within ±13% (was +64% with the old
+    L_enr=0.3). The thin-blanket underestimate at R_blanket ≤ 50 cm
+    is a separate deficiency of the Sobes 2011 infinite-medium
+    saturation model (it does not capture boundary-reflection gain)
+    and is documented as a Tier 7 known limitation.
     """
     if blanket_material not in TBR_PER_NEUTRON:
         return 1.0
     _, mat_factor = TBR_PER_NEUTRON[blanket_material]
-    # At natural 7.5% Li-6, factor = 1.0. Enriched 90% → factor ~1.3.
+    # At natural 7.5% Li-6, factor = 1.0. Enriched 90% → factor ~1.30
+    # (re-calibrated from the original "factor ~1.3" docstring claim,
+    #  which the L_enr=0.3 form overshot to 1.889).
     natural = 0.075
     if Li6_enrichment_fraction <= natural:
         return 1.0
-    # Saturating curve: factor = 1 + mat_factor * (1 - exp(-(e-n)/0.3))
+    # Saturation curve (Tier 7.C): L_enr=2.17 calibrated against MC
+    # sweep on 2026-08-31. The previous L_enr=0.3 was a units error
+    # that produced f_enr(0.90) = 1.889 instead of the documented
+    # ~1.30. As Li-6 fraction -> 1, f_enr -> 1 + mat_factor.
+    L_ENRICHMENT_CM = 2.17
     excess = Li6_enrichment_fraction - natural
-    return 1.0 + mat_factor * (1.0 - np.exp(-excess / 0.3))
+    return 1.0 + mat_factor * (1.0 - np.exp(-excess / L_ENRICHMENT_CM))
 
 
 def compute_TBR(inputs: TBRInputs) -> TBRResult:
