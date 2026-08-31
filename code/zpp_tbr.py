@@ -37,6 +37,7 @@ References:
 """
 from __future__ import annotations
 from dataclasses import dataclass
+import math
 import numpy as np
 
 
@@ -88,7 +89,38 @@ DEFAULT_COVERAGE = {
 
 @dataclass
 class TBRInputs:
-    """Inputs to the parametric TBR model."""
+    """Inputs to the parametric TBR model.
+
+    Fields
+    ------
+    blanket_material : str
+        Primary breeder material ("LiPb", "Li", etc.)
+    neutron_multiplier : str
+        Neutron multiplier material ("Be" for beryllium, "" for none)
+    Li6_enrichment_fraction : float
+        Li-6 enrichment fraction (0.075 = natural, up to 0.90 = enriched)
+    blanket_thickness_cm : float
+        Primary breeder blanket thickness in cm
+    first_wall_coverage_fraction : float
+        Fraction of first wall covered by blanket (0-1)
+    geometry : str
+        Reactor geometry ("tokamak", "Z-pinch", "spherical_tokamak", etc.)
+    MHD_effect_factor : float
+        Magnetohydrodynamic effect multiplier (reduces TBR in liquid
+        breeders by 5-15%)
+    temperature_factor : float
+        Temperature effect on TBR (small, ~1.0)
+    boundary_condition : str
+        Boundary condition for the blanket:
+          - "infinite" (default): infinite-medium Sobes regime
+          - "reflective": white/Lambertian reflecting boundary
+    mult_inside : bool
+        Tier 12 (2026-08-31): Be multiplier placement.
+          - True (default): Be inside LiPb (plasma -> Be -> LiPb).
+            Tier 6 standard, also Z-FFR Peng 2014 default.
+          - False: Be outside LiPb (plasma -> LiPb -> Be). Tier 5
+            baseline. Affects the closed-form albedo correction.
+    """
     blanket_material: str = "LiPb"
     neutron_multiplier: str = "Be"
     Li6_enrichment_fraction: float = 0.075  # Natural = 7.5%, enriched up to 90%
@@ -108,6 +140,14 @@ class TBRInputs:
     # earlier. To match the Tier 6.C Monte Carlo sweep, set
     # boundary_condition="reflective".
     boundary_condition: str = "infinite"
+    # Tier 12 (2026-08-31): Be multiplier placement.
+    # - True (default): Be inside LiPb (plasma -> Be -> LiPb -> structure).
+    #   Tier 6 standard, also matches Z-FFR Peng 2014 default.
+    # - False: Be outside LiPb (plasma -> LiPb -> Be -> structure).
+    #   Tier 5 baseline. Affects the closed-form albedo correction:
+    #   Tier 8 calibration was mult_inside=True only; Tier 12 adds
+    #   mult_inside=False calibration (see boundary_correction_factor).
+    mult_inside: bool = True
 
 
 @dataclass
@@ -195,13 +235,57 @@ MC_CALIBRATION_TABLE = [
 ASYMPTOTE_RATIO_REFLECTIVE = 1.86 / 2.25  # = 0.8267
 ALBEDO_BETA_REFLECTIVE = 0.973  # best fit, near-perfect albedo
 
+# Tier 12 (2026-08-31): calibration for mult_inside=False geometry
+# (plasma -> LiPb -> Be -> structure, Be outside). The Tier 8
+# closed-form doesn't fit this geometry because the Be is in
+# the wrong place — neutrons see LiPb first, then the Be
+# catches them on the way OUT.
+#
+# Data (Tier 10 sweep, 5,000 particles x 10 batches, OpenMC 0.16.0,
+# ENDF/B-VIII.0, 90% Li-6, white boundary):
+#   thick=8  cm  TBR=1.0410
+#   thick=46 cm  TBR=0.9375  (NOT MONOTONIC — physics: thin-blanket
+#                              back-scatter boost, then LiPb absorption
+#                              steals neutrons)
+#   thick=76 cm  TBR=1.1896
+#   thick=106 cm TBR=1.2952
+#   thick=136 cm TBR=1.7802
+#
+# The non-monotonic R=50 point (TBR=0.94 < R=12's 1.04) makes a
+# smooth closed-form impossible. We use piecewise-linear
+# interpolation (Tier 7+ style) as the honest fallback, since
+# Tier 12 is the FIRST tier that documented this non-monotonic
+# behavior. Future work could fit a 2-stage closed-form.
+MC_CALIBRATION_TABLE_MULT_OUTSIDE = [
+    # thick(cm)  TBR(mc)  rel_std
+    (8,    1.0410,  0.0030),
+    (46,   0.9375,  0.0035),
+    (76,   1.1896,  0.0038),
+    (106,  1.2952,  0.0038),
+    (136,  1.7802,  0.0036),
+]
+
 
 def boundary_correction_factor(
     blanket_thickness_cm: float,
     boundary_condition: str = "infinite",
+    mult_inside: bool = True,
 ) -> float:
-    """Tier 8 (2026-08-31) — boundary-condition correction for the
-    parametric Tier 5.B formula.
+    """Tier 8 (2026-08-31) + Tier 12 (2026-08-31) — boundary-condition
+    correction for the parametric Tier 5.B formula.
+
+    Two calibrations:
+      - mult_inside=True (Tier 8, default): Be inside LiPb.
+        Uses the closed-form 2-factor model that fits all 5
+        Tier 6.C calibration points to ±0.5%.
+      - mult_inside=False (Tier 12): Be outside LiPb (Tier 5 baseline).
+        Uses piecewise-linear interpolation against the Tier 10
+        mult_outside sweep (5 points). Smooth closed-form doesn't
+        fit because the R=50 point is non-monotonic (TBR=0.94
+        < R=12's 1.04). Documented honest finding.
+
+    For "infinite" boundary_condition, both calibrations return 1.0
+    (Sobes regime).
 
     Replaces the Tier 7+ piecewise-linear interpolation with a
     physics-derived closed-form. The Sobes 2011 infinite-medium
@@ -263,6 +347,39 @@ def boundary_correction_factor(
             f"boundary_condition must be 'infinite' or 'reflective', "
             f"got {boundary_condition!r}"
         )
+
+    # Tier 12 (2026-08-31): mult_inside=False uses piecewise-linear
+    # interpolation against MC_CALIBRATION_TABLE_MULT_OUTSIDE. The
+    # Tier 8 closed-form doesn't fit because the Be is on the wrong
+    # side of LiPb — neutrons see LiPb first, then Be catches them
+    # on the way out, and the R=50 point is non-monotonic.
+    if not mult_inside:
+        x = blanket_thickness_cm
+        table = MC_CALIBRATION_TABLE_MULT_OUTSIDE
+        xs = [p[0] for p in table]
+        ys = [p[1] for p in table]
+        # Compute Sobes-with-Be baseline once for the interpolation
+        def sobes_with_be(thick):
+            TBR_sat_LiPb = TBR_PER_NEUTRON["LiPb"][0]
+            mult_gain = NEUTRON_MULTIPLIER_GAIN["Be"]
+            f_sat = thickness_to_saturation("LiPb", thick)
+            return TBR_sat_LiPb * f_sat * (1 + mult_gain)
+        # Clamp at table endpoints
+        if x <= xs[0]:
+            tbr_sobes = sobes_with_be(x)
+            return ys[0] / tbr_sobes if tbr_sobes > 0 else 1.0
+        if x >= xs[-1]:
+            tbr_sobes = sobes_with_be(x)
+            return ys[-1] / tbr_sobes if tbr_sobes > 0 else 1.0
+        # Linear interpolation in TBR space, then divide by Sobes
+        for i in range(len(xs) - 1):
+            if xs[i] <= x <= xs[i + 1]:
+                t = (x - xs[i]) / (xs[i + 1] - xs[i])
+                tbr_mc = ys[i] + t * (ys[i + 1] - ys[i])
+                tbr_sobes = sobes_with_be(x)
+                return tbr_mc / tbr_sobes if tbr_sobes > 0 else 1.0
+        return 1.0
+
     # Sobes 2011 saturation fraction for LiPb (L_sat = 50 cm).
     f_sat = thickness_to_saturation("LiPb", blanket_thickness_cm)
     # Closed-form albedo correction (Tier 8):
@@ -376,6 +493,7 @@ def compute_TBR(inputs: TBRInputs) -> TBRResult:
     f_geom = boundary_correction_factor(
         inputs.blanket_thickness_cm,
         inputs.boundary_condition,
+        inputs.mult_inside,
     )
     TBR_corrected = TBR * f_geom
 

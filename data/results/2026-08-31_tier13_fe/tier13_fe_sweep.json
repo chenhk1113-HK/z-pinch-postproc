@@ -1,0 +1,38 @@
+[
+  {
+    "Fe_thickness_cm": 0,
+    "R_fe_cm": null,
+    "R_structure_cm": 53.0,
+    "TBR_mc": 1.8305775567228837,
+    "TBR_rel_stddev": 0.004168557871326203,
+    "elapsed_sec": 16.133589267730713,
+    "parametric_fallback": false
+  },
+  {
+    "Fe_thickness_cm": 5,
+    "R_fe_cm": 55.0,
+    "R_structure_cm": 58.0,
+    "TBR_mc": 1.7870644473790962,
+    "TBR_rel_stddev": 0.0037291973698067326,
+    "elapsed_sec": 15.333824396133423,
+    "parametric_fallback": false
+  },
+  {
+    "Fe_thickness_cm": 10,
+    "R_fe_cm": 60.0,
+    "R_structure_cm": 63.0,
+    "TBR_mc": 1.705006496180056,
+    "TBR_rel_stddev": 0.003338717355242015,
+    "elapsed_sec": 16.35958194732666,
+    "parametric_fallback": false
+  },
+  {
+    "Fe_thickness_cm": 20,
+    "R_fe_cm": 70.0,
+    "R_structure_cm": 73.0,
+    "TBR_mc": 1.5735294317140918,
+    "TBR_rel_stddev": 0.004641009273748578,
+    "elapsed_sec": 17.630597829818726,
+    "parametric_fallback": false
+  }
+]

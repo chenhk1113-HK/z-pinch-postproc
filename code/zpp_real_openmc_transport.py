@@ -131,13 +131,25 @@ def _build_blanket_materials(Li6_enrichment_fraction=0.90):
     rafm.add_nuclide("Fe57", 0.021)
     rafm.add_nuclide("Fe58", 0.003)
     rafm.set_density("g/cm3", 7.8)
-    return {"li6": li6, "li7": li7, "lipb": lipb, "be": be, "rafm": rafm}
+    # Tier 13 (2026-08-31): Fe reflector (pure Fe for simplicity;
+    # real reflectors use EUROFER97 or similar ferritic steel but
+    # the neutronics are Fe-dominated). Same composition as RAFM.
+    fe_reflector = openmc.Material(name="Fe_reflector")
+    fe_reflector.add_nuclide("Fe54", 0.056)
+    fe_reflector.add_nuclide("Fe56", 0.917)
+    fe_reflector.add_nuclide("Fe57", 0.021)
+    fe_reflector.add_nuclide("Fe58", 0.003)
+    fe_reflector.set_density("g/cm3", 7.8)
+    return {
+        "li6": li6, "li7": li7, "lipb": lipb, "be": be,
+        "rafm": rafm, "fe_reflector": fe_reflector,
+    }
 
 
 def _build_zpinch_geometry(materials, R_plasma_cm=4.0, R_blanket_cm=80.0,
                            R_be_cm=82.0, R_structure_cm=85.0,
                            height_cm=100.0, boundary_type="vacuum",
-                           mult_inside=False):
+                           mult_inside=False, R_fe_cm=None):
     """Build Z-pinch cylindrical geometry (rings + height).
 
     Layers (innermost to outermost):
@@ -152,6 +164,29 @@ def _build_zpinch_geometry(materials, R_plasma_cm=4.0, R_blanket_cm=80.0,
         2. Be multiplier: R_plasma_cm < r < R_be_cm
         3. LiPb blanket: R_be_cm < r < R_blanket_cm
         4. RAFM structure: R_blanket_cm < r < R_structure_cm
+
+      Tier 13 (2026-08-31): optional Fe reflector.
+        If R_fe_cm is set, an Fe reflector layer is inserted between
+        the outermost breeder/multiplier region and the RAFM
+        structure:
+          mult_inside=False:
+            1. Plasma: 0 < r < R_plasma_cm
+            2. LiPb: R_plasma_cm < r < R_blanket_cm
+            3. Be: R_blanket_cm < r < R_be_cm
+            4. Fe reflector: R_be_cm < r < R_fe_cm
+            5. RAFM structure: R_fe_cm < r < R_structure_cm
+          mult_inside=True:
+            1. Plasma: 0 < r < R_plasma_cm
+            2. Be: R_plasma_cm < r < R_be_cm
+            3. LiPb: R_be_cm < r < R_blanket_cm
+            4. Fe reflector: R_blanket_cm < r < R_fe_cm
+            5. RAFM structure: R_fe_cm < r < R_structure_cm
+
+        Fe reflectors are commonly used in tokamak (e.g., ITER)
+        and Z-pinch (Peng 2014) designs to reduce neutron leakage
+        from the blanket, increasing the effective TBR. The Fe also
+        acts as a neutron multiplier (Fe-56 (n,n') p reaction at
+        14 MeV, ~0.3-0.4 neutrons per incident fast neutron).
 
     In the standard fusion blanket, Be is INSIDE so the 14.1 MeV
     D-T neutrons hit the multiplier first, multiply (n,2n -> 2n),
@@ -194,59 +229,141 @@ def _build_zpinch_geometry(materials, R_plasma_cm=4.0, R_blanket_cm=80.0,
         "z_top": openmc.ZPlane(z0=height_cm / 2, boundary_type=boundary_type),
         "z_bot": openmc.ZPlane(z0=-height_cm / 2, boundary_type=boundary_type),
     }
+    if R_fe_cm is not None:
+        # Tier 13: add Fe reflector surface and corresponding cell.
+        # R_fe_cm should be > R_be_cm (or R_blanket_cm for mult_inside=True)
+        # and < R_structure_cm.
+        if mult_inside:
+            if not R_blanket_cm < R_fe_cm < R_structure_cm:
+                raise ValueError(
+                    f"R_fe_cm ({R_fe_cm}) must be between "
+                    f"R_blanket_cm ({R_blanket_cm}) and "
+                    f"R_structure_cm ({R_structure_cm}) "
+                    f"for mult_inside=True"
+                )
+        else:
+            if not R_be_cm < R_fe_cm < R_structure_cm:
+                raise ValueError(
+                    f"R_fe_cm ({R_fe_cm}) must be between "
+                    f"R_be_cm ({R_be_cm}) and R_structure_cm ({R_structure_cm}) "
+                    f"for mult_inside=False"
+                )
+        surfaces["r_fe"] = openmc.ZCylinder(r=R_fe_cm)
     if mult_inside:
         # Standard fusion blanket: plasma -> Be -> LiPb -> structure
-        cells = {
-            "plasma": openmc.Cell(
-                name="plasma", region=(-surfaces["r_plasma"]
-                                       & -surfaces["z_top"]
-                                       & +surfaces["z_bot"]),
-            ),
-            "be_mult": openmc.Cell(
-                name="be_mult",
-                region=(+surfaces["r_plasma"] & -surfaces["r_be"]
-                        & -surfaces["z_top"] & +surfaces["z_bot"]),
-            ),
-            "blanket": openmc.Cell(
-                name="blanket",
-                region=(+surfaces["r_be"] & -surfaces["r_blanket"]
-                        & -surfaces["z_top"] & +surfaces["z_bot"]),
-            ),
-            "structure": openmc.Cell(
-                name="structure",
-                region=(+surfaces["r_blanket"] & -surfaces["r_struct"]
-                        & -surfaces["z_top"] & +surfaces["z_bot"]),
-            ),
-        }
+        if R_fe_cm is not None:
+            # Tier 13: plasma -> Be -> LiPb -> Fe -> structure
+            cells = {
+                "plasma": openmc.Cell(
+                    name="plasma", region=(-surfaces["r_plasma"]
+                                           & -surfaces["z_top"]
+                                           & +surfaces["z_bot"]),
+                ),
+                "be_mult": openmc.Cell(
+                    name="be_mult",
+                    region=(+surfaces["r_plasma"] & -surfaces["r_be"]
+                            & -surfaces["z_top"] & +surfaces["z_bot"]),
+                ),
+                "blanket": openmc.Cell(
+                    name="blanket",
+                    region=(+surfaces["r_be"] & -surfaces["r_blanket"]
+                            & -surfaces["z_top"] & +surfaces["z_bot"]),
+                ),
+                "fe_reflector": openmc.Cell(
+                    name="fe_reflector",
+                    region=(+surfaces["r_blanket"] & -surfaces["r_fe"]
+                            & -surfaces["z_top"] & +surfaces["z_bot"]),
+                ),
+                "structure": openmc.Cell(
+                    name="structure",
+                    region=(+surfaces["r_fe"] & -surfaces["r_struct"]
+                            & -surfaces["z_top"] & +surfaces["z_bot"]),
+                ),
+            }
+        else:
+            cells = {
+                "plasma": openmc.Cell(
+                    name="plasma", region=(-surfaces["r_plasma"]
+                                           & -surfaces["z_top"]
+                                           & +surfaces["z_bot"]),
+                ),
+                "be_mult": openmc.Cell(
+                    name="be_mult",
+                    region=(+surfaces["r_plasma"] & -surfaces["r_be"]
+                            & -surfaces["z_top"] & +surfaces["z_bot"]),
+                ),
+                "blanket": openmc.Cell(
+                    name="blanket",
+                    region=(+surfaces["r_be"] & -surfaces["r_blanket"]
+                            & -surfaces["z_top"] & +surfaces["z_bot"]),
+                ),
+                "structure": openmc.Cell(
+                    name="structure",
+                    region=(+surfaces["r_blanket"] & -surfaces["r_struct"]
+                            & -surfaces["z_top"] & +surfaces["z_bot"]),
+                ),
+            }
     else:
         # Tier 5 default: plasma -> LiPb -> Be -> structure (Be outside)
-        cells = {
-            "plasma": openmc.Cell(
-                name="plasma", region=(-surfaces["r_plasma"]
-                                       & -surfaces["z_top"]
-                                       & +surfaces["z_bot"]),
-            ),
-            "blanket": openmc.Cell(
-                name="blanket",
-                region=(+surfaces["r_plasma"] & -surfaces["r_blanket"]
-                        & -surfaces["z_top"] & +surfaces["z_bot"]),
-            ),
-            "be_mult": openmc.Cell(
-                name="be_mult",
-                region=(+surfaces["r_blanket"] & -surfaces["r_be"]
-                        & -surfaces["z_top"] & +surfaces["z_bot"]),
-            ),
-            "structure": openmc.Cell(
-                name="structure",
-                region=(+surfaces["r_be"] & -surfaces["r_struct"]
-                        & -surfaces["z_top"] & +surfaces["z_bot"]),
-            ),
-        }
+        if R_fe_cm is not None:
+            # Tier 13: plasma -> LiPb -> Be -> Fe -> structure
+            cells = {
+                "plasma": openmc.Cell(
+                    name="plasma", region=(-surfaces["r_plasma"]
+                                           & -surfaces["z_top"]
+                                           & +surfaces["z_bot"]),
+                ),
+                "blanket": openmc.Cell(
+                    name="blanket",
+                    region=(+surfaces["r_plasma"] & -surfaces["r_blanket"]
+                            & -surfaces["z_top"] & +surfaces["z_bot"]),
+                ),
+                "be_mult": openmc.Cell(
+                    name="be_mult",
+                    region=(+surfaces["r_blanket"] & -surfaces["r_be"]
+                            & -surfaces["z_top"] & +surfaces["z_bot"]),
+                ),
+                "fe_reflector": openmc.Cell(
+                    name="fe_reflector",
+                    region=(+surfaces["r_be"] & -surfaces["r_fe"]
+                            & -surfaces["z_top"] & +surfaces["z_bot"]),
+                ),
+                "structure": openmc.Cell(
+                    name="structure",
+                    region=(+surfaces["r_fe"] & -surfaces["r_struct"]
+                            & -surfaces["z_top"] & +surfaces["z_bot"]),
+                ),
+            }
+        else:
+            cells = {
+                "plasma": openmc.Cell(
+                    name="plasma", region=(-surfaces["r_plasma"]
+                                           & -surfaces["z_top"]
+                                           & +surfaces["z_bot"]),
+                ),
+                "blanket": openmc.Cell(
+                    name="blanket",
+                    region=(+surfaces["r_plasma"] & -surfaces["r_blanket"]
+                            & -surfaces["z_top"] & +surfaces["z_bot"]),
+                ),
+                "be_mult": openmc.Cell(
+                    name="be_mult",
+                    region=(+surfaces["r_blanket"] & -surfaces["r_be"]
+                            & -surfaces["z_top"] & +surfaces["z_bot"]),
+                ),
+                "structure": openmc.Cell(
+                    name="structure",
+                    region=(+surfaces["r_be"] & -surfaces["r_struct"]
+                            & -surfaces["z_top"] & +surfaces["z_bot"]),
+                ),
+            }
     # Vacuum region: leave cell.fill = None (OpenMC treats it as void).
     # An empty openmc.Material() is rejected at runtime with
     # "ERROR: No macroscopic data or nuclides specified on material N".
     cells["blanket"].fill = materials["lipb"]
     cells["be_mult"].fill = materials["be"]
+    if "fe_reflector" in cells:
+        cells["fe_reflector"].fill = materials["fe_reflector"]
     cells["structure"].fill = materials["rafm"]
     universe = openmc.Universe(cells=list(cells.values()))
     geometry = openmc.Geometry(universe)
@@ -288,12 +405,17 @@ def run_real_openmc_tbr(n_particles=5000, n_batches=10,
                          R_be_cm=82.0, R_structure_cm=85.0,
                          height_cm=100.0, boundary_type="vacuum",
                          mult_inside=False,
-                         Li6_enrichment_fraction=0.90):
+                         Li6_enrichment_fraction=0.90,
+                         R_fe_cm=None):
     """Run a real OpenMC TBR simulation.
 
     Returns RealOpenMCTBRResult with TBR + stddev from the tally.
     Falls back to parametric Tier 5.B estimate if cross-sections
     or OpenMC are unavailable.
+
+    Tier 13 (2026-08-31): R_fe_cm parameter adds an optional Fe
+    reflector layer between the outermost breeder/multiplier
+    region and the RAFM structure.
 
     Geometry parameters (Tier 6.A):
       - R_plasma_cm: plasma-vacuum boundary radius (4 cm default).
@@ -358,6 +480,7 @@ def run_real_openmc_tbr(n_particles=5000, n_batches=10,
                 height_cm=height_cm,
                 boundary_type=boundary_type,
                 mult_inside=mult_inside,
+                R_fe_cm=R_fe_cm,
             )
             blanket_volume_cm3 = (
                 cells["blanket"].volume or 0.0

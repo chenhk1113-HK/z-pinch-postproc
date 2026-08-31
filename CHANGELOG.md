@@ -3,15 +3,63 @@
 > All notable changes to this project are documented here. Format follows
 > [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased]
+## [1.3.0] — 2026-08-31
 
-### Planned for v1.3+
-- Sobol sensitivity ranking on MC samples (deferred from v1.2)
-- FISPACT-II install (after UKAEA license acquisition)
-- Paramak D-shape extension for spherical tokamaks
-- GitHub release (pending user approval)
+### Added
+- **Tier 14 — Z-FFR / Antong Fusion reference data** in
+  `code/zpp_zffr_references.py` and `docs/zffr_references.md`:
+  - Captures published Z-pinch fusion blanket design data from
+    Peng Xianjue's team at CAEP and Antong Fusion (安东聚变,
+    founded 2022 in Beijing).
+  - ZFFR_TARGET_TBR = 1.15, ZFFR_ACHIEVED_TBR = 1.24,
+    ZFFR_NEUTRON_SOURCE_POWER_MW = 150.
+  - Antong Fusion founded by Peng Xianjue (CAE academician) +
+    Liu Cheng (Tsinghua PhD) + Yang Qingwei (ex-HL-2M Chief
+    Engineer).
+  - Key references: Peng 2014 (High Power Laser Particle
+    Beams 26(9)), Peng 2010 (Z-FFR concept paper), Gao+Peng
+    2018 (CAE strategy), CN104240772A (patent), FED 2020
+    (hybrid blanket neutronics).
+  - `summary()` one-line summary function.
+- **Tier 13 — Fe reflector support** in
+  `code/zpp_real_openmc_transport.py`:
+  - New `R_fe_cm` parameter on `_build_zpinch_geometry()` and
+    `run_real_openmc_tbr()`. When set, adds an Fe reflector
+    cell between the outermost breeder/multiplier and the
+    RAFM structure.
+  - Fe reflector uses pure Fe composition (Fe-54 5.6%, Fe-56
+    91.7%, Fe-57 2.1%, Fe-58 0.3%, density 7.8 g/cm3) — same
+    as RAFM steel.
+  - 8 new tests in `tests/test_zpp_tier13.py`.
+- **Tier 12 — mult_inside=False calibration** in
+  `code/zpp_tbr.py`:
+  - New `TBRInputs.mult_inside` field (default True, backward
+    compat).
+  - `boundary_correction_factor(thick, "reflective", mult_inside=False)`
+    uses piecewise-linear interpolation against the Tier 10
+    mult_outside sweep (5 points: thick=8/46/76/106/136 cm).
+  - **Honest finding**: smooth closed-form doesn't fit the
+    mult_inside=False geometry because R=50 cm is non-monotonic
+    (TBR=0.94 < R=12's 1.04). The piecewise-linear table
+    preserves the Tier 10 finding as the calibration source.
+  - 13 new tests in `tests/test_zpp_tier12.py`.
 
-See `docs/TODO.md` for the full list.
+### Stats
+- 720 tests pass, 1 skipped (was 692 at v1.2.0; +28 new)
+- 12 → 13 git tags
+
+### Known limits
+- Tier 12 piecewise-linear is exact at calibration points but
+  only approximates between them. A smooth 2-stage closed-form
+  (e.g., capture-and-multiplier model) is a v1.4 candidate.
+- Tier 13 Fe reflector sweep uses 5,000 × 10 batches (faster
+  production runs vs Tier 6.C calibration's 20,000 × 20).
+  Statistical uncertainty is ~0.4% vs 0.1% for Tier 6.C.
+- Tier 14 only catalogs Antong Fusion's published design
+  targets; it does NOT validate our MC results against the
+  Z-FFR design (different geometry, different neutronics
+  assumptions). Tier 15 candidate: build Z-FFR-specific
+  geometry and run side-by-side.
 
 ## [1.2.0] — 2026-08-31
 
