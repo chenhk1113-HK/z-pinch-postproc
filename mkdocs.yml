@@ -1,0 +1,68 @@
+# MkDocs configuration for z-pinch-postproc
+# Build: `mkdocs build` → ./site/ (static HTML)
+# Serve locally: `mkdocs serve`
+# Deploy to GitHub Pages: `mkdocs gh-deploy` (handled by .github/workflows/docs.yml)
+
+site_name: z-pinch-postproc
+site_description: A Python toolkit for Z-pinch fusion reactor design
+site_url: https://chenhk1113-HK.github.io/z-pinch-postproc/
+repo_url: https://github.com/chenhk1113-HK/z-pinch-postproc
+repo_name: chenhk1113-HK/z-pinch-postproc
+
+docs_dir: .
+
+nav:
+  - Home: README.md
+  - Architecture: ARCHITECTURE.md
+  - Contributing: CONTRIBUTING.md
+  - Changelog: CHANGELOG.md
+  - Model assumptions: MODEL_ASSUMPTIONS_AND_LIMITATIONS.md
+  - Z-FFR references: docs/zffr_references.md
+  - Nuclear data: data/nuclear_data/README.md
+  - Citation: CITATION.cff
+  - License: LICENSE
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: indigo
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - toc.follow
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+
+plugins:
+  - search
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/chenhk1113-HK
+  generator: false
