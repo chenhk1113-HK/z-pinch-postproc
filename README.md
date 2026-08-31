@@ -1,9 +1,12 @@
 # z-pinch-postproc
 
-> **Disclaimer:** Personal research project, AI-assisted (Hermes with
-> MiniMax-M3 as the coder). Not a production tool. Not peer-reviewed.
-> Not associated with Sandia National Laboratories, Pacific Fusion,
-> Zap Energy, Antong Fusion, or any other fusion program.
+> ⚠️ **Disclaimer:** It is a personal project out of curiosity, made using Hermes with **MiniMax M3** as the coder, **Claude Sonnet**, **Qwen 3.8 Max** and other AIs as reviewers. Not associated with Sandia National Laboratories, Pacific Fusion, Zap Energy, Antong Fusion, or any other fusion program.
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Version](https://img.shields.io/badge/version-v1.4.1-blue)](CHANGELOG.md)
+[![Tests](https://img.shields.io/badge/tests-751%20pass-brightgreen)](tests/)
+[![CI](https://img.shields.io/badge/CI-GitHub%20Actions-blue)](.github/workflows/ci.yml)
+[![Docs](https://img.shields.io/badge/docs-mkdocs%20material-blueviolet)](https://chenhk1113-HK.github.io/z-pinch-postproc/)
 
 A pure-Python toolkit for Z-pinch fusion reactor design, with two
 integrated modules:
@@ -28,12 +31,12 @@ integrated modules:
    either a fast parametric formula (~milliseconds) or real OpenMC
    Monte Carlo transport (~1-2 minutes per design point).
 
-This is the **v1.4.0 release**, adding Tier 15 + 16 + 17:
+This is the **v1.4.1 release**, adding Tier 18 + CI + Docs.
 
 ## Quick start
 
 ```bash
-git clone https://github.com/chenhk1113/z-pinch-postproc.git
+git clone https://github.com/chenhk1113-HK/z-pinch-postproc.git
 cd z-pinch-postproc
 
 # Create venv with the pinned dependencies
@@ -42,7 +45,7 @@ source .venv/Scripts/activate   # MSYS / git-bash on Windows
 # .venv\Scripts\activate        # cmd.exe / PowerShell
 pip install -r requirements.txt
 
-# Run the full test suite (745 tests, ~20 seconds)
+# Run the full test suite (751 tests, ~20 seconds)
 pytest tests/ -q
 
 # Run a single TBR sweep (parametric, milliseconds)
@@ -73,6 +76,8 @@ print(f'TBR_mc = {r.openmc_TBR:.4f} +/- {r.openmc_TBR_stddev*100:.2f}%')
 - Not a process / systems code (that is PROCESS, used in
   `zpp_real_process_adapter.py` for benchmarking).
 - Not a CFD code. We use analytical scaling for first-wall heat loads.
+- Not peer-reviewed. Not a production tool. Not associated with any
+  fusion company or program (see disclaimer above).
 
 ## Module map
 
@@ -86,9 +91,10 @@ design philosophy. Summary:
 | `code/zpp_zffr_spherical.py` | Z-FFR spherical geometry (Peng 2014) | ~250 |
 | `code/zpp_geometry_tbr.py` | Tier 5.B piecewise-linear interpolation | ~150 |
 | `code/zpp_tbr_diagnose.py` | Tier 11 TBR deconstruction tool | ~100 |
+| `code/zpp_li4sio4.py` | Tier 18 Li4SiO4 ceramic breeder material | ~100 |
 | `code/zpp_zffr_references.py` | Z-FFR Antong Fusion reference catalog | ~20 |
 | `code/zpp_*` (yield) | Bosch-Hale, Lawson, cost, etc. | ~3000 |
-| `tests/test_zpp_tier*.py` | Tier-specific test files (Tier 9–17) | ~2000 |
+| `tests/test_zpp_tier*.py` | Tier-specific test files (Tier 9–18) | ~2100 |
 
 ## Releases
 
@@ -104,9 +110,10 @@ design philosophy. Summary:
 | v1.1.0 | Tier 8 | Closed-form albedo correction |
 | v1.2.0 | Tier 9-11 | Furuta validation, extended sweep, deconstruction |
 | v1.3.0 | Tier 12-14 | mult_outside calibration, Fe reflector, Antong Fusion refs |
-| **v1.4.0** | **Tier 15-17** | **U-238 hybrid blanket, Z-FFR spherical validation** |
+| v1.4.0 | Tier 15-17 | U-238 hybrid blanket, Z-FFR spherical validation |
+| **v1.4.1** | **Tier 18 + CI + Docs** | **Li4SiO4 breeder, GitHub Actions, MkDocs site** |
 
-## Key results (v1.4.0)
+## Key results (v1.4.x)
 
 ### Tier 16: Hybrid fission blanket (U-238 layer)
 
@@ -153,6 +160,20 @@ geometry the penalty drops to 2.6%. This is the **first documented
 geometry correction** between Z-pinch cylindrical and Z-pinch
 spherical blanket designs.
 
+### Tier 18: Li4SiO4 ceramic breeder material
+
+Adds the material definition for Li4SiO4 (lithium orthosilicate) —
+the breeder used in Z-FFR Peng 2014's design. Higher Li density than
+LiPb → smaller blanket for TBR > 1.
+
+```python
+from zpp_li4sio4 import build_li4sio4_material
+m = build_li4sio4_material(Li6_enrichment_fraction=0.90)
+```
+
+Transport benchmark (Tier 18.B) deferred — requires Si-28/29/30 + O-16
+cross section download and an OpenMC run.
+
 ## Citation
 
 See [`CITATION.cff`](CITATION.cff) for the GitHub-native citation.
@@ -189,9 +210,10 @@ for the full list. The most important limits:
 3. **U-238 HURTS TBR in cylindrical**: Tier 16 finding. Z-FFR's hybrid
    blanket design with U-238 has only 4% TBR penalty in spherical
    geometry but 26% in cylindrical.
-4. **Simplified breeder**: LiPb only. Z-FFR's actual design uses Li4SiO4
-   ceramic breeder with different (better) neutronics.
+4. **Simplified breeder**: LiPb is the default. Z-FFR's actual design
+   uses Li4SiO4 ceramic breeder (material now defined in Tier 18;
+   transport benchmark deferred to Tier 18.B).
 
 ---
 
-`z-pinch-postproc` v1.4.0 (2026-08-31) — 745 tests pass.
+`z-pinch-postproc` v1.4.1 (2026-08-31) — 751 tests pass.
