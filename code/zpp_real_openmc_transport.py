@@ -97,10 +97,14 @@ def cross_sections_status():
     return info
 
 
-def _build_blanket_materials():
-    """Build openmc.Material for LiPb, Be, RAFM steel."""
+def _build_blanket_materials(Li6_enrichment_fraction=0.90):
+    """Build openmc.Material for LiPb, Be, RAFM steel.
+
+    Tier 10 (2026-08-31): added Li6_enrichment_fraction parameter.
+    Defaults to 0.90 for backward compatibility with Tier 5/6.
+    """
     import openmc
-    # Lithium-Lead (Li17Pb83, 90% Li-6 enrichment)
+    # Lithium-Lead (Li17Pb83, parameterized Li-6 enrichment)
     li6 = openmc.Material(name="Li6")
     li6.add_nuclide("Li6", 1.0)
     li6.set_density("g/cm3", 0.534)
@@ -109,8 +113,8 @@ def _build_blanket_materials():
     li7.set_density("g/cm3", 0.534)
     # Composite LiPb: 17 at% Li (with given Li-6 frac) + 83 at% Pb
     lipb = openmc.Material(name="LiPb")
-    lipb.add_nuclide("Li6", 0.17 * 0.90)  # 90% Li-6 enrichment
-    lipb.add_nuclide("Li7", 0.17 * 0.10)
+    lipb.add_nuclide("Li6", 0.17 * Li6_enrichment_fraction)
+    lipb.add_nuclide("Li7", 0.17 * (1.0 - Li6_enrichment_fraction))
     lipb.add_nuclide("Pb204", 0.83 * 0.014)  # natural Pb composition
     lipb.add_nuclide("Pb206", 0.83 * 0.241)
     lipb.add_nuclide("Pb207", 0.83 * 0.221)
@@ -283,7 +287,8 @@ def run_real_openmc_tbr(n_particles=5000, n_batches=10,
                          R_plasma_cm=4.0, R_blanket_cm=80.0,
                          R_be_cm=82.0, R_structure_cm=85.0,
                          height_cm=100.0, boundary_type="vacuum",
-                         mult_inside=False):
+                         mult_inside=False,
+                         Li6_enrichment_fraction=0.90):
     """Run a real OpenMC TBR simulation.
 
     Returns RealOpenMCTBRResult with TBR + stddev from the tally.
@@ -341,7 +346,9 @@ def run_real_openmc_tbr(n_particles=5000, n_batches=10,
 
         # Build geometry (Tier 6.A: propagate all geometry params)
         try:
-            materials = _build_blanket_materials()
+            materials = _build_blanket_materials(
+                Li6_enrichment_fraction=Li6_enrichment_fraction
+            )
             geometry, cells, surfaces = _build_zpinch_geometry(
                 materials,
                 R_plasma_cm=R_plasma_cm,
@@ -568,8 +575,10 @@ def run_blanket_sweep(
     mult_inside=True,
     n_particles=20000,
     n_batches=20,
+    Li6_enrichment_fraction=0.90,
+    MHD_effect_factor=0.85,
 ):
-    """Tier 6.C — sweep R_blanket and compare Monte Carlo TBR to
+    """Tier 6.C / Tier 10 — sweep R_blanket and compare Monte Carlo TBR to
     the parametric Tier 5.B estimate.
 
     Returns a list of dicts (one per sweep point) with:
@@ -581,6 +590,11 @@ def run_blanket_sweep(
     reconciliation setup: white boundary (closed enclosure) +
     mult_inside=True (standard fusion blanket design with Be on the
     inner radius).
+
+    Tier 10 (2026-08-31): added Li6_enrichment_fraction and
+    MHD_effect_factor parameters so the sweep can be extended in
+    those dimensions. Default Li6=90% (Tier 6 baseline) and
+    MHD=0.85 (default Tokamak/blanket reference value).
 
     The 2026-08-31 sweep (R_blanket ∈ {12, 50, 80, 110, 140} cm, Be at
     r=6 cm, white boundary, 20k particles × 20 batches) found:
@@ -614,6 +628,7 @@ def run_blanket_sweep(
             height_cm=height_cm,
             boundary_type=boundary_type,
             mult_inside=mult_inside,
+            Li6_enrichment_fraction=Li6_enrichment_fraction,
         )
         # Parametric at the SAME LiPb thickness
         from zpp_tbr import compute_TBR, TBRInputs
@@ -621,11 +636,11 @@ def run_blanket_sweep(
         param_inputs = TBRInputs(
             blanket_material="LiPb",
             neutron_multiplier="Be",
-            Li6_enrichment_fraction=0.90,
+            Li6_enrichment_fraction=Li6_enrichment_fraction,
             blanket_thickness_cm=lipb_thickness,
             first_wall_coverage_fraction=0.95,
             geometry="cylindrical",
-            MHD_effect_factor=0.85,
+            MHD_effect_factor=MHD_effect_factor,
             temperature_factor=1.0,
         )
         param_tbr = compute_TBR(param_inputs).TBR

@@ -1,0 +1,14 @@
+{
+  "R_sphere_cm": 50.0,
+  "n_particles": 20000,
+  "n_batches": 20,
+  "leakage_fraction": 0.9572700000000001,
+  "leakage_rel_stddev": 0.0006940458930059605,
+  "li6_t_rate": 0.10422725983702685,
+  "li6_t_rel_stddev": 0.0017017060911254012,
+  "li7_t_rate": 0.5522965541879333,
+  "li7_t_rel_stddev": 0.000988718937687889,
+  "TBR_total": 0.6565238140249602,
+  "TBR_total_rel_stddev": 0.0008745276536281056,
+  "elapsed_s": 3.8662519454956055
+}

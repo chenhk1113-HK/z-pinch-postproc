@@ -227,6 +227,42 @@ The project scope is bounded by what a post-processor can defensibly compute:
   the calibration pin tests, and
   `TestBoundaryCorrectionFactor` for the closed-form tests.
 
+### 3.7 Tier 9 Furuta 1987 validation (2026-08-31)
+- We validated our Tier 5 → Tier 8 methodology against an
+  **independent** external benchmark: Furuta et al. 1987
+  (J. Nucl. Sci. Technol. 24(4)), 50 cm radius natural-Li
+  sphere with 14 MeV D-T source at center, vacuum boundary.
+  Result: TBR = 0.6565 ± 0.09%, neutron leakage = 95.73%.
+- **Honest finding**: the Tier 8 closed-form (calibrated for
+  LiPb+Be Z-pinch geometry) overshoots the pure-Li sphere
+  TBR by **+106%**. This is expected and documented: the
+  closed-form was fitted against our specific Z-pinch
+  geometry and assumes a Be multiplier + Pb reflector + LiPb
+  blanket structure. It does NOT generalize to arbitrary
+  blanket compositions.
+- **Use `boundary_condition="infinite"` for engineering
+  scoping of any real plant.** Use Tier 8 closed-form only
+  for Z-pinch LiPb+Be geometries within the calibration range
+  (R_b ∈ [12, 140] cm, Li-6 ∈ [7.5%, 90%]).
+- See `tests/test_zpp_tier9_furuta.py` for the validation
+  tests.
+
+### 3.8 Tier 10 extended sweep and Tier 11 diagnostic tool (2026-08-31)
+- Tier 10 extended the Tier 6 calibration in two new
+  dimensions: Li-6 enrichment (30%, 60%, 90%) and
+  `mult_inside` (True vs False). This exposed and fixed a
+  Tier 5/6 bug: `_build_blanket_materials()` was hard-coded
+  at 90% Li-6, so the Monte Carlo never actually varied
+  Li-6 enrichment even though the parametric did. After the
+  fix, MC TBR now varies correctly with Li-6 enrichment.
+- Tier 11 added `code/zpp_tbr_diagnose.py`, a deconstruction
+  tool that breaks any TBR calculation into its named
+  components, shows each contribution, and flags components
+  outside the Sobes 2011 validity range. This is the
+  user-facing version of the Tier 7 finding.
+- See `tests/test_zpp_tier10_sweep.py` and
+  `tests/test_zpp_tbr_diagnose.py` for the new tests.
+
 ## 4. Physics references
 
 ### 4.1 D-T reactivity
@@ -245,9 +281,17 @@ The project scope is bounded by what a post-processor can defensibly compute:
 ### 4.2 Wall-plug chain
 - Hansen, S. (2021), "Pulsed power: A 'precision hammer' for
   high energy density science", Princeton SULI 2021 course.
-  Z present wall-plug ~4%.
 - Sinars, D.B. et al. (2020), "Magneto-inertial fusion on the Z
-  machine: past, present, and future", Phys. Plasmas 27 070501.
+  machine: past, present, and future", Phys. plasmas 27 070501.
+- **Furuta, K. and Oka, Y. (1987)** "Accuracy of multi-group
+  transport calculation in D-T fusion neutronics",
+  *J. Nucl. Sci. Technol.* 24(4), 333-340. DOI
+  10.1080/18811248.1987.9735810. **Tier 9 validation
+  reference** — 50 cm radius spheres of Li, Fe, Fe+H₂O,
+  double-layer Li+Fe with 14 MeV D-T source. We use the
+  pure-Li sphere benchmark to validate (and document the
+  applicability limit of) our Tier 8 closed-form albedo
+  correction.
 - Yager-Elorriaga, D.A. et al. (2022), "An overview of
   magneto-inertial fusion on the Z machine at Sandia National
   Laboratories", Nucl. Fusion 62 042015. Magnetic direct drive

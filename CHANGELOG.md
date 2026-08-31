@@ -5,13 +5,78 @@
 
 ## [Unreleased]
 
-### Planned for v1.2+
+### Planned for v1.3+
+- Sobol sensitivity ranking on MC samples (deferred from v1.2)
 - FISPACT-II install (after UKAEA license acquisition)
 - Paramak D-shape extension for spherical tokamaks
-- Sensitivity ranking via Sobol on MC samples
 - GitHub release (pending user approval)
 
 See `docs/TODO.md` for the full list.
+
+## [1.2.0] — 2026-08-31
+
+### Added
+- **Tier 11 — Sobes deconstruction tool** in
+  `code/zpp_tbr_diagnose.py`:
+  - `deconstruct_tbr(inputs, mc_value=None)` returns a
+    structured `TBRDeconstruction` with each named
+    component (TBR_sat, f_sat, Be multiplier, f_enr, f_cov,
+    MHD, temperature, optional f_geom), its contribution to
+    total TBR, Sobes validity flags, and warnings.
+  - Markdown formatter `tbr_deconstruction_markdown()` for
+    human-readable reports.
+  - The tool is the user-facing version of the Tier 7
+    finding: it makes the Be-multiplier asymptote overcount
+    and Sobes-vs-MC plateau gap explicit in the output.
+- **Tier 10 — extended OpenMC sweep** with two new
+  dimensions:
+  - Li-6 enrichment: 30%, 60%, 90% (Tier 6 was 90% only)
+  - `mult_inside`: True (Be inside LiPb, Tier 6 default) vs
+    False (Be outside LiPb, Tier 5 baseline)
+  - 3 sweeps × 5 R_blanket points each = 15 new MC points
+  - Bug fix: `_build_blanket_materials()` was hard-coded
+    at 90% Li-6 (Tier 5 default); now thread
+    `Li6_enrichment_fraction` through so MC actually varies
+    with enrichment.
+  - 11 new tests in `tests/test_zpp_tier10_sweep.py`.
+- **Tier 9 — Furuta 1987 validation**:
+  - Built 50 cm radius natural-Li sphere with 14 MeV D-T
+    source, vacuum boundary, OpenMC 0.16.0, ENDF/B-VIII.0,
+    20,000 particles × 20 batches.
+  - **Result**: TBR = 0.6565 ± 0.09%, neutron leakage
+    = 95.73%, Li-7 (n,T) rate (0.5523) **dominates over
+    Li-6 (n,T) (0.1042)** — consistent with Furuta 1987
+    (J. Nucl. Sci. Technol. 24(4)) observation that Li-7
+    (n,n'α)T threshold (~2.8 MeV) catches many fast
+    neutrons that miss Li-6 (n,T).
+  - **Honest negative validation**: Tier 8 closed-form
+    (calibrated for LiPb+Be Z-pinch) overshoots pure-Li
+    sphere by **+106%**. The Tier 8 closed-form only works
+    for the LiPb+Be Z-pinch geometry it was fitted against,
+    NOT for arbitrary pure-Li spheres.
+  - 7 new tests in `tests/test_zpp_tier9_furuta.py`.
+
+### Changed
+- `code/zpp_real_openmc_transport.py`:
+  - `_build_blanket_materials(Li6_enrichment_fraction=0.90)`
+    parameterizes the LiPb material composition.
+  - `run_real_openmc_tbr(..., Li6_enrichment_fraction=0.90)`
+    propagates the parameter.
+  - `run_blanket_sweep(..., Li6_enrichment_fraction=0.90,
+    MHD_effect_factor=0.85)` exposes the dimension at the
+    sweep level.
+
+### Tests
+- **676 → 693 tests passing** (Tier 11: +26, Tier 9: +7,
+  Tier 10: +11 documentation/infrastructure; Tier 10
+  data-validation tests skip until sweep completes).
+
+### Documentation
+- `MODEL_ASSUMPTIONS_AND_LIMITATIONS.md` §3.6 extended
+  with Tier 9 Furuta applicability-limit finding.
+- Tier 11 diagnostic-tool usage example added to
+  `README.md` (if present) or `code/zpp_tbr_diagnose.py`
+  docstring.
 
 ## [1.1.0] — 2026-08-31
 

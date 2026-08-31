@@ -1,0 +1,62 @@
+[
+  {
+    "R_blanket_cm": 12,
+    "TBR_mc": 1.4073083483991302,
+    "TBR_mc_rel_stddev": 0.005590414250152123,
+    "TBR_param": 0.21419020095596608,
+    "delta_pct": -84.78015132933616,
+    "parametric_fallback": false,
+    "notes": [
+      "Geometry: R_plasma=4.0 cm, R_blanket=12 cm, R_be=6.0 cm, R_struct=15.0 cm, height=100.0 cm, boundary=white, mult_inside=True",
+      "Running OpenMC with 5000 particles x 10 batches"
+    ]
+  },
+  {
+    "R_blanket_cm": 50,
+    "TBR_mc": 1.752797155755381,
+    "TBR_mc_rel_stddev": 0.0034324109222067796,
+    "TBR_param": 1.1084917743824216,
+    "delta_pct": -36.75869619353023,
+    "parametric_fallback": false,
+    "notes": [
+      "Geometry: R_plasma=4.0 cm, R_blanket=50 cm, R_be=6.0 cm, R_struct=53.0 cm, height=100.0 cm, boundary=white, mult_inside=True",
+      "Running OpenMC with 5000 particles x 10 batches"
+    ]
+  },
+  {
+    "R_blanket_cm": 80,
+    "TBR_mc": 1.7864140168499705,
+    "TBR_mc_rel_stddev": 0.0027317254941782113,
+    "TBR_param": 1.4629738029859074,
+    "delta_pct": -18.10555732396197,
+    "parametric_fallback": false,
+    "notes": [
+      "Geometry: R_plasma=4.0 cm, R_blanket=80 cm, R_be=6.0 cm, R_struct=83.0 cm, height=100.0 cm, boundary=white, mult_inside=True",
+      "Running OpenMC with 5000 particles x 10 batches"
+    ]
+  },
+  {
+    "R_blanket_cm": 110,
+    "TBR_mc": 1.8081149944021755,
+    "TBR_mc_rel_stddev": 0.0037994240951849186,
+    "TBR_param": 1.657517665069715,
+    "delta_pct": -8.328968555578685,
+    "parametric_fallback": false,
+    "notes": [
+      "Geometry: R_plasma=4.0 cm, R_blanket=110 cm, R_be=6.0 cm, R_struct=113.0 cm, height=100.0 cm, boundary=white, mult_inside=True",
+      "Running OpenMC with 5000 particles x 10 batches"
+    ]
+  },
+  {
+    "R_blanket_cm": 140,
+    "TBR_mc": 1.8112720067243748,
+    "TBR_mc_rel_stddev": 0.003431865898185856,
+    "TBR_param": 1.764285600311981,
+    "delta_pct": -2.5941110025416494,
+    "parametric_fallback": false,
+    "notes": [
+      "Geometry: R_plasma=4.0 cm, R_blanket=140 cm, R_be=6.0 cm, R_struct=143.0 cm, height=100.0 cm, boundary=white, mult_inside=True",
+      "Running OpenMC with 5000 particles x 10 batches"
+    ]
+  }
+]
