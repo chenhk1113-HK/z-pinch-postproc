@@ -3,9 +3,15 @@ numpy>=2.0
 scipy>=1.11
 pandas>=2.0
 matplotlib>=3.7
+openmc>=0.16
 
 # Testing
 pytest>=7.0
+pytest-cov>=4.0
+
+# Documentation site (Tier 19, v1.4.0)
+mkdocs>=1.5
+mkdocs-material>=9.4
 
 # Fusion engineering codes (installed in v0.6-v0.7, optional)
 
