@@ -140,16 +140,24 @@ def _build_blanket_materials(Li6_enrichment_fraction=0.90):
     fe_reflector.add_nuclide("Fe57", 0.021)
     fe_reflector.add_nuclide("Fe58", 0.003)
     fe_reflector.set_density("g/cm3", 7.8)
+    # Tier 16 (2026-08-31): U-238 fission blanket for Z-FFR-style
+    # hybrid blankets. Depleted uranium (no U-235) at theoretical
+    # density 19.1 g/cm3. The fast (n,fission) cross-section of
+    # U-238 above ~1 MeV adds significant neutron multiplication.
+    u238 = openmc.Material(name="U238")
+    u238.add_nuclide("U238", 1.0)
+    u238.set_density("g/cm3", 19.1)
     return {
         "li6": li6, "li7": li7, "lipb": lipb, "be": be,
-        "rafm": rafm, "fe_reflector": fe_reflector,
+        "rafm": rafm, "fe_reflector": fe_reflector, "u238": u238,
     }
 
 
 def _build_zpinch_geometry(materials, R_plasma_cm=4.0, R_blanket_cm=80.0,
                            R_be_cm=82.0, R_structure_cm=85.0,
                            height_cm=100.0, boundary_type="vacuum",
-                           mult_inside=False, R_fe_cm=None):
+                           mult_inside=False, R_fe_cm=None,
+                           R_u238_cm=None):
     """Build Z-pinch cylindrical geometry (rings + height).
 
     Layers (innermost to outermost):
@@ -168,19 +176,21 @@ def _build_zpinch_geometry(materials, R_plasma_cm=4.0, R_blanket_cm=80.0,
       Tier 13 (2026-08-31): optional Fe reflector.
         If R_fe_cm is set, an Fe reflector layer is inserted between
         the outermost breeder/multiplier region and the RAFM
-        structure:
-          mult_inside=False:
-            1. Plasma: 0 < r < R_plasma_cm
-            2. LiPb: R_plasma_cm < r < R_blanket_cm
-            3. Be: R_blanket_cm < r < R_be_cm
-            4. Fe reflector: R_be_cm < r < R_fe_cm
-            5. RAFM structure: R_fe_cm < r < R_structure_cm
-          mult_inside=True:
-            1. Plasma: 0 < r < R_plasma_cm
-            2. Be: R_plasma_cm < r < R_be_cm
-            3. LiPb: R_be_cm < r < R_blanket_cm
-            4. Fe reflector: R_blanket_cm < r < R_fe_cm
-            5. RAFM structure: R_fe_cm < r < R_structure_cm
+        structure.
+
+      Tier 16 (2026-08-31): optional U-238 fission blanket (hybrid).
+        If R_u238_cm is set, a U-238 layer is inserted OUTSIDE the
+        breeder/multiplier region but INSIDE the RAFM structure
+        (or Fe reflector if present). This models the Z-FFR-style
+        hybrid fission-fusion blanket.
+        mult_inside=False, R_u238_cm set:
+          plasma -> LiPb -> Be -> U-238 -> [Fe] -> structure
+        mult_inside=True, R_u238_cm set:
+          plasma -> Be -> LiPb -> U-238 -> [Fe] -> structure
+        The U-238 layer is placed BEFORE the Fe reflector (so Fe
+        back-scatters neutrons from U-238 fission back into LiPb).
+        The RAFM structure starts at R_u238_cm + 3 cm (or at
+        R_fe_cm + 3 cm if Fe reflector is also present).
 
         Fe reflectors are commonly used in tokamak (e.g., ITER)
         and Z-pinch (Peng 2014) designs to reduce neutron leakage
@@ -249,119 +259,90 @@ def _build_zpinch_geometry(materials, R_plasma_cm=4.0, R_blanket_cm=80.0,
                     f"for mult_inside=False"
                 )
         surfaces["r_fe"] = openmc.ZCylinder(r=R_fe_cm)
+    if R_u238_cm is not None:
+        # Tier 16: add U-238 fission blanket layer.
+        # R_u238_cm should be > R_be_cm (or R_blanket_cm for mult_inside=True)
+        # and < R_structure_cm (or < R_fe_cm if R_fe_cm is set).
+        if R_fe_cm is not None:
+            max_r = R_fe_cm
+        else:
+            max_r = R_structure_cm
+        if mult_inside:
+            min_r = R_blanket_cm
+        else:
+            min_r = R_be_cm
+        if not min_r < R_u238_cm < max_r:
+            raise ValueError(
+                f"R_u238_cm ({R_u238_cm}) must be between {min_r} "
+                f"and {max_r} for mult_inside={mult_inside}, "
+                f"R_fe_cm={R_fe_cm}"
+            )
+        surfaces["r_u238"] = openmc.ZCylinder(r=R_u238_cm)
+
+    # Helper: build a Z-pinch cylindrical cell with given inner/outer radii.
+    def _cyl_cell(name, r_inner, r_outer):
+        if r_inner is None:
+            region = (-surfaces[r_outer]
+                      & -surfaces["z_top"] & +surfaces["z_bot"])
+        elif r_outer is None:
+            region = (+surfaces[r_inner]
+                      & -surfaces["z_top"] & +surfaces["z_bot"])
+        else:
+            region = (+surfaces[r_inner] & -surfaces[r_outer]
+                      & -surfaces["z_top"] & +surfaces["z_bot"])
+        return openmc.Cell(name=name, region=region)
+
     if mult_inside:
-        # Standard fusion blanket: plasma -> Be -> LiPb -> structure
-        if R_fe_cm is not None:
-            # Tier 13: plasma -> Be -> LiPb -> Fe -> structure
-            cells = {
-                "plasma": openmc.Cell(
-                    name="plasma", region=(-surfaces["r_plasma"]
-                                           & -surfaces["z_top"]
-                                           & +surfaces["z_bot"]),
-                ),
-                "be_mult": openmc.Cell(
-                    name="be_mult",
-                    region=(+surfaces["r_plasma"] & -surfaces["r_be"]
-                            & -surfaces["z_top"] & +surfaces["z_bot"]),
-                ),
-                "blanket": openmc.Cell(
-                    name="blanket",
-                    region=(+surfaces["r_be"] & -surfaces["r_blanket"]
-                            & -surfaces["z_top"] & +surfaces["z_bot"]),
-                ),
-                "fe_reflector": openmc.Cell(
-                    name="fe_reflector",
-                    region=(+surfaces["r_blanket"] & -surfaces["r_fe"]
-                            & -surfaces["z_top"] & +surfaces["z_bot"]),
-                ),
-                "structure": openmc.Cell(
-                    name="structure",
-                    region=(+surfaces["r_fe"] & -surfaces["r_struct"]
-                            & -surfaces["z_top"] & +surfaces["z_bot"]),
-                ),
-            }
+        # Standard fusion blanket: plasma -> Be -> LiPb -> [U-238] -> [Fe] -> structure
+        cells = {
+            "plasma": _cyl_cell("plasma", None, "r_plasma"),
+            "be_mult": _cyl_cell("be_mult", "r_plasma", "r_be"),
+            "blanket": _cyl_cell("blanket", "r_be", "r_blanket"),
+        }
+        # Add U-238 if requested (after LiPb blanket)
+        if R_u238_cm is not None:
+            cells["u238"] = _cyl_cell("u238", "r_blanket", "r_u238")
+            next_inner = "r_u238"
         else:
-            cells = {
-                "plasma": openmc.Cell(
-                    name="plasma", region=(-surfaces["r_plasma"]
-                                           & -surfaces["z_top"]
-                                           & +surfaces["z_bot"]),
-                ),
-                "be_mult": openmc.Cell(
-                    name="be_mult",
-                    region=(+surfaces["r_plasma"] & -surfaces["r_be"]
-                            & -surfaces["z_top"] & +surfaces["z_bot"]),
-                ),
-                "blanket": openmc.Cell(
-                    name="blanket",
-                    region=(+surfaces["r_be"] & -surfaces["r_blanket"]
-                            & -surfaces["z_top"] & +surfaces["z_bot"]),
-                ),
-                "structure": openmc.Cell(
-                    name="structure",
-                    region=(+surfaces["r_blanket"] & -surfaces["r_struct"]
-                            & -surfaces["z_top"] & +surfaces["z_bot"]),
-                ),
-            }
+            next_inner = "r_blanket"
+        # Add Fe reflector if requested (after U-238 or LiPb)
+        if R_fe_cm is not None:
+            cells["fe_reflector"] = _cyl_cell(
+                "fe_reflector", next_inner, "r_fe",
+            )
+            next_inner = "r_fe"
+        cells["structure"] = _cyl_cell(
+            "structure", next_inner, "r_struct",
+        )
     else:
-        # Tier 5 default: plasma -> LiPb -> Be -> structure (Be outside)
-        if R_fe_cm is not None:
-            # Tier 13: plasma -> LiPb -> Be -> Fe -> structure
-            cells = {
-                "plasma": openmc.Cell(
-                    name="plasma", region=(-surfaces["r_plasma"]
-                                           & -surfaces["z_top"]
-                                           & +surfaces["z_bot"]),
-                ),
-                "blanket": openmc.Cell(
-                    name="blanket",
-                    region=(+surfaces["r_plasma"] & -surfaces["r_blanket"]
-                            & -surfaces["z_top"] & +surfaces["z_bot"]),
-                ),
-                "be_mult": openmc.Cell(
-                    name="be_mult",
-                    region=(+surfaces["r_blanket"] & -surfaces["r_be"]
-                            & -surfaces["z_top"] & +surfaces["z_bot"]),
-                ),
-                "fe_reflector": openmc.Cell(
-                    name="fe_reflector",
-                    region=(+surfaces["r_be"] & -surfaces["r_fe"]
-                            & -surfaces["z_top"] & +surfaces["z_bot"]),
-                ),
-                "structure": openmc.Cell(
-                    name="structure",
-                    region=(+surfaces["r_fe"] & -surfaces["r_struct"]
-                            & -surfaces["z_top"] & +surfaces["z_bot"]),
-                ),
-            }
+        # Tier 5 default: plasma -> LiPb -> Be -> [U-238] -> [Fe] -> structure
+        cells = {
+            "plasma": _cyl_cell("plasma", None, "r_plasma"),
+            "blanket": _cyl_cell("blanket", "r_plasma", "r_blanket"),
+            "be_mult": _cyl_cell("be_mult", "r_blanket", "r_be"),
+        }
+        # Add U-238 if requested (after Be multiplier)
+        if R_u238_cm is not None:
+            cells["u238"] = _cyl_cell("u238", "r_be", "r_u238")
+            next_inner = "r_u238"
         else:
-            cells = {
-                "plasma": openmc.Cell(
-                    name="plasma", region=(-surfaces["r_plasma"]
-                                           & -surfaces["z_top"]
-                                           & +surfaces["z_bot"]),
-                ),
-                "blanket": openmc.Cell(
-                    name="blanket",
-                    region=(+surfaces["r_plasma"] & -surfaces["r_blanket"]
-                            & -surfaces["z_top"] & +surfaces["z_bot"]),
-                ),
-                "be_mult": openmc.Cell(
-                    name="be_mult",
-                    region=(+surfaces["r_blanket"] & -surfaces["r_be"]
-                            & -surfaces["z_top"] & +surfaces["z_bot"]),
-                ),
-                "structure": openmc.Cell(
-                    name="structure",
-                    region=(+surfaces["r_be"] & -surfaces["r_struct"]
-                            & -surfaces["z_top"] & +surfaces["z_bot"]),
-                ),
-            }
+            next_inner = "r_be"
+        # Add Fe reflector if requested (after U-238 or Be)
+        if R_fe_cm is not None:
+            cells["fe_reflector"] = _cyl_cell(
+                "fe_reflector", next_inner, "r_fe",
+            )
+            next_inner = "r_fe"
+        cells["structure"] = _cyl_cell(
+            "structure", next_inner, "r_struct",
+        )
     # Vacuum region: leave cell.fill = None (OpenMC treats it as void).
     # An empty openmc.Material() is rejected at runtime with
     # "ERROR: No macroscopic data or nuclides specified on material N".
     cells["blanket"].fill = materials["lipb"]
     cells["be_mult"].fill = materials["be"]
+    if "u238" in cells:
+        cells["u238"].fill = materials["u238"]
     if "fe_reflector" in cells:
         cells["fe_reflector"].fill = materials["fe_reflector"]
     cells["structure"].fill = materials["rafm"]
@@ -374,6 +355,12 @@ def _build_tally(geometry, surfaces, batches=10, particles=5000):
     """Build a TBR tally over the blanket cell.
 
     TBR = (Li-6 capture + Li-7 capture + Be-9 (n,2n)) / source neutron
+
+    Tier 16 (2026-08-31): if a 'u238' cell is present in the geometry
+    (hybrid blanket), include U-238 (n,Xt) in the nuclide list. U-238
+    fission above ~1 MeV produces significant tritium indirectly via
+    fission neutrons that back-scatter into LiPb; direct (n,Xt) on
+    U-238 is small but non-zero (e.g. U-238(n,p)Np-238 -> ...).
     """
     import openmc
     # Find blanket cell
@@ -392,8 +379,15 @@ def _build_tally(geometry, surfaces, batches=10, particles=5000):
     # TBR tally
     tally = openmc.Tally()
     tally.filters = [openmc.CellFilter(blanket)]
-    # Li-6 (n,xt) -> T; Li-7 (n,xn+t) -> T; Be-9 (n,2n) -> multiplier
-    tally.nuclides = ["Li6", "Li7", "Be9"]
+    # Tier 16: include U-238 if present in the geometry (hybrid blanket).
+    # Note: direct (n,Xt) on U-238 is negligible; the dominant effect is
+    # U-238 fast fission multiplying neutrons that then breed T in LiPb.
+    # We still include U-238 in the nuclide list so the tally explicitly
+    # accounts for any direct tritium production.
+    nuclides = ["Li6", "Li7", "Be9"]
+    if any(c.name == "u238" for c in geometry.get_all_cells().values()):
+        nuclides.append("U238")
+    tally.nuclides = nuclides
     tally.scores = ["(n,Xt)"]  # total tritium production
     # Estimate uncertainty from 1/N sqrt(N) for fixed source with 5k particles
     tallies = openmc.Tallies([tally])
@@ -406,7 +400,7 @@ def run_real_openmc_tbr(n_particles=5000, n_batches=10,
                          height_cm=100.0, boundary_type="vacuum",
                          mult_inside=False,
                          Li6_enrichment_fraction=0.90,
-                         R_fe_cm=None):
+                         R_fe_cm=None, R_u238_cm=None):
     """Run a real OpenMC TBR simulation.
 
     Returns RealOpenMCTBRResult with TBR + stddev from the tally.
@@ -416,6 +410,9 @@ def run_real_openmc_tbr(n_particles=5000, n_batches=10,
     Tier 13 (2026-08-31): R_fe_cm parameter adds an optional Fe
     reflector layer between the outermost breeder/multiplier
     region and the RAFM structure.
+
+    Tier 16 (2026-08-31): R_u238_cm parameter adds an optional
+    U-238 fission blanket layer (Z-FFR-style hybrid blanket).
 
     Geometry parameters (Tier 6.A):
       - R_plasma_cm: plasma-vacuum boundary radius (4 cm default).
@@ -481,6 +478,7 @@ def run_real_openmc_tbr(n_particles=5000, n_batches=10,
                 boundary_type=boundary_type,
                 mult_inside=mult_inside,
                 R_fe_cm=R_fe_cm,
+                R_u238_cm=R_u238_cm,
             )
             blanket_volume_cm3 = (
                 cells["blanket"].volume or 0.0

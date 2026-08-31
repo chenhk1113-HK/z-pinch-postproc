@@ -1,0 +1,47 @@
+[
+  {
+    "label": "zffr_v1_full",
+    "include_u238": true,
+    "include_fe": true,
+    "boundary": "vacuum",
+    "TBR_mc": 1.437081630188629,
+    "TBR_rel_stddev": 0.006007977186718594,
+    "elapsed_sec": 5.692605257034302
+  },
+  {
+    "label": "zffr_v1_full_white",
+    "include_u238": true,
+    "include_fe": true,
+    "boundary": "white",
+    "TBR_mc": 1.4388969127567977,
+    "TBR_rel_stddev": 0.006402821876161767,
+    "elapsed_sec": 5.523195266723633
+  },
+  {
+    "label": "zffr_v2_no_fe",
+    "include_u238": true,
+    "include_fe": false,
+    "boundary": "white",
+    "TBR_mc": 1.4782343600128658,
+    "TBR_rel_stddev": 0.006670029789601256,
+    "elapsed_sec": 5.65094518661499
+  },
+  {
+    "label": "zffr_v3_no_u238",
+    "include_u238": false,
+    "include_fe": false,
+    "boundary": "white",
+    "TBR_mc": 1.4991854359938708,
+    "TBR_rel_stddev": 0.006824232469549558,
+    "elapsed_sec": 5.297601222991943
+  },
+  {
+    "label": "zffr_v4_pure_fusion",
+    "include_u238": false,
+    "include_fe": false,
+    "boundary": "white",
+    "TBR_mc": 1.4991854359938726,
+    "TBR_rel_stddev": 0.006824232469547941,
+    "elapsed_sec": 5.725371837615967
+  }
+]

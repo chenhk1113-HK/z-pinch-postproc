@@ -56,6 +56,12 @@ NUCLIDES = [
     ("n_8231_82-Pb-206.zip", "Pb_082_206.endf"),
     ("n_8234_82-Pb-207.zip", "Pb_082_207.endf"),
     ("n_8237_82-Pb-208.zip", "Pb_082_208.endf"),
+    # Tier 16 (2026-08-31): U-238 for hybrid fission blanket (Z-FFR-style).
+    ("n_9237_92-U-238.zip", "U_092_238.endf"),
+    # Tier 17 (2026-08-31): Pb-207 already covered; need O-16 for Li4SiO4
+    # ceramic breeder, W-184 for tungsten first wall (Z-FFR design), and
+    # Cr-52 / Mn-55 / Ni-58 for EUROFER97 RAFM (more realistic than pure Fe).
+    # Skipping for v1.4 — Tier 17 uses simplified spherical geometry.
 ]
 
 BASE_URL = "https://www-nds.iaea.org/public/download-endf/ENDF-B-VIII.0/n/"

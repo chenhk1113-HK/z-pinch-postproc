@@ -3,6 +3,63 @@
 > All notable changes to this project are documented here. Format follows
 > [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.4.0] — 2026-08-31
+
+### Added
+- **Tier 17 — Z-FFR spherical geometry** in
+  `code/zpp_zffr_spherical.py`:
+  - `_build_zffr_spherical_geometry()` builds Peng 2014's Z-FFR
+    design in 1D spherical coordinates (vs the cylindrical Z-pinch
+    geometry used elsewhere).
+  - Layers: plasma → Be → LiPb → [U-238] → [Fe] → RAFM (matches
+    Peng's hybrid fission blanket design).
+  - `run_zffr_spherical_tbr()` runs an OpenMC simulation on the
+    spherical geometry, returns TBR_mc + stddev.
+  - 9 new tests in `tests/test_zpp_tier17.py`.
+- **Tier 16 — Hybrid fission blanket (U-238 layer)** in
+  `code/zpp_real_openmc_transport.py`:
+  - New `R_u238_cm` parameter on `_build_zpinch_geometry()` and
+    `run_real_openmc_tbr()`. When set, adds a U-238 fission
+    blanket layer between the breeder/multiplier region and the
+    RAFM structure (or Fe reflector if also set).
+  - U-238 material at theoretical density 19.1 g/cm3.
+  - `_build_tally()` automatically includes U-238 in nuclide list
+    when u238 cell is present.
+  - **Counterintuitive finding**: U-238 layer DECREASES TBR by
+    26% (1.83 → 1.36 with 10 cm U-238) because U-238 (n,γ)
+    competes with Li-6 (n,T) for thermal neutrons.
+  - **Fe reflector continues to hurt** but loses magnitude: −3.1%
+    (10 cm U-238) vs −14.0% (no U-238).
+  - 11 new tests in `tests/test_zpp_tier16.py`.
+- **Tier 15 — Smooth closed-form honest failure** in
+  `tests/test_zpp_tier15.py`:
+  - Attempted to fit a 2-stage capture-then-multiply closed-form
+    for mult_inside=False geometry (replacing the Tier 12
+    piecewise-linear table).
+  - **Honest finding**: even with bounded physical parameters
+    and 5 free params, no smooth model fits within 5% of all 5
+    Tier 10 calibration points (chi² > 100, max delta 7.6%).
+  - The Tier 12 piecewise-linear table remains the correct
+    calibration source. Documented as the v1.4 known limit.
+  - 4 new tests documenting the honest failure.
+
+### Stats
+- 745 tests pass (was 721 at v1.3.0; +24 new)
+- 13 → 14 git tags
+
+### Known limits (v1.4 honest findings)
+1. **Tier 15**: smooth closed-form insufficient for mult_inside=False.
+   The non-monotonic R=50 data point (Tier 10) prevents any smooth
+   5-param model from fitting within 5%. Tier 12 piecewise-linear
+   table is the correct calibration source.
+2. **Tier 16**: U-238 layer HURTS TBR by 26% in cylindrical LiPb+Be
+   blanket. Z-FFR's published TBR > 1.15 may still be achievable with
+   different geometry (spherical), different breeder (Li4SiO4), or
+   natural Li enrichment (7.5%) — none of which Tier 16 tested.
+3. **Tier 17**: spherical geometry tested at design parameters but
+   does not yet include Li4SiO4 (only LiPb). Z-FFR Peng 2014 used
+   Li4SiO4 as breeder, which has different neutronics.
+
 ## [1.3.0] — 2026-08-31
 
 ### Added
