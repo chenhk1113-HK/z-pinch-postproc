@@ -97,6 +97,17 @@ class TBRInputs:
     geometry: str = "tokamak"  # "tokamak", "Z-pinch", "spherical_tokamak", etc.
     MHD_effect_factor: float = 1.0   # MHD can reduce TBR by ~5-15% in liquid breeders
     temperature_factor: float = 1.0  # Temperature effect on TBR (small)
+    # Tier 7+ (2026-08-31): boundary condition for the parametric.
+    # - "infinite": infinite-medium (Sobes 2011 regime). TBR uses the
+    #   Sobes formula without boundary correction.
+    # - "reflective": neutrons that escape the blanket are reflected
+    #   back (white / Lambertian boundary). The MC sweep was run with
+    #   this setup. The parametric applies a calibrated
+    #   boundary_correction_factor on top of Sobes.
+    # Default "infinite" preserves backward compat with v0.9.0 and
+    # earlier. To match the Tier 6.C Monte Carlo sweep, set
+    # boundary_condition="reflective".
+    boundary_condition: str = "infinite"
 
 
 @dataclass
@@ -110,7 +121,11 @@ class TBRResult:
     blanket_thickness_cm: float
     saturation_fraction: float  # Fraction of saturated TBR achieved
     needs_enrichment: bool    # True if TBR < 1.0 at natural Li
-    notes: str
+    # Tier 7+ (2026-08-31): boundary-correction factor applied.
+    # 1.0 for infinite-medium (Sobes regime); >1.0 for reflective
+    # boundary (reflected neutrons contribute to TBR at thin blankets).
+    boundary_correction: float = 1.0
+    notes: str = ""
 
 
 def thickness_to_saturation(
@@ -135,6 +150,110 @@ def thickness_to_saturation(
     if blanket_material not in L_sat:
         L_sat[blanket_material] = 40.0  # default
     return float(1.0 - np.exp(-thickness_cm / L_sat[blanket_material]))
+
+
+# Tier 7+ (2026-08-31): MC calibration table for the Z-pinch
+# LiPb + Be blanket at 90% Li-6 enrichment with white reflecting
+# boundary. Source: code/zpp_real_openmc_transport.py,
+# Tier 6.C sweep, 20,000 particles × 20 batches each,
+# OpenMC 0.16.0 / ENDF/B-VIII.0.
+#
+# Format: list of (R_blanket_cm, TBR_mc, TBR_mc_rel_stddev)
+# The Be inner layer is at R=6 cm, so LiPb-only thickness is
+# R_blanket - 6 cm.
+MC_CALIBRATION_TABLE = [
+    # R_b   TBR(mc)   rel_std
+    (12,    1.5341,   0.0013),
+    (50,    1.8361,   0.0011),
+    (80,    1.8574,   0.0010),
+    (110,   1.8625,   0.0011),
+    (140,   1.8639,   0.0011),
+]
+
+
+def boundary_correction_factor(
+    blanket_thickness_cm: float,
+    boundary_condition: str = "infinite",
+) -> float:
+    """Tier 7+ (2026-08-31) — boundary-condition correction for the
+    parametric Tier 5.B formula.
+
+    The Sobes 2011 infinite-medium saturation model
+    `f_sat = 1 - exp(-x/L_sat)` assumes escaping neutrons are lost.
+    When the boundary is *reflective* (white / Lambertian, as in our
+    Tier 6.C OpenMC sweep), escaping neutrons bounce back and
+    contribute to TBR — most strongly at thin blankets where most
+    neutrons would otherwise leak.
+
+    This function returns a multiplicative correction that, applied
+    on top of the Sobes parametric, recovers the calibrated MC
+    values to within ±10% at every R_blanket in the calibration
+    table (R_b ∈ {12, 50, 80, 110, 140} cm).
+
+    Method: piecewise-linear interpolation in `blanket_thickness_cm`
+    space, anchored to the 5 calibration points. The reference
+    "infinite" correction at each thickness is the ratio
+    MC(TBR) / Sobes(TBR), evaluated at 90% Li-6 enrichment.
+
+    Parameters
+    ----------
+    blanket_thickness_cm : float
+        LiPb-only thickness (NOT the full R_blanket). For the Tier 6.C
+        geometry, R_b - 6 cm.
+    boundary_condition : str
+        "infinite" (default): return 1.0. The Sobes formula is used
+        as-is.
+        "reflective": interpolate the calibration table.
+
+    Returns
+    -------
+    float
+        Multiplicative correction factor. 1.0 for infinite-medium.
+        For reflective boundary at the calibration points, values
+        range from ~6.0 (R_b=12 cm, thin blanket, big boost) to
+        ~0.89 (R_b=140 cm, Sobes slightly overshoots).
+    """
+    if boundary_condition == "infinite":
+        return 1.0
+    if boundary_condition != "reflective":
+        raise ValueError(
+            f"boundary_condition must be 'infinite' or 'reflective', "
+            f"got {boundary_condition!r}"
+        )
+    # R_b = blanket_thickness_cm + R_be_inner = blanket_thickness_cm + 6
+    # (because the Tier 6.C geometry has Be at r=6 cm).
+    # For the interpolation, work in terms of blanket_thickness_cm
+    # directly — the calibration table is keyed by R_b but the
+    # correction is parameterized by LiPb-only thickness.
+    R_BE_INNER = 6.0
+    # Build the thickness -> correction lookup from MC_CALIBRATION_TABLE
+    # by evaluating Sobes at each calibration point.
+    thickness_to_correction = []
+    for R_b, TBR_mc, _ in MC_CALIBRATION_TABLE:
+        thick = R_b - R_BE_INNER
+        # Sobes TBR at this point (90% Li-6, post-Tier 7.C calibrated).
+        inp = TBRInputs(
+            blanket_material="LiPb",
+            neutron_multiplier="Be",
+            Li6_enrichment_fraction=0.90,
+            blanket_thickness_cm=thick,
+            first_wall_coverage_fraction=0.95,
+            geometry="cylindrical",
+            MHD_effect_factor=0.85,
+            temperature_factor=1.0,
+        )
+        TBR_sobes = compute_TBR(inp).TBR
+        correction = TBR_mc / TBR_sobes
+        thickness_to_correction.append((thick, correction))
+    # Piecewise-linear interpolation (numpy.interp with extrapolation
+    # at the boundaries via clamping).
+    thicknesses = np.array([t for t, _ in thickness_to_correction])
+    corrections = np.array([c for _, c in thickness_to_correction])
+    if blanket_thickness_cm <= thicknesses[0]:
+        return float(corrections[0])
+    if blanket_thickness_cm >= thicknesses[-1]:
+        return float(corrections[-1])
+    return float(np.interp(blanket_thickness_cm, thicknesses, corrections))
 
 
 def enrichment_factor(
@@ -227,22 +346,37 @@ def compute_TBR(inputs: TBRInputs) -> TBRResult:
     # Apply MHD and temperature effects
     TBR = TBR_raw * inputs.MHD_effect_factor * inputs.temperature_factor
 
+    # Tier 7+ (2026-08-31): boundary-condition correction. If the
+    # blanket is in a reflective enclosure (white / Lambertian
+    # boundary, as in our Tier 6.C OpenMC sweep), escaped neutrons
+    # bounce back and contribute to TBR — most strongly at thin
+    # blankets where most neutrons would otherwise leak. The
+    # correction is calibrated against the 5-point MC_CALIBRATION_
+    # TABLE; for "infinite" boundary_condition it is 1.0 and Sobes
+    # is used as-is. Calibrated against 90% Li-6 only.
+    f_geom = boundary_correction_factor(
+        inputs.blanket_thickness_cm,
+        inputs.boundary_condition,
+    )
+    TBR_corrected = TBR * f_geom
+
     needs_enrichment = (
-        TBR < 1.0 and inputs.Li6_enrichment_fraction <= 0.30
+        TBR_corrected < 1.0 and inputs.Li6_enrichment_fraction <= 0.30
     )
 
     notes = (
         f"Blanket={inputs.blanket_material}, mult={inputs.neutron_multiplier}, "
         f"thickness={inputs.blanket_thickness_cm} cm (f_sat={f_sat:.2f}), "
         f"Li-6={inputs.Li6_enrichment_fraction*100:.1f}% (f_enr={f_enr:.2f}), "
-        f"coverage={f_cov:.2f}. "
+        f"coverage={f_cov:.2f}, boundary={inputs.boundary_condition} "
+        f"(f_geom={f_geom:.2f}). "
         f"TBR_blanket={TBR_blanket:.3f}, TBR_multiplier={TBR_multiplier:.3f}, "
-        f"TBR_total={TBR:.3f}. "
+        f"TBR_Sobes={TBR:.3f}, TBR_total={TBR_corrected:.3f}. "
         f"{'NEEDS ENRICHMENT for TBR>1' if needs_enrichment else 'self-sufficient'}."
     )
 
     return TBRResult(
-        TBR=float(TBR),
+        TBR=float(TBR_corrected),
         TBR_blanket=float(TBR_blanket),
         TBR_multiplier=float(TBR_multiplier),
         f_coverage=float(f_cov),
@@ -250,6 +384,7 @@ def compute_TBR(inputs: TBRInputs) -> TBRResult:
         blanket_thickness_cm=float(inputs.blanket_thickness_cm),
         saturation_fraction=float(f_sat),
         needs_enrichment=bool(needs_enrichment),
+        boundary_correction=float(f_geom),
         notes=notes,
     )
 

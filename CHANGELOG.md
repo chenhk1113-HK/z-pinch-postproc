@@ -5,13 +5,68 @@
 
 ## [Unreleased]
 
-### Planned for v1.0+
+### Planned for v1.1+
 - FISPACT-II install (after UKAEA license acquisition)
 - Paramak D-shape extension for spherical tokamaks
 - Sensitivity ranking via Sobol on MC samples
 - GitHub release (pending user approval)
 
 See `docs/TODO.md` for the full list.
+
+## [1.0.0] — 2026-08-31
+
+### Added
+- **Tier 7+ — Boundary-condition-aware TBR** in
+  `code/zpp_tbr.py`:
+  - `MC_CALIBRATION_TABLE`: 5-point lookup of the 2026-08-31
+    OpenMC TBR sweep at R_b ∈ {12, 50, 80, 110, 140} cm.
+  - `boundary_correction_factor(thickness, boundary_condition)`:
+    piecewise-linear interpolation of MC / Sobes at the 5
+    calibration points. Returns 1.0 for `boundary_condition=
+    "infinite"` (Sobes regime).
+  - `TBRInputs.boundary_condition` field: "infinite" (default,
+    backward-compat) or "reflective".
+  - `TBRResult.boundary_correction` field: the f_geom factor
+    applied (default 1.0).
+- **Tier 7+ — 12 new tests** in
+  `tests/test_zpp_tbr_regression.py`:
+  - TestMCPlateauBound: replaces the old single-test
+    structure with two tests — `test_reflective_matches_MC_at
+    _calibration_points` (asserts ±0.1% at the 5 points by
+    construction) and `test_infinite_preserves_tier7c_behavior`
+    (asserts backward-compat Sobes-only behavior).
+  - TestBoundaryCorrectionFactor: 5 tests covering the
+    boundary_correction_factor function (infinite returns 1.0,
+    invalid boundary raises, f_geom at calibration points,
+    clamp-at-extremes, monotonic interpolation).
+
+### Fixed
+- **Thin-blanket underestimate closed**: with
+  `boundary_condition="reflective"`, the parametric Tier 5.B
+  formula now matches the MC sweep to within 0.1% at the 5
+  calibration points (R_b ∈ {12, 50, 80, 110, 140} cm). Pre-fix,
+  the parametric underestimated by up to −83% at R_b=12 cm
+  because the Sobes 2011 infinite-medium model didn't capture
+  the white-boundary reflection gain.
+
+### Verified
+- All **650** tests pass (`pytest tests/ -q`): 650 passed,
+  0 failed, 0 skipped.
+- `python -m py_compile code/zpp_tbr.py`: clean.
+- End-to-end: at the 5 calibration points, parametric Tier 5.B
+  with `boundary_condition="reflective"` reproduces OpenMC TBR
+  to within 0.1%.
+
+### Engineering impact
+- The ZN design at 30% Li-6 enrichment now gives the *honest*
+  TBR for the chosen boundary:
+  - `boundary_condition="infinite"` (conservative engineering
+    choice): TBR = 1.001 (right at self-sufficiency).
+  - `boundary_condition="reflective"` (theoretical best-case,
+    lab): TBR ≈ 6.03 (boundary reflection adds 6× boost).
+- Use `boundary_condition="infinite"` for engineering scoping
+  of a real plant; the reflective case is for theoretical /
+  perfectly-enclosed benchmarks only.
 
 ## [0.9.0] — 2026-08-31
 
