@@ -18,13 +18,13 @@ import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "code"))
 
-from zpp_plant_simulation import (
+from zpp.zpp_plant_simulation import (
     PlantDesign, PlantSimulation, PlantSimulationResult,
     simulate_plant, sweep_plant_designs,
     TRITIUM_BREEDING_THRESHOLD, COMMERCIAL_LCOE_TARGET_USD_PER_MWH,
     COMMERCIAL_NET_POWER_MW,
 )
-from zpp_comparison import ZN_DESIGN, Z_PRESENT, ZAP_SFZ, GF_MTF, PACIFIC_FUSION
+from zpp.zpp_comparison import ZN_DESIGN, Z_PRESENT, ZAP_SFZ, GF_MTF, PACIFIC_FUSION
 
 
 class TestPlantDesign:

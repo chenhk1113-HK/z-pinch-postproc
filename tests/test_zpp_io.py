@@ -11,7 +11,7 @@ import pytest
 _HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(_HERE.parent / "code"))
 
-from zpp_io import read_profile, write_report
+from zpp.zpp_io import read_profile, write_report
 
 
 def test_read_csv_basic(tmp_path):

@@ -16,34 +16,34 @@ class TestTier14ZFFRReferences:
     """Tier 14 — Z-FFR / Antong Fusion reference data."""
 
     def test_zffr_references_module_loads(self):
-        """zpp_zffr_references module should load without error."""
-        import zpp_zffr_references
-        assert hasattr(zpp_zffr_references, "ZFFR_TARGET_TBR")
+            """zpp_zffr_references module should load without error."""
+            from zpp.adapters import zpp_zffr_references
+            assert hasattr(zpp_zffr_references, "ZFFR_TARGET_TBR")
 
     def test_zffr_target_tbr_value(self):
         """ZFFR_TARGET_TBR should be 1.15 (Peng 2014 design target)."""
-        from zpp_zffr_references import ZFFR_TARGET_TBR
+        from zpp.adapters.zpp_zffr_references import ZFFR_TARGET_TBR
         assert ZFFR_TARGET_TBR == 1.15
 
     def test_zffr_actual_achieved_tbr(self):
         """ZFFR achieved TBR should be 1.24 (per published design)."""
-        from zpp_zffr_references import ZFFR_ACHIEVED_TBR
+        from zpp.adapters.zpp_zffr_references import ZFFR_ACHIEVED_TBR
         # Antong Fusion / 钛媒体 claim TBR up to 1.24
         assert 1.20 <= ZFFR_ACHIEVED_TBR <= 1.30
 
     def test_antong_fusion_founded(self):
         """Antong Fusion should be founded in 2022 in Beijing."""
-        from zpp_zffr_references import ANTONG_FUSION_FOUNDED
+        from zpp.adapters.zpp_zffr_references import ANTONG_FUSION_FOUNDED
         assert ANTONG_FUSION_FOUNDED == 2022
 
     def test_peng_xianjue_academician(self):
         """Peng Xianjue should be listed as founder and CAE academician."""
-        from zpp_zffr_references import ANTONG_FUSION_FOUNDER
+        from zpp.adapters.zpp_zffr_references import ANTONG_FUSION_FOUNDER
         assert "Peng Xianjue" in ANTONG_FUSION_FOUNDER or "彭先觉" in ANTONG_FUSION_FOUNDER
 
     def test_zffr_blaket_geometry(self):
         """Z-FFR design: 150 MW Z-pinch neutron source, TBR > 1.15."""
-        from zpp_zffr_references import (
+        from zpp.adapters.zpp_zffr_references import (
             ZFFR_NEUTRON_SOURCE_POWER_MW,
             ZFFR_TARGET_TBR,
         )
@@ -79,7 +79,7 @@ class TestTier14BackwardCompat:
         from Tier 14 which only added documentation)."""
         # This is implicitly tested by the full suite; here just
         # verify the parametric Tier 5.B still works
-        from zpp_tbr import compute_TBR, TBRInputs
+        from zpp.zpp_tbr import compute_TBR, TBRInputs
         inp = TBRInputs(
             blanket_material="LiPb",
             neutron_multiplier="Be",

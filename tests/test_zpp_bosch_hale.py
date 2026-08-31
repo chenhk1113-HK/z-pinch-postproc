@@ -20,7 +20,7 @@ import pytest
 _HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(_HERE.parent / "code"))
 
-from zpp_bosch_hale import (
+from zpp.zpp_bosch_hale import (
     reactivity_DT_cm3s,
     reactivity_DDn_cm3s,
     E_DT_MeV,

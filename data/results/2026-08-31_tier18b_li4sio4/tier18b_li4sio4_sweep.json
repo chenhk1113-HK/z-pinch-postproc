@@ -1,0 +1,16 @@
+[
+  {
+    "label": "tier6_lipb_baseline",
+    "breeder": "LiPb",
+    "TBR_mc": 1.8279762892167468,
+    "TBR_rel_stddev": 0.004174483974737278,
+    "elapsed_sec": 3.436526298522949
+  },
+  {
+    "label": "tier18b_li4sio4",
+    "breeder": "Li4SiO4",
+    "TBR_mc": 1.0295989500765395,
+    "TBR_rel_stddev": 0.004848902521213655,
+    "elapsed_sec": 1.854741096496582
+  }
+]

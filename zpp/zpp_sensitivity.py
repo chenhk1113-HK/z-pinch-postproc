@@ -20,10 +20,10 @@ from dataclasses import dataclass, field
 from typing import Callable
 import numpy as np
 
-from zpp_plant_simulation import (
+from zpp.zpp_plant_simulation import (
     PlantDesign, simulate_plant, PlantSimulationResult,
 )
-from zpp_comparison import (
+from zpp.zpp_comparison import (
     ZN_DESIGN, ConceptParameters,
 )
 

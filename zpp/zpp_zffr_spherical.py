@@ -177,7 +177,7 @@ def run_zffr_spherical_tbr(
     """
     import sys
     sys.path.insert(0, "code")
-    from zpp_real_openmc_transport import (
+    from zpp.zpp_real_openmc_transport import (
         _build_blanket_materials, _build_tally, _cross_sections_xml,
     )
     import openmc

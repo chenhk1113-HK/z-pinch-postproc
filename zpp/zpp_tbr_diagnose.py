@@ -25,7 +25,7 @@ Output is structured (TBRDeconstruction dataclass) and includes a
 markdown formatter for human-readable reports.
 
 Usage:
-    from zpp_tbr_diagnose import deconstruct_tbr, deconstruction_markdown
+    from zpp.zpp_tbr_diagnose import deconstruct_tbr, deconstruction_markdown
     d = deconstruct_tbr(tbr_inputs, mc_value=1.84)
     print(deconstruction_markdown(d))
 """
@@ -35,7 +35,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Optional
 
-from zpp_tbr import (
+from zpp.zpp_tbr import (
     TBRInputs,
     TBRResult,
     compute_TBR,

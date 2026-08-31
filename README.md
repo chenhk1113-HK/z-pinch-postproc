@@ -86,15 +86,17 @@ design philosophy. Summary:
 
 | Module | Purpose | Lines |
 |---|---|---|
-| `code/zpp_tbr.py` | Parametric TBR formula (fast, calibrated to MC) | ~250 |
-| `code/zpp_real_openmc_transport.py` | Real OpenMC transport wrapper | ~700 |
-| `code/zpp_zffr_spherical.py` | Z-FFR spherical geometry (Peng 2014) | ~250 |
-| `code/zpp_geometry_tbr.py` | Tier 5.B piecewise-linear interpolation | ~150 |
-| `code/zpp_tbr_diagnose.py` | Tier 11 TBR deconstruction tool | ~100 |
-| `code/zpp_li4sio4.py` | Tier 18 Li4SiO4 ceramic breeder material | ~100 |
-| `code/zpp_zffr_references.py` | Z-FFR Antong Fusion reference catalog | ~20 |
-| `code/zpp_*` (yield) | Bosch-Hale, Lawson, cost, etc. | ~3000 |
-| `tests/test_zpp_tier*.py` | Tier-specific test files (Tier 9–18) | ~2100 |
+| `zpp/zpp_tbr.py` | Parametric TBR formula (fast, calibrated to MC) | ~250 |
+| `zpp/zpp_real_openmc_transport.py` | Real OpenMC transport wrapper | ~700 |
+| `zpp/zpp_zffr_spherical.py` | Z-FFR spherical geometry (Peng 2014) | ~250 |
+| `zpp/zpp_geometry_tbr.py` | Tier 5.B piecewise-linear interpolation | ~150 |
+| `zpp/zpp_tbr_diagnose.py` | Tier 11 TBR deconstruction tool | ~100 |
+| `zpp/zpp_li4sio4.py` | Tier 18 Li4SiO4 ceramic breeder material | ~100 |
+| `zpp/adapters/zpp_zffr_references.py` | Z-FFR Antong Fusion reference catalog | ~20 |
+| `zpp/zpp_*` (yield) | Bosch-Hale, Lawson, cost, etc. | ~3000 |
+| `tests/test_zpp_tier*.py` | Tier-specific test files (Tier 9–18) | ~2200 |
+| `zpp_cli/tbr.py` | `zpp-tbr` CLI entry point (post `pip install`) | ~80 |
+| `pyproject.toml` | Install + console scripts + pytest config | ~100 |
 
 ## Releases
 
@@ -111,7 +113,8 @@ design philosophy. Summary:
 | v1.2.0 | Tier 9-11 | Furuta validation, extended sweep, deconstruction |
 | v1.3.0 | Tier 12-14 | mult_outside calibration, Fe reflector, Antong Fusion refs |
 | v1.4.0 | Tier 15-17 | U-238 hybrid blanket, Z-FFR spherical validation |
-| **v1.4.1** | **Tier 18 + CI + Docs** | **Li4SiO4 breeder, GitHub Actions, MkDocs site** |
+| v1.4.1 | Tier 18 + CI + Docs | Li4SiO4 breeder material, GitHub Actions, MkDocs site |
+| **v1.5.0** | **Packaging + Tier 18.B** | **pyproject.toml, code/→zpp/, Li4SiO4 OpenMC benchmark** |
 
 ## Key results (v1.4.x)
 
@@ -160,21 +163,45 @@ geometry the penalty drops to 2.6%. This is the **first documented
 geometry correction** between Z-pinch cylindrical and Z-pinch
 spherical blanket designs.
 
-### Tier 18: Li4SiO4 ceramic breeder material
+### Tier 18: Li4SiO4 ceramic breeder — counter-intuitive Tier 18.B finding
 
-Adds the material definition for Li4SiO4 (lithium orthosilicate) —
-the breeder used in Z-FFR Peng 2014's design. Higher Li density than
-LiPb → smaller blanket for TBR > 1.
+Tier 18.A added the material definition for Li4SiO4 (lithium
+orthosilicate) — the breeder used in Z-FFR Peng 2014's design.
+
+Tier 18.B **validated the material with real OpenMC transport** and
+found a counter-intuitive result:
+
+| Configuration | TBR_mc | Δ vs LiPb |
+|---|---|---|
+| LiPb breeder (Tier 6 baseline, cylindrical) | 1.83 | baseline |
+| Li4SiO4 breeder (Tier 18.B, cylindrical) | **1.03** | **−44%** |
+
+**Why?** Li4SiO4 has higher Li density per unit volume than LiPb, but
+its silicate lattice creates self-shielding, and O-16 captures neutrons
+that would otherwise reach Li-6. Net breeding rate is much lower.
+
+**Implication for Z-FFR design**: Z-FFR's choice of Li4SiO4 is
+specific to **spherical hybrid (U-238) designs** — Tier 17 showed
+spherical Li4SiO4 gives TBR=1.50, and U-238 amplifies further. But
+for **pure-fusion cylindrical Z-pinch** (our default geometry), LiPb
+is decisively better. LiPb remains the recommended breeder.
 
 ```python
-from zpp_li4sio4 import build_li4sio4_material
+from zpp_li4sio4 import build_li4sio4_material  # zpp/zpp_li4sio4.py
 m = build_li4sio4_material(Li6_enrichment_fraction=0.90)
 ```
 
-Transport benchmark (Tier 18.B) deferred — requires Si-28/29/30 + O-16
-cross section download and an OpenMC run.
+## How to install (v1.5.0+)
 
-## Citation
+```bash
+git clone https://github.com/chenhk1113-HK/z-pinch-postproc.git
+cd z-pinch-postproc
+pip install -e .                    # editable install
+zpp-tbr --R-blanket 80 --Li6 0.90   # parametric TBR sweep
+pytest tests/ --cov                 # 757 tests, 85.15% coverage
+```
+
+## Releases
 
 See [`CITATION.cff`](CITATION.cff) for the GitHub-native citation.
 Key references (see [`docs/zffr_references.md`](docs/zffr_references.md)
@@ -216,4 +243,4 @@ for the full list. The most important limits:
 
 ---
 
-`z-pinch-postproc` v1.4.1 (2026-08-31) — 751 tests pass.
+`z-pinch-postproc` v1.5.0 (2026-08-31) — 757 tests pass, 85.15% coverage.

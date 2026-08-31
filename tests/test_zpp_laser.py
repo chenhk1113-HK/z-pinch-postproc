@@ -27,20 +27,20 @@ import pytest
 # Ensure `code/` is on path for direct imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "code"))
 
-from zpp_laser import (
+from zpp.zpp_laser import (
     LaserPreheat,
     no_laser,
     z_present_zbeamlet,
     zn_design_laser,
     preheat_floor_for_cylindrical_fuel,
 )
-from zpp_mcbride import (
+from zpp.zpp_mcbride import (
     MagLIFInputs,
     gomez2020_z_shot,
     zn_design_shot,
     stagnation_profile,
 )
-from zpp_pipeline import run_pipeline
+from zpp.zpp_pipeline import run_pipeline
 
 
 # A simple triangular Z-pinch profile for pipeline tests.

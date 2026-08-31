@@ -17,7 +17,7 @@ import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "code"))
 
-from zpp_adapters import (
+from zpp.adapters.zpp_adapters import (
     BOPAdapter, TBRAdapter, GeometryAdapter, NeutronicsAdapter,
     ParametricBOPAdapter, RealProcessBOPAdapter,
     ParametricTBRAdapter, RealOpenMCTBRAdapter,
@@ -25,10 +25,10 @@ from zpp_adapters import (
     ParametricNeutronicsAdapter, RealFISPACTNeutronicsAdapter,
     AdapterSet, make_parametric_set, swap_adapter, list_install_instructions,
 )
-from zpp_process_bop import PlantBOPInputs, ProcessBOPResult
-from zpp_tbr import TBRInputs, TBRResult
-from zpp_geometry import ZIFERadialBuild
-from zpp_pfc_lifetime import PFCDamageInputs, PFCDamageResult
+from zpp.zpp_process_bop import PlantBOPInputs, ProcessBOPResult
+from zpp.zpp_tbr import TBRInputs, TBRResult
+from zpp.zpp_geometry import ZIFERadialBuild
+from zpp.zpp_pfc_lifetime import PFCDamageInputs, PFCDamageResult
 
 
 class TestParametricAdapters:

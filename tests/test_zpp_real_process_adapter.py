@@ -18,13 +18,13 @@ import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "code"))
 
-from zpp_real_process_adapter import (
+from zpp.adapters.zpp_real_process_adapter import (
     RealProcessBOPAdapter, ProcessIFEParams,
     validate_process_install, get_process_ife_defaults,
     get_process_cost_defaults, PROCESS_IFE_DEFAULTS, PROCESS_COST_2015_DEFAULTS,
 )
-from zpp_process_bop import PlantBOPInputs, ProcessBOPResult
-from zpp_adapters import BOPAdapter
+from zpp.zpp_process_bop import PlantBOPInputs, ProcessBOPResult
+from zpp.adapters.zpp_adapters import BOPAdapter
 
 
 class TestProcessInstallDetection:

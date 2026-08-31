@@ -201,7 +201,7 @@ def compute_LCOE_proxy(
         dict with required_rep_rate_Hz, P_net_electric_MW,
         annual_net_energy_MWh, LCOE.
     """
-    from zpp_economics import PlantEconomics
+    from zpp.zpp_economics import PlantEconomics
 
     Q_eng = compute_Q_eng(concept)
     if Q_eng * concept.eta_wallplug * eta_E_plant < 1:

@@ -58,6 +58,11 @@ NUCLIDES = [
     ("n_8237_82-Pb-208.zip", "Pb_082_208.endf"),
     # Tier 16 (2026-08-31): U-238 for hybrid fission blanket (Z-FFR-style).
     ("n_9237_92-U-238.zip", "U_092_238.endf"),
+    # Tier 18.B (2026-08-31): Li4SiO4 ceramic breeder needs Si-28/29/30 + O-16
+    ("n_1425_14-Si-28.zip", "Si_014_028.endf"),
+    ("n_1428_14-Si-29.zip", "Si_014_029.endf"),
+    ("n_1431_14-Si-30.zip", "Si_014_030.endf"),
+    ("n_0825_8-O-16.zip", "O_008_016.endf"),
     # Tier 17 (2026-08-31): Pb-207 already covered; need O-16 for Li4SiO4
     # ceramic breeder, W-184 for tungsten first wall (Z-FFR design), and
     # Cr-52 / Mn-55 / Ni-58 for EUROFER97 RAFM (more realistic than pure Fe).

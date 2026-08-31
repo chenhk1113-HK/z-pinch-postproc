@@ -38,12 +38,12 @@ class TestCheckParamakInstall:
     """Test check_paramak_install()."""
 
     def test_installed(self):
-        from zpp_real_paramak_adapter import check_paramak_install
+        from zpp.adapters.zpp_real_paramak_adapter import check_paramak_install
         info = check_paramak_install()
         assert info["installed"] is True
 
     def test_version(self):
-        from zpp_real_paramak_adapter import check_paramak_install
+        from zpp.adapters.zpp_real_paramak_adapter import check_paramak_install
         info = check_paramak_install()
         assert info["version"] is not None
         # 0.9.x
@@ -54,12 +54,12 @@ class TestGetParamakInfo:
     """Test get_paramak_info() metadata."""
 
     def test_returns_dict(self):
-        from zpp_real_paramak_adapter import get_paramak_info
+        from zpp.adapters.zpp_real_paramak_adapter import get_paramak_info
         info = get_paramak_info()
         assert info["name"] == "paramak"
 
     def test_location(self):
-        from zpp_real_paramak_adapter import get_paramak_info
+        from zpp.adapters.zpp_real_paramak_adapter import get_paramak_info
         info = get_paramak_info()
         assert info["location"] is not None
         assert ".venv" in info["location"] or "site-packages" in info["location"]
@@ -69,8 +69,8 @@ class TestBuildParamakZpinch:
     """Test build_paramak_zpinch() for the 4 pre-defined builds."""
 
     def test_zn_build(self):
-        from zpp_real_paramak_adapter import build_paramak_zpinch
-        from zpp_geometry import ZN_radial_build
+        from zpp.adapters.zpp_real_paramak_adapter import build_paramak_zpinch
+        from zpp.zpp_geometry import ZN_radial_build
         build = ZN_radial_build()
         with tempfile.TemporaryDirectory() as work_dir:
             result = build_paramak_zpinch(build, work_dir, export_step=False)
@@ -80,8 +80,8 @@ class TestBuildParamakZpinch:
             assert result.blanket_volume_cm3 > 0
 
     def test_zn_step_file_generated(self):
-        from zpp_real_paramak_adapter import build_paramak_zpinch
-        from zpp_geometry import ZN_radial_build
+        from zpp.adapters.zpp_real_paramak_adapter import build_paramak_zpinch
+        from zpp.zpp_geometry import ZN_radial_build
         build = ZN_radial_build()
         with tempfile.TemporaryDirectory() as work_dir:
             result = build_paramak_zpinch(build, work_dir, export_step=True)
@@ -91,24 +91,24 @@ class TestBuildParamakZpinch:
             assert os.path.getsize(result.step_file_path) > 1000  # STEP file
 
     def test_tokamak_build(self):
-        from zpp_real_paramak_adapter import build_paramak_zpinch
-        from zpp_geometry import tokamak_radial_build
+        from zpp.adapters.zpp_real_paramak_adapter import build_paramak_zpinch
+        from zpp.zpp_geometry import tokamak_radial_build
         build = tokamak_radial_build()
         with tempfile.TemporaryDirectory() as work_dir:
             result = build_paramak_zpinch(build, work_dir, export_step=False)
             assert result.build_name.startswith("ITER") or "tokamak" in result.build_name.lower()
 
     def test_gf_mtf_build(self):
-        from zpp_real_paramak_adapter import build_paramak_zpinch
-        from zpp_geometry import GF_MTF_radial_build
+        from zpp.adapters.zpp_real_paramak_adapter import build_paramak_zpinch
+        from zpp.zpp_geometry import GF_MTF_radial_build
         build = GF_MTF_radial_build()
         with tempfile.TemporaryDirectory() as work_dir:
             result = build_paramak_zpinch(build, work_dir, export_step=False)
             assert result.total_radius_cm > 0
 
     def test_zap_sfz_build(self):
-        from zpp_real_paramak_adapter import build_paramak_zpinch
-        from zpp_geometry import Zap_SFZ_radial_build
+        from zpp.adapters.zpp_real_paramak_adapter import build_paramak_zpinch
+        from zpp.zpp_geometry import Zap_SFZ_radial_build
         build = Zap_SFZ_radial_build()
         with tempfile.TemporaryDirectory() as work_dir:
             result = build_paramak_zpinch(build, work_dir, export_step=False)
@@ -116,8 +116,8 @@ class TestBuildParamakZpinch:
 
     def test_radius_consistent_with_radial_build(self):
         """total_radius from Paramak matches sum of layer thicknesses."""
-        from zpp_real_paramak_adapter import build_paramak_zpinch
-        from zpp_geometry import ZN_radial_build
+        from zpp.adapters.zpp_real_paramak_adapter import build_paramak_zpinch
+        from zpp.zpp_geometry import ZN_radial_build
         build = ZN_radial_build()
         expected_radius = sum(l.thickness_cm for l in build.layers)
         with tempfile.TemporaryDirectory() as work_dir:
@@ -126,8 +126,8 @@ class TestBuildParamakZpinch:
 
     def test_blanket_volume_scales_with_height(self):
         """Blanket volume scales linearly with axial_length."""
-        from zpp_real_paramak_adapter import build_paramak_zpinch
-        from zpp_geometry import ZIFERadialBuild, RadialBuildLayer
+        from zpp.adapters.zpp_real_paramak_adapter import build_paramak_zpinch
+        from zpp.zpp_geometry import ZIFERadialBuild, RadialBuildLayer
         layers = [
             RadialBuildLayer(name="FW", material="RAFM", thickness_cm=2.0, role="FW"),
             RadialBuildLayer(name="blanket", material="LiPb", thickness_cm=50.0, role="blanket"),
@@ -146,7 +146,7 @@ class TestParamakGeometryMarkdown:
     """Test paramak_geometry_markdown() formatting."""
 
     def test_includes_install_status(self):
-        from zpp_real_paramak_adapter import (
+        from zpp.adapters.zpp_real_paramak_adapter import (
             paramak_geometry_markdown, ParamakGeometryResult,
         )
         result = ParamakGeometryResult(

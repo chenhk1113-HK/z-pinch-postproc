@@ -11,12 +11,12 @@ from __future__ import annotations
 import json
 import numpy as np
 
-from zpp_alpha_heating import apply_alpha_heating_to_shot, alpha_ignition_criterion
-from zpp_bosch_hale import reactivity_DT_cm3s, E_DT_J, E_DT_MeV
-from zpp_laser import LaserPreheat, no_laser
-from zpp_lawson import burn_weighted_lawson, lawson_criterion_classic_DT
-from zpp_mix import eta_mix_empirical, apply_mix_correction
-from zpp_wallplug import WallPlugChain, wallplug_chain_z_present
+from zpp.zpp_alpha_heating import apply_alpha_heating_to_shot, alpha_ignition_criterion
+from zpp.zpp_bosch_hale import reactivity_DT_cm3s, E_DT_J, E_DT_MeV
+from zpp.zpp_laser import LaserPreheat, no_laser
+from zpp.zpp_lawson import burn_weighted_lawson, lawson_criterion_classic_DT
+from zpp.zpp_mix import eta_mix_empirical, apply_mix_correction
+from zpp.zpp_wallplug import WallPlugChain, wallplug_chain_z_present
 
 
 # Physical constants

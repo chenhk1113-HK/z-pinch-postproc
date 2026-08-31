@@ -24,13 +24,13 @@ from __future__ import annotations
 from dataclasses import dataclass
 import numpy as np
 
-from zpp_plant_simulation import (
+from zpp.zpp_plant_simulation import (
     PlantDesign, simulate_plant, PlantSimulationResult,
 )
-from zpp_comparison import (
+from zpp.zpp_comparison import (
     ZN_DESIGN, ConceptParameters,
 )
-from zpp_pfc_lifetime import (
+from zpp.zpp_pfc_lifetime import (
     first_wall_lifetime, PFCDamageInputs, PFCDamageResult,
 )
 
@@ -107,7 +107,7 @@ def replacement_capex_USD(
     """
     if blanket_area_m2 is None:
         # Approximate blanket area from first-wall area of geometry
-        from zpp_geometry import get_build
+        from zpp.zpp_geometry import get_build
         geometry = get_build(plant_design.geometry_name)
         fw_area_m2 = geometry.first_wall_area_cm2() / 1e4
         blanket_area_m2 = fw_area_m2

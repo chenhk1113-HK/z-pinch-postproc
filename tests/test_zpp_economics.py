@@ -27,7 +27,7 @@ import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "code"))
 
-from zpp_economics import (
+from zpp.zpp_economics import (
     PlantEconomics,
     break_even_Q_eng,
     lcoe_pareto_frontier,

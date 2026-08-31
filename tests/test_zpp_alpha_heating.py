@@ -22,7 +22,7 @@ import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "code"))
 
-from zpp_alpha_heating import (
+from zpp.zpp_alpha_heating import (
     ALPHA_RANGE_DT_GCCM,
     alpha_deposition_fraction,
     bremsstrahlung_power_density,
@@ -32,7 +32,7 @@ from zpp_alpha_heating import (
     alpha_ignition_criterion,
     AlphaHeatingResult,
 )
-from zpp_pipeline import run_pipeline
+from zpp.zpp_pipeline import run_pipeline
 
 
 def _triangular_profile(
@@ -307,8 +307,8 @@ class TestEndToEndZPresent:
         """Z present stagnation: ρR is too low for α heating to matter."""
         import sys
         sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "code"))
-        from zpp_mcbride import gomez2020_z_shot, stagnation_profile
-        from zpp_wallplug import wallplug_chain_z_present
+        from zpp.zpp_mcbride import gomez2020_z_shot, stagnation_profile
+        from zpp.zpp_wallplug import wallplug_chain_z_present
 
         inp = gomez2020_z_shot()
         p = stagnation_profile(inp)

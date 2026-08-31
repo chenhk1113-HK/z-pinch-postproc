@@ -2,7 +2,7 @@
 OpenMC-equivalent tritium breeding ratio (TBR) calculator.
 
 OpenMC (https://openmc.org) is the open-source Monte Carlo neutronics
-code. For a fusion plant, the key neutronics output is the **tritium
+zpp. For a fusion plant, the key neutronics output is the **tritium
 breeding ratio (TBR)** — the number of tritium atoms bred per D-T
 fusion reaction. TBR must exceed 1.0 for tritium self-sufficiency
 (with engineering margin, TBR ≥ 1.05-1.20 in practice).

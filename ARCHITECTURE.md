@@ -158,16 +158,63 @@ z-pinch-postproc/
 ├── CITATION.cff                    # GitHub citation
 ├── LICENSE                         # MIT
 ├── CHANGELOG.md                    # Version history
+├── VERSION                         # Single source of truth (v1.5.0)
 ├── MODEL_ASSUMPTIONS_AND_LIMITATIONS.md   # Physics assumptions
+├── pyproject.toml                  # Install + CLI entry points
 ├── PLAN_v0.1.md                    # Original project plan
 ├── requirements.txt                # Pinned dependencies
-├── pyproject.toml                  # Python project config
-├── code/                           # Implementation modules
-├── tests/                          # pytest tests
+├── zpp/                            # Core physics package (Tier 1-17)
+│   ├── __init__.py
+│   ├── zpp_tbr.py                  # Parametric TBR formula
+│   ├── zpp_real_openmc_transport.py # OpenMC transport wrapper
+│   ├── zpp_zffr_spherical.py       # Z-FFR spherical geometry
+│   ├── zpp_li4sio4.py              # Li4SiO4 ceramic breeder
+│   ├── zpp_zffr_references.py      # (in adapters/)
+│   └── ...                         # 28 more core modules
+├── zpp/adapters/                   # External wrappers (Tier 1-17)
+│   ├── __init__.py
+│   ├── zpp_adapters.py             # Abstract adapter interfaces
+│   ├── zpp_real_openmc_adapter.py  # OpenMC wrapper
+│   ├── zpp_real_process_adapter.py # PROCESS wrapper
+│   ├── zpp_real_paramak_adapter.py # Paramak wrapper
+│   ├── zpp_fispact_adapter.py      # FISPACT-II stub
+│   ├── zpp_subprocess_adapters.py  # Subprocess base classes
+│   └── zpp_zffr_references.py      # Z-FFR Antong Fusion references
+├── zpp_cli/                        # CLI entry points (post `pip install -e .`)
+│   ├── __init__.py
+│   ├── version.py                  # `zpp-version` command
+│   └── tbr.py                      # `zpp-tbr` command
+├── tests/                          # 757 tests
 ├── data/                           # Reference data
-│   ├── nuclear_data/               # ENDF + ACE cross sections
+│   ├── nuclear_data/               # ENDF + ACE cross sections (gitignored)
 │   └── results/                    # MC sweep results (per-Tier)
 ├── docs/                           # Additional documentation
-│   └── zffr_references.md
-└── scripts/                        # Cross-section download, etc.
+│   ├── zffr_references.md
+│   └── Review1.docx                # Archived external review
+├── scripts/                        # Cross-section download, etc.
+└── .github/workflows/              # CI + docs deployment
 ```
+
+## How to install (v1.5.0+)
+
+```bash
+git clone https://github.com/chenhk1113-HK/z-pinch-postproc.git
+cd z-pinch-postproc
+pip install -e .                    # editable install with [dev] extras
+# OR
+pip install -e ".[dev]"             # include mkdocs + pytest-cov
+
+# After install:
+zpp-version                         # prints version + git sha
+zpp-tbr --R-blanket 80 --Li6 0.90   # run a parametric TBR sweep
+pytest tests/                       # run the 757-test suite
+```
+
+## How to install (legacy v1.4.x — sys.path-based)
+
+If you can't `pip install -e .` (e.g. on Windows without admin):
+```bash
+python -c "import sys; sys.path.insert(0, 'zpp'); from zpp_tbr import compute_TBR; print(compute_TBR(TBRInputs(R_blanket_cm=80)))"
+```
+
+The `sys.path.insert` approach is deprecated in v1.5.0; prefer `pip install -e .`.

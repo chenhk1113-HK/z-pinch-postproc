@@ -110,7 +110,7 @@ class TestTier8ApplicabilityLimit:
     def test_tier8_overshoots_pure_li_sphere(self, furuta_result):
         """The Tier 8 closed-form (calibrated for LiPb+Be Z-pinch) does
         NOT match pure-Li sphere TBR. This is the honest finding."""
-        from zpp_tbr import compute_TBR, TBRInputs
+        from zpp.zpp_tbr import compute_TBR, TBRInputs
         inp = TBRInputs(
             blanket_material="LiPb",  # closest match; pure Li unavailable
             neutron_multiplier="Be",  # no Be in pure Li

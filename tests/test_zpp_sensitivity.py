@@ -20,12 +20,12 @@ import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "code"))
 
-from zpp_sensitivity import (
+from zpp.zpp_sensitivity import (
     TornadoEntry, tornado_analysis, tornado_markdown,
     saltelli_sample, sobol_indices,
 )
-from zpp_plant_simulation import PlantDesign
-from zpp_comparison import ZN_DESIGN
+from zpp.zpp_plant_simulation import PlantDesign
+from zpp.zpp_comparison import ZN_DESIGN
 
 
 class TestTornadoEntry:

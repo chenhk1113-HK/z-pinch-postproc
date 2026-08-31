@@ -41,7 +41,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import numpy as np
 
-from zpp_bosch_hale import reactivity_DT_cm3s, E_DT_J, E_DT_MeV
+from zpp.zpp_bosch_hale import reactivity_DT_cm3s, E_DT_J, E_DT_MeV
 
 
 # Physical constants

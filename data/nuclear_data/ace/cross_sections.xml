@@ -10,10 +10,14 @@
   <library materials="H1" path="H_001_001.h5" type="neutron"/>
   <library materials="Li6" path="Li_003_006.h5" type="neutron"/>
   <library materials="Li7" path="Li_003_007.h5" type="neutron"/>
+  <library materials="O16" path="O_008_016.h5" type="neutron"/>
   <library materials="Pb204" path="Pb_082_204.h5" type="neutron"/>
   <library materials="Pb205" path="Pb_082_205.h5" type="neutron"/>
   <library materials="Pb206" path="Pb_082_206.h5" type="neutron"/>
   <library materials="Pb207" path="Pb_082_207.h5" type="neutron"/>
   <library materials="Pb208" path="Pb_082_208.h5" type="neutron"/>
+  <library materials="Si28" path="Si_014_028.h5" type="neutron"/>
+  <library materials="Si29" path="Si_014_029.h5" type="neutron"/>
+  <library materials="Si30" path="Si_014_030.h5" type="neutron"/>
   <library materials="U238" path="U_092_238.h5" type="neutron"/>
 </cross_sections>

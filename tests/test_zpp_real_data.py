@@ -37,14 +37,14 @@ _HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(_HERE.parent / "code"))
 sys.path.insert(0, str(_HERE))
 
-from zpp_pipeline import run_pipeline
-from zpp_mcbride import (
+from zpp.zpp_pipeline import run_pipeline
+from zpp.zpp_mcbride import (
     MagLIFInputs,
     stagnation_profile,
     gomez2020_z_shot,
     zn_design_shot,
 )
-from zpp_wallplug import wallplug_chain_z_present
+from zpp.zpp_wallplug import wallplug_chain_z_present
 
 
 REAL_FIXTURE = _HERE.parent / "data" / "fixtures" / "z_gomez2020_real.csv"

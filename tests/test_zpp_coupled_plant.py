@@ -20,7 +20,7 @@ import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "code"))
 
-from zpp_coupled_plant import (
+from zpp.zpp_coupled_plant import (
     ReplacementCostInputs, CoupledPlantResult,
     n_replacements_during_plant_life,
     replacement_capex_USD,
@@ -28,9 +28,9 @@ from zpp_coupled_plant import (
     couple_sweep_materials, coupled_sweep_markdown,
     DEFAULT_BLANKET_MODULE_COST_USD,
 )
-from zpp_plant_simulation import PlantDesign, PlantSimulationResult
-from zpp_pfc_lifetime import PFCDamageInputs, PFCDamageResult
-from zpp_comparison import ZN_DESIGN
+from zpp.zpp_plant_simulation import PlantDesign, PlantSimulationResult
+from zpp.zpp_pfc_lifetime import PFCDamageInputs, PFCDamageResult
+from zpp.zpp_comparison import ZN_DESIGN
 
 
 class TestReplacementCostInputs:
@@ -121,7 +121,7 @@ class TestCoupledPlantSimulation:
         # PFC replacement interval = 41 yr > 30 yr plant life
         # Check: this depends on the default PFC inputs
         pfc = PFCDamageInputs(material="RAFM", plant_availability=0.25)
-        from zpp_pfc_lifetime import first_wall_lifetime
+        from zpp.zpp_pfc_lifetime import first_wall_lifetime
         pfc_result = first_wall_lifetime(pfc)
         if pfc_result.replacement_interval_years > 30.0:
             assert result.n_replacements == 0
@@ -203,7 +203,7 @@ class TestStrategicFindings:
         """
         result = coupled_plant_simulation()
         pfc_inputs = PFCDamageInputs(material="RAFM", plant_availability=0.25)
-        from zpp_pfc_lifetime import first_wall_lifetime
+        from zpp.zpp_pfc_lifetime import first_wall_lifetime
         pfc = first_wall_lifetime(pfc_inputs)
         # Calendar replacement interval must exceed 30 yr
         assert pfc.replacement_interval_years > 30.0

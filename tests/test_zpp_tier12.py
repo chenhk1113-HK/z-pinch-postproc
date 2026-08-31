@@ -26,14 +26,14 @@ class TestTier12Inputs:
 
     def test_mult_inside_field_exists(self):
         """TBRInputs should have mult_inside field with default True."""
-        from zpp_tbr import TBRInputs
+        from zpp.zpp_tbr import TBRInputs
         inp = TBRInputs()
         assert hasattr(inp, "mult_inside")
         assert inp.mult_inside is True  # backward compat: Tier 6 default
 
     def test_mult_inside_settable(self):
         """mult_inside can be set to False."""
-        from zpp_tbr import TBRInputs
+        from zpp.zpp_tbr import TBRInputs
         inp = TBRInputs(mult_inside=False)
         assert inp.mult_inside is False
 
@@ -43,12 +43,12 @@ class TestTier12MultOutsideTable:
 
     def test_table_has_5_points(self):
         """MC_CALIBRATION_TABLE_MULT_OUTSIDE should have 5 points."""
-        from zpp_tbr import MC_CALIBRATION_TABLE_MULT_OUTSIDE
+        from zpp.zpp_tbr import MC_CALIBRATION_TABLE_MULT_OUTSIDE
         assert len(MC_CALIBRATION_TABLE_MULT_OUTSIDE) == 5
 
     def test_table_thicknesses_monotonic(self):
         """Table thicknesses should be in increasing order."""
-        from zpp_tbr import MC_CALIBRATION_TABLE_MULT_OUTSIDE
+        from zpp.zpp_tbr import MC_CALIBRATION_TABLE_MULT_OUTSIDE
         ts = [p[0] for p in MC_CALIBRATION_TABLE_MULT_OUTSIDE]
         assert ts == sorted(ts)
         assert ts[0] == 8 and ts[-1] == 136  # R_b 12 -> 140, LiPb=thick
@@ -57,7 +57,7 @@ class TestTier12MultOutsideTable:
         """The non-monotonic R=50 point (TBR=0.94) must be < R=12 (1.04).
         This is the Tier 12 honest finding — Tier 10 sweep
         documented it; Tier 12 preserves the finding."""
-        from zpp_tbr import MC_CALIBRATION_TABLE_MULT_OUTSIDE
+        from zpp.zpp_tbr import MC_CALIBRATION_TABLE_MULT_OUTSIDE
         # First point: thick=8 (R_b=12)
         tbr_R12 = MC_CALIBRATION_TABLE_MULT_OUTSIDE[0][1]
         # Second point: thick=46 (R_b=50)
@@ -74,7 +74,7 @@ class TestTier12BoundaryCorrection:
 
     def test_infinite_boundary_returns_one(self):
         """For 'infinite' boundary, correction is 1.0 regardless of mult_inside."""
-        from zpp_tbr import boundary_correction_factor
+        from zpp.zpp_tbr import boundary_correction_factor
         f_inside = boundary_correction_factor(50.0, "infinite", mult_inside=True)
         f_outside = boundary_correction_factor(50.0, "infinite", mult_inside=False)
         assert f_inside == 1.0
@@ -87,7 +87,7 @@ class TestTier12BoundaryCorrection:
         At calibration points, the piecewise-linear interpolation is
         exact by construction (delta = 0).
         """
-        from zpp_tbr import (
+        from zpp.zpp_tbr import (
             boundary_correction_factor, MC_CALIBRATION_TABLE_MULT_OUTSIDE,
             TBR_PER_NEUTRON, NEUTRON_MULTIPLIER_GAIN,
             thickness_to_saturation,
@@ -113,7 +113,7 @@ class TestTier12BoundaryCorrection:
         """Default (mult_inside=True) behavior must NOT change.
         Tier 8 closed-form at R_b=80 cm (thick=74) should give
         the same value as before."""
-        from zpp_tbr import boundary_correction_factor
+        from zpp.zpp_tbr import boundary_correction_factor
         f_default = boundary_correction_factor(74.0, "reflective")
         f_explicit_true = boundary_correction_factor(74.0, "reflective", mult_inside=True)
         assert f_default == f_explicit_true
@@ -124,7 +124,7 @@ class TestTier12ComputeTBR:
 
     def test_compute_TBR_with_mult_inside_false(self):
         """compute_TBR should accept mult_inside=False in TBRInputs."""
-        from zpp_tbr import TBRInputs, compute_TBR
+        from zpp.zpp_tbr import TBRInputs, compute_TBR
         inp = TBRInputs(
             blanket_material="LiPb",
             neutron_multiplier="Be",
@@ -144,7 +144,7 @@ class TestTier12ComputeTBR:
     def test_compute_TBR_mult_inside_changes_tbr(self):
         """mult_inside=False should give a different TBR than mult_inside=True
         at the same blanket_thickness_cm + reflective boundary."""
-        from zpp_tbr import TBRInputs, compute_TBR
+        from zpp.zpp_tbr import TBRInputs, compute_TBR
         common = dict(
             blanket_material="LiPb",
             neutron_multiplier="Be",
@@ -171,7 +171,7 @@ class TestTier12ComputeTBR:
         at reflective boundary, so the absolute difference is smaller
         than the MC difference (1.84 vs 0.94), but the mult_outside
         correction factor absorbs the bulk of the gap."""
-        from zpp_tbr import TBRInputs, compute_TBR
+        from zpp.zpp_tbr import TBRInputs, compute_TBR
         common = dict(
             blanket_material="LiPb",
             neutron_multiplier="Be",
@@ -202,7 +202,7 @@ class TestTier12BackwardCompat:
     def test_all_v1_2_0_tests_still_pass(self):
         """Run the existing Tier 8 closed-form tests; they should still pass
         because mult_inside defaults to True."""
-        from zpp_tbr import (
+        from zpp.zpp_tbr import (
             boundary_correction_factor, compute_TBR, TBRInputs,
         )
         # Tier 8 closed-form: thick=74 cm, reflective
@@ -215,7 +215,7 @@ class TestTier12BackwardCompat:
 
     def test_TBRInputs_mult_inside_in_TBRInputs_docstring(self):
         """The mult_inside field must appear in the TBRInputs docstring."""
-        from zpp_tbr import TBRInputs
+        from zpp.zpp_tbr import TBRInputs
         doc = TBRInputs.__doc__ or ""
         assert "mult_inside" in doc, (
             f"TBRInputs docstring should document the new mult_inside "

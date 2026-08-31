@@ -22,7 +22,7 @@ import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "code"))
 
-from zpp_pfc_lifetime import (
+from zpp.zpp_pfc_lifetime import (
     DPA_rate_per_FPY, MHD_Hartmann_number, MHD_wall_shear_stress,
     MHD_erosion_rate_mm_per_year, first_wall_lifetime,
     PFCDamageInputs, PFCDamageResult,

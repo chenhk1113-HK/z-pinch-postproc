@@ -3,6 +3,49 @@
 > All notable changes to this project are documented here. Format follows
 > [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.5.0] — 2026-08-31
+
+### Added
+- **pyproject.toml** — single install path (`pip install -e .`), console
+  scripts (`zpp-tbr`, `zpp-version`), pytest config with markers
+  (`slow`, `openmc`), coverage config (`fail_under=75`).
+- **zpp_cli/** — CLI entry points for `zpp-tbr` (parametric TBR sweep)
+  and `zpp-version` (version + git sha).
+- **zpp/adapters/** subpackage — splits external wrappers (OpenMC,
+  PROCESS, Paramak, FISPACT, Antong refs, abstract adapter interfaces)
+  from the core physics path.
+- **Tier 18.B** — Li4SiO4 OpenMC transport benchmark
+  (`data/results/2026-08-31_tier18b_li4sio4/`).
+- 6 new tests in `tests/test_zpp_tier18b.py` pinning the Li4SiO4
+  benchmark result.
+- Si-28/29/30 + O-16 cross sections (downloaded from IAEA,
+  converted via NJOY, registered as nuclides 17-20).
+
+### Renamed
+- `code/` → `zpp/` (avoids collision with stdlib `code` module).
+- All imports updated: `from zpp_X import Y` → `from zpp.zpp_X import Y`.
+- 7 adapter modules moved from `code/` to `zpp/adapters/`.
+
+### Findings
+- **Tier 18.B — Li4SiO4 HURTS TBR by 44%** in cylindrical geometry.
+  TBR(LiPb) = 1.83 ± 0.76%, TBR(Li4SiO4) = 1.03 ± 0.50%. Z-FFR's
+  choice of Li4SiO4 is specific to spherical hybrid (U-238) designs;
+  LiPb remains the recommended breeder for cylindrical pure-fusion.
+
+### Stats
+- 757 tests pass (was 751 at v1.4.1; +6 Tier 18.B tests)
+- 85.15% coverage (exceeds 75% threshold)
+- 16 → 17 git tags
+
+## [1.4.1] — 2026-08-31
+
+_Header inserted by v1.5.0 ship. The v1.4.0 release section below
+covers what shipped at the v1.4.0 / v1.4.1 boundary. The v1.4.1 tag
+itself only added the Tier 18.A Li4SiO4 material definition, the CI
+workflow, the MkDocs site, and the disclaimer update — all in commits
+`d0e08fa`, `7f066f3`, `2211081`, `0367d55`, `4bd118e`, `669a84e`,
+`14e4c72` on the v1.4.0 / v1.4.1 cycle._
+
 ## [1.4.0] — 2026-08-31
 
 ### Added

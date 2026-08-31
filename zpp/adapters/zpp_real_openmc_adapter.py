@@ -23,7 +23,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from zpp_tbr import TBRInputs, TBRResult, compute_TBR
+from zpp.zpp_tbr import TBRInputs, TBRResult, compute_TBR
 
 
 OPENMC_CROSS_SECTIONS_ENV = "OPENMC_CROSS_SECTIONS"

@@ -42,7 +42,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import sys
 
-from zpp_comparison import (
+from zpp.zpp_comparison import (
     ConceptParameters, ALL_CONCEPTS as Z_PINCH_CONCEPTS,
     compute_Q_eng, compute_LCOE_proxy, compare_concepts,
     comparison_markdown_table,

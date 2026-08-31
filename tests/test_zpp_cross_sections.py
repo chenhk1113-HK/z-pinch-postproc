@@ -25,7 +25,7 @@ class TestCheckCrossSectionsAvailable:
     """Test check_cross_sections_available()."""
 
     def test_unset_returns_no_env(self):
-        from zpp_cross_sections import check_cross_sections_available
+        from zpp.zpp_cross_sections import check_cross_sections_available
         os.environ.pop("OPENMC_CROSS_SECTIONS", None)
         info = check_cross_sections_available()
         assert info["env_var_set"] is False
@@ -33,14 +33,14 @@ class TestCheckCrossSectionsAvailable:
         assert info["file_path"] is None
 
     def test_set_to_missing_file(self):
-        from zpp_cross_sections import check_cross_sections_available
+        from zpp.zpp_cross_sections import check_cross_sections_available
         os.environ["OPENMC_CROSS_SECTIONS"] = "/nonexistent/cross_sections.xml"
         info = check_cross_sections_available()
         assert info["env_var_set"] is True
         assert info["file_exists"] is False
 
     def test_set_to_existing_file(self):
-        from zpp_cross_sections import check_cross_sections_available
+        from zpp.zpp_cross_sections import check_cross_sections_available
         with tempfile.NamedTemporaryFile(suffix=".xml", delete=False) as f:
             f.write(b"<cross_sections></cross_sections>")
             tmp_path = f.name
@@ -59,22 +59,22 @@ class TestDownloadInstructions:
     """Test download_cross_sections_instructions()."""
 
     def test_non_empty(self):
-        from zpp_cross_sections import download_cross_sections_instructions
+        from zpp.zpp_cross_sections import download_cross_sections_instructions
         text = download_cross_sections_instructions()
         assert len(text) > 100
 
     def test_mentions_NNDC(self):
-        from zpp_cross_sections import download_cross_sections_instructions
+        from zpp.zpp_cross_sections import download_cross_sections_instructions
         text = download_cross_sections_instructions()
         assert "NNDC" in text or "nndc.bnl.gov" in text
 
     def test_mentions_OPENMC_CROSS_SECTIONS_env(self):
-        from zpp_cross_sections import download_cross_sections_instructions
+        from zpp.zpp_cross_sections import download_cross_sections_instructions
         text = download_cross_sections_instructions()
         assert "OPENMC_CROSS_SECTIONS" in text
 
     def test_mentions_NJOY(self):
-        from zpp_cross_sections import download_cross_sections_instructions
+        from zpp.zpp_cross_sections import download_cross_sections_instructions
         text = download_cross_sections_instructions()
         assert "NJOY" in text or "njoy" in text
 
@@ -83,7 +83,7 @@ class TestListRequiredNuclides:
     """Test list_required_nuclides_for_blanket()."""
 
     def test_LiPb_RAFM(self):
-        from zpp_cross_sections import list_required_nuclides_for_blanket
+        from zpp.zpp_cross_sections import list_required_nuclides_for_blanket
         nucs = list_required_nuclides_for_blanket("LiPb", "Be", "RAFM")
         assert "Li6" in nucs
         assert "Li7" in nucs
@@ -92,7 +92,7 @@ class TestListRequiredNuclides:
         assert "Fe" in nucs
 
     def test_Li4SiO4_tokamak(self):
-        from zpp_cross_sections import list_required_nuclides_for_blanket
+        from zpp.zpp_cross_sections import list_required_nuclides_for_blanket
         nucs = list_required_nuclides_for_blanket("Li4SiO4", None, "RAFM")
         assert "Li6" in nucs
         assert "Li7" in nucs
@@ -101,18 +101,18 @@ class TestListRequiredNuclides:
         assert "Be9" not in nucs  # No multiplier
 
     def test_W_structure(self):
-        from zpp_cross_sections import list_required_nuclides_for_blanket
+        from zpp.zpp_cross_sections import list_required_nuclides_for_blanket
         nucs = list_required_nuclides_for_blanket("LiPb", None, "W")
         assert "W" in nucs
         assert "Fe" not in nucs  # No RAFM
 
     def test_no_multiplier(self):
-        from zpp_cross_sections import list_required_nuclides_for_blanket
+        from zpp.zpp_cross_sections import list_required_nuclides_for_blanket
         nucs = list_required_nuclides_for_blanket("LiPb", None, "RAFM")
         assert "Be9" not in nucs
 
     def test_returns_sorted_list(self):
-        from zpp_cross_sections import list_required_nuclides_for_blanket
+        from zpp.zpp_cross_sections import list_required_nuclides_for_blanket
         nucs = list_required_nuclides_for_blanket("LiPb", "Be", "RAFM")
         assert nucs == sorted(nucs)
 
@@ -121,7 +121,7 @@ class TestGenerateCrossSectionsXML:
     """Test generate_minimal_cross_sections_xml()."""
 
     def test_creates_valid_xml(self):
-        from zpp_cross_sections import generate_minimal_cross_sections_xml
+        from zpp.zpp_cross_sections import generate_minimal_cross_sections_xml
         with tempfile.TemporaryDirectory() as work_dir:
             output = os.path.join(work_dir, "cross_sections.xml")
             ace_files = [
@@ -152,7 +152,7 @@ class TestStrategicFindings:
         triggers download manually if/when they want real
         Monte Carlo TBR.
         """
-        from zpp_cross_sections import download_cross_sections_instructions
+        from zpp.zpp_cross_sections import download_cross_sections_instructions
         text = download_cross_sections_instructions()
         # Should NOT contain any auto-download command
         assert "auto" not in text.lower() or "automatically" not in text.lower()
@@ -165,7 +165,7 @@ class TestStrategicFindings:
         This is much smaller than the full ENDF library (200+
         nuclides). Could be hand-downloaded in ~30 min.
         """
-        from zpp_cross_sections import list_required_nuclides_for_blanket
+        from zpp.zpp_cross_sections import list_required_nuclides_for_blanket
         nucs = list_required_nuclides_for_blanket("LiPb", "Be", "RAFM")
         # Should be <15 nuclides for the minimal subset
         assert len(nucs) < 15

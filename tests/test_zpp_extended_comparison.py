@@ -17,7 +17,7 @@ import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "code"))
 
-from zpp_extended_comparison import (
+from zpp.zpp_extended_comparison import (
     TAE_FRC, HELION, TOKAMAK_ENERGY, ITER, EU_DEMO, SPARC,
     EXTENDED_CONCEPTS, MILESTONE_PLASMA_GAIN, MILESTONE_ENG_GAIN,
     MILESTONE_LCOE_100, MILESTONE_GRID_100MW, ALL_MILESTONES,
@@ -96,7 +96,7 @@ class TestCategorize:
     """Test the _categorize helper."""
 
     def test_Z_pinch_concepts_categorized(self):
-        from zpp_comparison import ZN_DESIGN, Z_PRESENT, ZAP_SFZ, GF_MTF, PACIFIC_FUSION
+        from zpp.zpp_comparison import ZN_DESIGN, Z_PRESENT, ZAP_SFZ, GF_MTF, PACIFIC_FUSION
         for c in [ZN_DESIGN, Z_PRESENT, ZAP_SFZ, GF_MTF, PACIFIC_FUSION]:
             assert _categorize(c) == "pulsed_magnetic_or_MTF"
 

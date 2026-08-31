@@ -19,12 +19,12 @@ import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "code"))
 
-from zpp_optimization import (
+from zpp.zpp_optimization import (
     OptimizationConstraints, DesignPoint,
     grid_search_plant_design, pareto_frontier, best_design,
     optimization_markdown,
 )
-from zpp_plant_simulation import PlantDesign, PlantSimulationResult
+from zpp.zpp_plant_simulation import PlantDesign, PlantSimulationResult
 
 
 class TestOptimizationConstraints:

@@ -21,7 +21,7 @@ import pytest
 # Make the code directory importable
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "code"))
 
-from zpp_real_openmc_transport import (
+from zpp.zpp_real_openmc_transport import (
     _build_blanket_materials,
     _build_zpinch_geometry,
     _build_tally,

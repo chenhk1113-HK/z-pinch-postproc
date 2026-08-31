@@ -18,7 +18,7 @@ import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "code"))
 
-from zpp_comparison import (
+from zpp.zpp_comparison import (
     ConceptParameters,
     ALL_CONCEPTS,
     Z_PRESENT,

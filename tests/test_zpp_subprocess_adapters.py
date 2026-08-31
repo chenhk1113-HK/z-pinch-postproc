@@ -18,21 +18,21 @@ import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "code"))
 
-from zpp_subprocess_adapters import (
+from zpp.adapters.zpp_subprocess_adapters import (
     detect_upstream_codes, report_installed_codes,
     SubprocessBOPAdapter, SubprocessTBRAdapter,
     SubprocessGeometryAdapter, SubprocessNeutronicsAdapter,
     make_subprocess_set, UpstreamCodeInfo,
 )
-from zpp_adapters import (
+from zpp.adapters.zpp_adapters import (
     BOPAdapter, TBRAdapter, GeometryAdapter, NeutronicsAdapter,
     ParametricBOPAdapter, ParametricTBRAdapter,
     ParametricGeometryAdapter, ParametricNeutronicsAdapter,
 )
-from zpp_process_bop import PlantBOPInputs, ProcessBOPResult
-from zpp_tbr import TBRInputs, TBRResult
-from zpp_geometry import ZIFERadialBuild
-from zpp_pfc_lifetime import PFCDamageInputs, PFCDamageResult
+from zpp.zpp_process_bop import PlantBOPInputs, ProcessBOPResult
+from zpp.zpp_tbr import TBRInputs, TBRResult
+from zpp.zpp_geometry import ZIFERadialBuild
+from zpp.zpp_pfc_lifetime import PFCDamageInputs, PFCDamageResult
 
 
 class TestDetectUpstreamCodes:
@@ -102,13 +102,13 @@ class TestSubprocessTBRAdapter:
     """
 
     def test_using_real_code_True_after_OpenMC_install(self):
-        """After openmc-anywhere install (v0.6.1), adapter uses real code."""
+        """After openmc-anywhere install (v0.6.1), adapter uses real zpp."""
         adapter = SubprocessTBRAdapter()
         assert adapter.using_real_code is True
 
     def test_compute_returns_TBRResult(self):
         adapter = SubprocessTBRAdapter()
-        from zpp_tbr import TBRInputs
+        from zpp.zpp_tbr import TBRInputs
         inp = TBRInputs(
             blanket_material="LiPb",
             neutron_multiplier="Be",
@@ -123,13 +123,13 @@ class TestSubprocessTBRAdapter:
 
     def test_satisfies_ABC(self):
         adapter = SubprocessTBRAdapter()
-        from zpp_adapters import TBRAdapter
+        from zpp.adapters.zpp_adapters import TBRAdapter
         assert isinstance(adapter, TBRAdapter)
 
     def test_compute_handles_real_or_fallback(self):
         """Whether OpenMC run succeeds or falls back, result is valid."""
         adapter = SubprocessTBRAdapter()
-        from zpp_tbr import TBRInputs
+        from zpp.zpp_tbr import TBRInputs
         inp = TBRInputs(
             blanket_material="LiPb",
             neutron_multiplier="Be",

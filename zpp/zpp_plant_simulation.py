@@ -31,20 +31,20 @@ from typing import Optional
 
 import numpy as np
 
-from zpp_process_bop import (
+from zpp.zpp_process_bop import (
     PlantBOPInputs, compute_process_bop, bop_for_scenario,
     bop_result_to_wallplug_kwargs, ProcessBOPResult,
 )
-from zpp_tbr import (
+from zpp.zpp_tbr import (
     TBRInputs, compute_TBR, tbr_for_blanket, TBRResult,
 )
-from zpp_geometry import (
+from zpp.zpp_geometry import (
     ZIFERadialBuild, get_build, ALL_BUILDS,
 )
-from zpp_economics import (
+from zpp.zpp_economics import (
     PlantEconomics,
 )
-from zpp_comparison import (
+from zpp.zpp_comparison import (
     ConceptParameters, compute_Q_eng, compute_LCOE_proxy,
 )
 

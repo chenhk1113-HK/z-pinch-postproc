@@ -10,7 +10,7 @@ import pytest
 _HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(_HERE.parent / "code"))
 
-from zpp_lawson import burn_weighted_lawson, lawson_criterion_classic_DT
+from zpp.zpp_lawson import burn_weighted_lawson, lawson_criterion_classic_DT
 
 
 def test_lawson_constant_profile():

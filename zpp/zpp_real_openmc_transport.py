@@ -433,10 +433,10 @@ def run_real_openmc_tbr(n_particles=5000, n_batches=10,
     import openmc
     import openmc.data
 
-    from zpp_real_openmc_adapter import (
+    from zpp.adapters.zpp_real_openmc_adapter import (
         check_openmc_install, get_openmc_anywhere_info,
     )
-    from zpp_tbr import compute_TBR, TBRInputs
+    from zpp.zpp_tbr import compute_TBR, TBRInputs
 
     notes = []
     install = check_openmc_install()
@@ -752,7 +752,7 @@ def run_blanket_sweep(
             Li6_enrichment_fraction=Li6_enrichment_fraction,
         )
         # Parametric at the SAME LiPb thickness
-        from zpp_tbr import compute_TBR, TBRInputs
+        from zpp.zpp_tbr import compute_TBR, TBRInputs
         lipb_thickness = R_b - R_be_cm
         param_inputs = TBRInputs(
             blanket_material="LiPb",

@@ -25,10 +25,10 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 import numpy as np
 
-from zpp_tbr import (
+from zpp.zpp_tbr import (
     TBRInputs, compute_TBR, TBRResult,
 )
-from zpp_geometry import (
+from zpp.zpp_geometry import (
     ZIFERadialBuild, get_build, ALL_BUILDS,
 )
 

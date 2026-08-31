@@ -33,13 +33,13 @@ class TestTier18Li4SiO4:
 
     def test_material_creates_with_correct_name(self):
         """build_li4sio4_material() returns openmc.Material named 'Li4SiO4'."""
-        from zpp_li4sio4 import build_li4sio4_material
+        from zpp.zpp_li4sio4 import build_li4sio4_material
         m = build_li4sio4_material()
         assert m.name == "Li4SiO4"
 
     def test_atomic_density_conservation(self):
         """Sum of nuclide densities = total atom density (4+1+4 per molecule)."""
-        from zpp_li4sio4 import build_li4sio4_material
+        from zpp.zpp_li4sio4 import build_li4sio4_material
         m = build_li4sio4_material(Li6_enrichment_fraction=0.5)
         densities = _nuclide_dict(m)
         total = sum(densities.values())
@@ -50,7 +50,7 @@ class TestTier18Li4SiO4:
 
     def test_li6_enrichment_propagates(self):
         """Li-6 enrichment fraction should be in Li6/Li7 ratio."""
-        from zpp_li4sio4 import build_li4sio4_material
+        from zpp.zpp_li4sio4 import build_li4sio4_material
         m_50 = build_li4sio4_material(Li6_enrichment_fraction=0.50)
         m_90 = build_li4sio4_material(Li6_enrichment_fraction=0.90)
 
@@ -72,7 +72,7 @@ class TestTier18Li4SiO4:
 
     def test_density_matches_literature(self):
         """Theoretical density should be 2.40 g/cm3 (Li4SiO4 literature)."""
-        from zpp_li4sio4 import build_li4sio4_material, LI4SIO4_MOLAR_MASS
+        from zpp.zpp_li4sio4 import build_li4sio4_material, LI4SIO4_MOLAR_MASS
         m = build_li4sio4_material()
         rho = 2.40
         # Check by summing atom densities and comparing to expected
@@ -83,7 +83,7 @@ class TestTier18Li4SiO4:
 
     def test_uses_si_and_o_nuclides(self):
         """Material must include Si-28/29/30 and O-16 nuclides."""
-        from zpp_li4sio4 import build_li4sio4_material
+        from zpp.zpp_li4sio4 import build_li4sio4_material
         m = build_li4sio4_material()
         nuclides = set(_nuclide_dict(m).keys())
         assert "Si28" in nuclides
@@ -99,7 +99,20 @@ class TestTier18BackwardCompat:
 
     def test_lipb_still_works(self):
         """Existing LiPb material definition should still work."""
-        from zpp_real_openmc_transport import _build_blanket_materials
+        from zpp.zpp_real_openmc_transport import _build_blanket_materials
         mats = _build_blanket_materials(Li6_enrichment_fraction=0.90)
         assert "lipb" in mats
         assert mats["lipb"].name == "LiPb"
+
+class TestTier18BackwardCompatToB:
+    """Tier 18.B — Tier 18.A material still works after Tier 18.B sweep."""
+
+    def test_li4sio4_material_not_modified_by_b_sweep(self):
+        """Tier 18.B sweep must not modify the Tier 18.A material definition."""
+        from zpp.zpp_li4sio4 import build_li4sio4_material, LI4SIO4_MOLAR_MASS
+        m = build_li4sio4_material(Li6_enrichment_fraction=0.90)
+        # Same properties as Tier 18.A test_density_matches_literature
+        rho = 2.40
+        total_atoms = rho * 6.022e23 * 9 / LI4SIO4_MOLAR_MASS
+        total = sum(n.percent for n in m.nuclides)
+        assert abs(total - total_atoms) / total_atoms < 0.01

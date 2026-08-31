@@ -23,9 +23,9 @@ from dataclasses import dataclass, field
 from typing import Optional
 import numpy as np
 
-from zpp_plant_simulation import PlantDesign, simulate_plant
-from zpp_pfc_lifetime import first_wall_lifetime, PFCDamageInputs
-from zpp_coupled_plant import (
+from zpp.zpp_plant_simulation import PlantDesign, simulate_plant
+from zpp.zpp_pfc_lifetime import first_wall_lifetime, PFCDamageInputs
+from zpp.zpp_coupled_plant import (
     ReplacementCostInputs, n_replacements_during_plant_life,
 )
 
@@ -214,7 +214,7 @@ def extended_plant_cost(
     )
     # Plant annual energy
     # First, plant simulation for rep-rate and P_net
-    from zpp_comparison import ZN_DESIGN
+    from zpp.zpp_comparison import ZN_DESIGN
     plant_result = simulate_plant(
         ZN_DESIGN, plant_design,
         nameplate_MW=100, capacity_factor=financing.capacity_factor,
@@ -228,7 +228,7 @@ def extended_plant_cost(
         plant_lifetime_years, pfc_result.replacement_interval_years,
     )
     # Per-event cost
-    from zpp_coupled_plant import replacement_capex_USD
+    from zpp.zpp_coupled_plant import replacement_capex_USD
     capex_per_replacement = replacement_capex_USD(
         plant_design, pfc_inputs, replacement_cost,
     )

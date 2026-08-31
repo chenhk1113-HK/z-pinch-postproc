@@ -19,7 +19,7 @@ import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "code"))
 
-from zpp_geometry import (
+from zpp.zpp_geometry import (
     RadialBuildLayer,
     ZIFERadialBuild,
     ZN_radial_build,

@@ -26,15 +26,15 @@ from dataclasses import dataclass, field
 from itertools import product
 import numpy as np
 
-from zpp_plant_simulation import (
+from zpp.zpp_plant_simulation import (
     PlantDesign, simulate_plant, PlantSimulationResult,
 )
-from zpp_comparison import ZN_DESIGN, ConceptParameters
-from zpp_cost_model import (
+from zpp.zpp_comparison import ZN_DESIGN, ConceptParameters
+from zpp.zpp_cost_model import (
     CapitalCostBreakdown, OperatingCostBreakdown, FinancingParams,
     capital_recovery_factor, PlantCostResult, extended_plant_cost,
 )
-from zpp_coupled_plant import ReplacementCostInputs
+from zpp.zpp_coupled_plant import ReplacementCostInputs
 
 
 @dataclass
@@ -119,7 +119,7 @@ def grid_search_plant_design(
                 concept, pd, nameplate_MW, capacity_factor,
             )
             # LCOE from extended cost model
-            from zpp_pfc_lifetime import PFCDamageInputs
+            from zpp.zpp_pfc_lifetime import PFCDamageInputs
             pfc_inputs = PFCDamageInputs(
                 neutron_wall_load_MW_per_m2=1.0,
                 material="RAFM", blanket_fluid="LiPb",

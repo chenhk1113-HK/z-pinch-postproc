@@ -45,7 +45,7 @@ class TestTier15HonestFailure:
         """The Tier 12 piecewise-linear interpolation should still be
         exact at calibration points (this is the calibration source
         Tier 15 cannot improve on)."""
-        from zpp_tbr import (
+        from zpp.zpp_tbr import (
             boundary_correction_factor, MC_CALIBRATION_TABLE_MULT_OUTSIDE,
             TBR_PER_NEUTRON, NEUTRON_MULTIPLIER_GAIN,
             thickness_to_saturation,

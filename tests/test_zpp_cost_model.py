@@ -18,7 +18,7 @@ import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "code"))
 
-from zpp_cost_model import (
+from zpp.zpp_cost_model import (
     CapitalCostBreakdown, OperatingCostBreakdown,
     FinancingParams, capital_recovery_factor,
     extended_plant_cost, PlantCostResult, cost_breakdown_markdown,
@@ -151,7 +151,7 @@ class TestExtendedPlantCost:
 
     def test_Be_replacements_increase_LCOE(self):
         """For Be (3 replacements), LCOE_with_repl > LCOE_total."""
-        from zpp_pfc_lifetime import PFCDamageInputs
+        from zpp.zpp_pfc_lifetime import PFCDamageInputs
         result = extended_plant_cost(
             pfc_inputs=PFCDamageInputs(material="Be", plant_availability=0.25),
         )

@@ -19,7 +19,7 @@ import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "code"))
 
-from zpp_process_bop import (
+from zpp.zpp_process_bop import (
     carnot_efficiency,
     cycle_efficiency,
     BRAYTON_EFFICIENCY_FRACTION,
@@ -243,7 +243,7 @@ class TestBOPToWallPlugKwargs:
 
     def test_kwargs_apply_to_wallplug(self):
         """Verify the kwargs can construct a WallPlugChain."""
-        from zpp_wallplug import WallPlugChain
+        from zpp.zpp_wallplug import WallPlugChain
         result = bop_for_scenario("ZN")
         kwargs = bop_result_to_wallplug_kwargs(result)
         wp = WallPlugChain(**kwargs)

@@ -27,8 +27,8 @@ if str(_HERE) not in sys.path:
     sys.path.insert(0, str(_HERE))
 
 import numpy as np
-from zpp_pipeline import run_pipeline
-from zpp_io import read_profile, write_report
+from zpp.zpp_pipeline import run_pipeline
+from zpp.zpp_io import read_profile, write_report
 
 
 def _build_argparser() -> argparse.ArgumentParser:

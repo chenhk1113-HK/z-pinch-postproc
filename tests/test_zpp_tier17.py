@@ -23,8 +23,8 @@ class TestTier17ZFFRGeometry:
 
     def test_default_geometry_loads(self):
         """Default Peng 2014 parameters should build without error."""
-        from zpp_zffr_spherical import _build_zffr_spherical_geometry
-        from zpp_real_openmc_transport import _build_blanket_materials
+        from zpp.zpp_zffr_spherical import _build_zffr_spherical_geometry
+        from zpp.zpp_real_openmc_transport import _build_blanket_materials
         materials = _build_blanket_materials(Li6_enrichment_fraction=0.90)
         geom, cells, surfaces = _build_zffr_spherical_geometry(materials)
         # Should have plasma, be_mult, blanket, u238, fe_reflector, structure
@@ -43,8 +43,8 @@ class TestTier17ZFFRGeometry:
 
     def test_blanket_cell_is_lipb(self):
         """The 'blanket' cell (used by tally) should be filled with LiPb."""
-        from zpp_zffr_spherical import _build_zffr_spherical_geometry
-        from zpp_real_openmc_transport import _build_blanket_materials
+        from zpp.zpp_zffr_spherical import _build_zffr_spherical_geometry
+        from zpp.zpp_real_openmc_transport import _build_blanket_materials
         materials = _build_blanket_materials(Li6_enrichment_fraction=0.90)
         geom, cells, surfaces = _build_zffr_spherical_geometry(materials)
         assert cells["blanket"].fill is not None
@@ -52,8 +52,8 @@ class TestTier17ZFFRGeometry:
 
     def test_no_u238(self):
         """include_u238=False should remove the u238 cell."""
-        from zpp_zffr_spherical import _build_zffr_spherical_geometry
-        from zpp_real_openmc_transport import _build_blanket_materials
+        from zpp.zpp_zffr_spherical import _build_zffr_spherical_geometry
+        from zpp.zpp_real_openmc_transport import _build_blanket_materials
         materials = _build_blanket_materials(Li6_enrichment_fraction=0.90)
         geom, cells, surfaces = _build_zffr_spherical_geometry(
             materials, include_u238=False,
@@ -65,8 +65,8 @@ class TestTier17ZFFRGeometry:
 
     def test_no_fe(self):
         """include_fe=False should remove the fe_reflector cell."""
-        from zpp_zffr_spherical import _build_zffr_spherical_geometry
-        from zpp_real_openmc_transport import _build_blanket_materials
+        from zpp.zpp_zffr_spherical import _build_zffr_spherical_geometry
+        from zpp.zpp_real_openmc_transport import _build_blanket_materials
         materials = _build_blanket_materials(Li6_enrichment_fraction=0.90)
         geom, cells, surfaces = _build_zffr_spherical_geometry(
             materials, include_fe=False,
@@ -77,8 +77,8 @@ class TestTier17ZFFRGeometry:
     def test_neither_u238_nor_fe(self):
         """Both include_u238=False and include_fe=False should leave
         only Be/LiPb/RAFM cells."""
-        from zpp_zffr_spherical import _build_zffr_spherical_geometry
-        from zpp_real_openmc_transport import _build_blanket_materials
+        from zpp.zpp_zffr_spherical import _build_zffr_spherical_geometry
+        from zpp.zpp_real_openmc_transport import _build_blanket_materials
         materials = _build_blanket_materials(Li6_enrichment_fraction=0.90)
         geom, cells, surfaces = _build_zffr_spherical_geometry(
             materials, include_u238=False, include_fe=False,
@@ -89,8 +89,8 @@ class TestTier17ZFFRGeometry:
 
     def test_invalid_R_blanket_raises(self):
         """R_blanket_cm <= R_be_cm should raise."""
-        from zpp_zffr_spherical import _build_zffr_spherical_geometry
-        from zpp_real_openmc_transport import _build_blanket_materials
+        from zpp.zpp_zffr_spherical import _build_zffr_spherical_geometry
+        from zpp.zpp_real_openmc_transport import _build_blanket_materials
         materials = _build_blanket_materials()
         with pytest.raises(ValueError, match="R_be"):
             _build_zffr_spherical_geometry(
@@ -99,8 +99,8 @@ class TestTier17ZFFRGeometry:
 
     def test_invalid_R_u238_raises(self):
         """R_u238_cm out of range should raise."""
-        from zpp_zffr_spherical import _build_zffr_spherical_geometry
-        from zpp_real_openmc_transport import _build_blanket_materials
+        from zpp.zpp_zffr_spherical import _build_zffr_spherical_geometry
+        from zpp.zpp_real_openmc_transport import _build_blanket_materials
         materials = _build_blanket_materials()
         with pytest.raises(ValueError, match="R_u238_cm"):
             _build_zffr_spherical_geometry(
@@ -109,8 +109,8 @@ class TestTier17ZFFRGeometry:
 
     def test_invalid_R_fe_raises(self):
         """R_fe_cm out of range should raise."""
-        from zpp_zffr_spherical import _build_zffr_spherical_geometry
-        from zpp_real_openmc_transport import _build_blanket_materials
+        from zpp.zpp_zffr_spherical import _build_zffr_spherical_geometry
+        from zpp.zpp_real_openmc_transport import _build_blanket_materials
         materials = _build_blanket_materials()
         with pytest.raises(ValueError, match="R_fe_cm"):
             _build_zffr_spherical_geometry(
@@ -123,7 +123,7 @@ class TestTier17BackwardCompat:
 
     def test_cylindrical_geometry_unaffected(self):
         """_build_zpinch_geometry should still work as in v1.3.0."""
-        from zpp_real_openmc_transport import (
+        from zpp.zpp_real_openmc_transport import (
             _build_blanket_materials, _build_zpinch_geometry,
         )
         mats = _build_blanket_materials()

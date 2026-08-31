@@ -112,7 +112,7 @@ def parametric_activation_proxy(
     import os
     sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
 
-    from zpp_pfc_lifetime import (
+    from zpp.zpp_pfc_lifetime import (
         DPA_rate_per_FPY, first_wall_lifetime,
         PFCDamageInputs,
     )

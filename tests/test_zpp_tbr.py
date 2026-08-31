@@ -21,7 +21,7 @@ import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "code"))
 
-from zpp_tbr import (
+from zpp.zpp_tbr import (
     TBR_PER_NEUTRON,
     NEUTRON_MULTIPLIER_GAIN,
     DEFAULT_COVERAGE,

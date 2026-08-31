@@ -21,13 +21,13 @@ from dataclasses import dataclass, field
 from typing import Iterable
 import numpy as np
 
-from zpp_scaling import (
+from zpp.zpp_scaling import (
     SweepResult,
     sweep_one_point,
     zn_scaling_sweep,
     scaling_summary,
 )
-from zpp_wallplug import (
+from zpp.zpp_wallplug import (
     wallplug_chain_zn_design,
     wallplug_chain_z_present,
     wallplug_chain_pf_design,

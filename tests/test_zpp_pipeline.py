@@ -23,14 +23,14 @@ _HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(_HERE.parent / "code"))
 sys.path.insert(0, str(_HERE))
 
-from zpp_pipeline import run_pipeline
-from zpp_wallplug import (
+from zpp.zpp_pipeline import run_pipeline
+from zpp.zpp_wallplug import (
     WallPlugChain,
     wallplug_chain_z_present,
     wallplug_chain_zn_design,
     wallplug_chain_pf_design,
 )
-from zpp_io import read_profile
+from zpp.zpp_io import read_profile
 
 
 FIXTURE = _HERE.parent / "data" / "fixtures" / "z2960_synthetic.csv"

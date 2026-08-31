@@ -24,10 +24,10 @@ we just use its data structures to anchor our values.
 from __future__ import annotations
 from dataclasses import dataclass
 
-from zpp_process_bop import (
+from zpp.zpp_process_bop import (
     PlantBOPInputs, ProcessBOPResult,
 )
-from zpp_adapters import BOPAdapter, ParametricBOPAdapter
+from .zpp_adapters import BOPAdapter, ParametricBOPAdapter
 
 
 # Default IFE plant values from PROCESS IFEData.

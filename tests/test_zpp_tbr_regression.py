@@ -26,7 +26,7 @@ import pytest
 # Make the code directory importable
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "code"))
 
-from zpp_tbr import (
+from zpp.zpp_tbr import (
     compute_TBR, TBRInputs,
     TBR_PER_NEUTRON, NEUTRON_MULTIPLIER_GAIN,
     thickness_to_saturation, enrichment_factor,
@@ -242,7 +242,7 @@ class TestBoundaryCorrectionFactor:
     """Tier 7+ — tests for the boundary_correction_factor function."""
 
     def test_infinite_boundary_returns_one(self):
-        from zpp_tbr import boundary_correction_factor
+        from zpp.zpp_tbr import boundary_correction_factor
         for thick in [0, 6, 44, 100, 200]:
             f = boundary_correction_factor(thick, "infinite")
             assert f == 1.0, (
@@ -251,7 +251,7 @@ class TestBoundaryCorrectionFactor:
             )
 
     def test_invalid_boundary_raises(self):
-        from zpp_tbr import boundary_correction_factor
+        from zpp.zpp_tbr import boundary_correction_factor
         with pytest.raises(ValueError, match="boundary_condition"):
             boundary_correction_factor(50.0, "vacuum")
 
@@ -262,7 +262,7 @@ class TestBoundaryCorrectionFactor:
         This is the closed-form equivalent of the Tier 7+
         "exact at interpolation points" test.
         """
-        from zpp_tbr import (
+        from zpp.zpp_tbr import (
             boundary_correction_factor, ASYMPTOTE_RATIO_REFLECTIVE,
             ALBEDO_BETA_REFLECTIVE, MC_CALIBRATION_TABLE,
         )
@@ -289,7 +289,7 @@ class TestBoundaryCorrectionFactor:
         (the geometric-series gain blows up, but for engineering
         purposes blankets below 6 cm are not used).
         """
-        from zpp_tbr import (
+        from zpp.zpp_tbr import (
             boundary_correction_factor, ASYMPTOTE_RATIO_REFLECTIVE,
         )
         # Far above calibration range: should approach asymptote_ratio
@@ -313,7 +313,7 @@ class TestBoundaryCorrectionFactor:
         """The closed-form albedo correction is monotonically
         decreasing in thickness (thin blankets get more reflection
         gain than thick ones, since f_sat grows toward 1)."""
-        from zpp_tbr import boundary_correction_factor
+        from zpp.zpp_tbr import boundary_correction_factor
         thicknesses = [6, 25, 44, 60, 74, 90, 104, 120, 134]
         fs = [boundary_correction_factor(t, "reflective") for t in thicknesses]
         for i in range(len(fs) - 1):
@@ -333,7 +333,7 @@ class TestSelfConsistency:
     components. If the formula structure changes, this catches it."""
 
     def test_TBR_equals_product_of_components(self):
-        from zpp_tbr import (
+        from zpp.zpp_tbr import (
             TBR_PER_NEUTRON, NEUTRON_MULTIPLIER_GAIN,
         )
         inputs = TBRInputs(

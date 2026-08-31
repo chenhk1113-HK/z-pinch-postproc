@@ -27,9 +27,9 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
-from zpp_plant_simulation import simulate_plant, PlantDesign
-from zpp_comparison import ZN_DESIGN
-from zpp_tbr import TBRInputs, compute_TBR
+from zpp.zpp_plant_simulation import simulate_plant, PlantDesign
+from zpp.zpp_comparison import ZN_DESIGN
+from zpp.zpp_tbr import TBRInputs, compute_TBR
 
 
 @dataclass

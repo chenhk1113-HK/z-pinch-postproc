@@ -43,7 +43,7 @@ class TestCheckOpenMCInstall:
     """Test check_openmc_install() reporting."""
 
     def test_returns_dict(self):
-        from zpp_real_openmc_adapter import check_openmc_install
+        from zpp.adapters.zpp_real_openmc_adapter import check_openmc_install
         info = check_openmc_install()
         assert isinstance(info, dict)
         assert "installed" in info
@@ -53,22 +53,22 @@ class TestCheckOpenMCInstall:
         assert "cross_sections_ready" in info
 
     def test_installed_is_true(self):
-        from zpp_real_openmc_adapter import check_openmc_install
+        from zpp.adapters.zpp_real_openmc_adapter import check_openmc_install
         info = check_openmc_install()
         assert info["installed"] is True
 
     def test_version_is_openmc_anywhere(self):
-        from zpp_real_openmc_adapter import check_openmc_install
+        from zpp.adapters.zpp_real_openmc_adapter import check_openmc_install
         info = check_openmc_install()
         assert info["version"] == "0.16.0.0"
 
     def test_binary_path_is_set(self):
-        from zpp_real_openmc_adapter import check_openmc_install
+        from zpp.adapters.zpp_real_openmc_adapter import check_openmc_install
         info = check_openmc_install()
         assert info["binary_path"] is not None
 
     def test_cross_sections_initially_unset(self):
-        from zpp_real_openmc_adapter import check_openmc_install
+        from zpp.adapters.zpp_real_openmc_adapter import check_openmc_install
         # Ensure env var is not set
         os.environ.pop("OPENMC_CROSS_SECTIONS", None)
         info = check_openmc_install()
@@ -80,18 +80,18 @@ class TestGetOpenMCAnywhereInfo:
     """Test get_openmc_anywhere_info() package metadata."""
 
     def test_returns_dict(self):
-        from zpp_real_openmc_adapter import get_openmc_anywhere_info
+        from zpp.adapters.zpp_real_openmc_adapter import get_openmc_anywhere_info
         info = get_openmc_anywhere_info()
         assert isinstance(info, dict)
         assert info["name"] == "openmc-anywhere"
 
     def test_version(self):
-        from zpp_real_openmc_adapter import get_openmc_anywhere_info
+        from zpp.adapters.zpp_real_openmc_adapter import get_openmc_anywhere_info
         info = get_openmc_anywhere_info()
         assert info["version"] == "0.16.0.0"
 
     def test_location_is_in_venv(self):
-        from zpp_real_openmc_adapter import get_openmc_anywhere_info
+        from zpp.adapters.zpp_real_openmc_adapter import get_openmc_anywhere_info
         info = get_openmc_anywhere_info()
         assert info["location"] is not None
         assert ".venv" in info["location"] or "site-packages" in info["location"]
@@ -101,8 +101,8 @@ class TestRealOpenMCTBRCalculation:
     """Test real_openmc_tbr_calculation() behavior."""
 
     def test_zn_default_returns_result(self):
-        from zpp_real_openmc_adapter import real_openmc_tbr_calculation
-        from zpp_tbr import TBRInputs
+        from zpp.adapters.zpp_real_openmc_adapter import real_openmc_tbr_calculation
+        from zpp.zpp_tbr import TBRInputs
         inp = TBRInputs(
             blanket_material="LiPb",
             neutron_multiplier="Be",
@@ -116,8 +116,8 @@ class TestRealOpenMCTBRCalculation:
         assert result.openmc_installed is True
 
     def test_parametric_tbr_always_computed(self):
-        from zpp_real_openmc_adapter import real_openmc_tbr_calculation
-        from zpp_tbr import TBRInputs
+        from zpp.adapters.zpp_real_openmc_adapter import real_openmc_tbr_calculation
+        from zpp.zpp_tbr import TBRInputs
         inp = TBRInputs(
             blanket_material="LiPb",
             neutron_multiplier="Be",
@@ -134,8 +134,8 @@ class TestRealOpenMCTBRCalculation:
         assert 1.0 < result.parametric_TBR < 2.5
 
     def test_xml_generated_even_without_cross_sections(self):
-        from zpp_real_openmc_adapter import real_openmc_tbr_calculation
-        from zpp_tbr import TBRInputs
+        from zpp.adapters.zpp_real_openmc_adapter import real_openmc_tbr_calculation
+        from zpp.zpp_tbr import TBRInputs
         # Make sure cross-sections are NOT set
         os.environ.pop("OPENMC_CROSS_SECTIONS", None)
         inp = TBRInputs(
@@ -153,8 +153,8 @@ class TestRealOpenMCTBRCalculation:
         assert result.tally_xml_generated is True
 
     def test_run_skipped_without_cross_sections(self):
-        from zpp_real_openmc_adapter import real_openmc_tbr_calculation
-        from zpp_tbr import TBRInputs
+        from zpp.adapters.zpp_real_openmc_adapter import real_openmc_tbr_calculation
+        from zpp.zpp_tbr import TBRInputs
         os.environ.pop("OPENMC_CROSS_SECTIONS", None)
         inp = TBRInputs(
             blanket_material="LiPb",
@@ -170,8 +170,8 @@ class TestRealOpenMCTBRCalculation:
         assert result.openmc_TBR is None
 
     def test_fispact_blanket(self):
-        from zpp_real_openmc_adapter import real_openmc_tbr_calculation
-        from zpp_tbr import TBRInputs
+        from zpp.adapters.zpp_real_openmc_adapter import real_openmc_tbr_calculation
+        from zpp.zpp_tbr import TBRInputs
         # Test with Li4SiO4 (FISPACT-relevant ceramic)
         inp = TBRInputs(
             blanket_material="Li4SiO4",
@@ -190,8 +190,8 @@ class TestBuildOpenMCTBRModel:
     """Test build_openmc_tbr_model() geometry building."""
 
     def test_xml_files_written(self):
-        from zpp_real_openmc_adapter import build_openmc_tbr_model
-        from zpp_tbr import TBRInputs
+        from zpp.adapters.zpp_real_openmc_adapter import build_openmc_tbr_model
+        from zpp.zpp_tbr import TBRInputs
         inp = TBRInputs(
             blanket_material="LiPb",
             neutron_multiplier="Be",
@@ -210,8 +210,8 @@ class TestBuildOpenMCTBRModel:
             assert os.path.exists(os.path.join(work_dir, "tallies.xml"))
 
     def test_model_is_openmc_model(self):
-        from zpp_real_openmc_adapter import build_openmc_tbr_model
-        from zpp_tbr import TBRInputs
+        from zpp.adapters.zpp_real_openmc_adapter import build_openmc_tbr_model
+        from zpp.zpp_tbr import TBRInputs
         import openmc
         inp = TBRInputs(
             blanket_material="LiPb",
@@ -231,7 +231,7 @@ class TestRealOpenMCMarkdown:
     """Test real_openmc_markdown() formatting."""
 
     def test_includes_install_status(self):
-        from zpp_real_openmc_adapter import real_openmc_markdown, OpenMCNeutronicsResult
+        from zpp.adapters.zpp_real_openmc_adapter import real_openmc_markdown, OpenMCNeutronicsResult
         result = OpenMCNeutronicsResult(
             openmc_installed=True,
             openmc_version="0.16.0.0",
@@ -251,7 +251,7 @@ class TestRealOpenMCMarkdown:
         assert "1.5000" in md
 
     def test_includes_openmc_tbr_when_available(self):
-        from zpp_real_openmc_adapter import real_openmc_markdown, OpenMCNeutronicsResult
+        from zpp.adapters.zpp_real_openmc_adapter import real_openmc_markdown, OpenMCNeutronicsResult
         result = OpenMCNeutronicsResult(
             openmc_installed=True,
             openmc_version="0.16.0.0",
@@ -276,7 +276,7 @@ class TestStrategicFindings:
         """openmc-anywhere is the unofficial PyPI wheel workaround
         for installing OpenMC without conda on Windows.
         """
-        from zpp_real_openmc_adapter import get_openmc_anywhere_info
+        from zpp.adapters.zpp_real_openmc_adapter import get_openmc_anywhere_info
         info = get_openmc_anywhere_info()
         # The wheel name proves the unofficial nature
         assert info["name"] == "openmc-anywhere"
@@ -285,7 +285,7 @@ class TestStrategicFindings:
         """OPENMC_CROSS_SECTIONS env var must be set with valid
         path to cross_sections.xml for a real simulation.
         """
-        from zpp_real_openmc_adapter import check_openmc_install
+        from zpp.adapters.zpp_real_openmc_adapter import check_openmc_install
         os.environ.pop("OPENMC_CROSS_SECTIONS", None)
         info = check_openmc_install()
         # Without env var, cross_sections_ready is False

@@ -23,7 +23,7 @@ import os
 import tempfile
 from dataclasses import dataclass
 
-from zpp_geometry import ZIFERadialBuild
+from zpp.zpp_geometry import ZIFERadialBuild
 
 
 def check_paramak_install() -> dict:

@@ -32,10 +32,10 @@ from dataclasses import dataclass, field
 from typing import Iterable
 import numpy as np
 
-from zpp_mcbride import MagLIFInputs, stagnation_profile
-from zpp_pipeline import run_pipeline
-from zpp_wallplug import wallplug_chain_zn_design, WallPlugChain
-from zpp_economics import break_even_Q_eng
+from zpp.zpp_mcbride import MagLIFInputs, stagnation_profile
+from zpp.zpp_pipeline import run_pipeline
+from zpp.zpp_wallplug import wallplug_chain_zn_design, WallPlugChain
+from zpp.zpp_economics import break_even_Q_eng
 
 
 @dataclass

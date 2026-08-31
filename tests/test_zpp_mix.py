@@ -20,13 +20,13 @@ import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "code"))
 
-from zpp_mix import (
+from zpp.zpp_mix import (
     eta_mix_empirical,
     apply_mix_correction,
     eta_mix_calibration_table,
     MixCorrectionResult,
 )
-from zpp_pipeline import run_pipeline
+from zpp.zpp_pipeline import run_pipeline
 
 
 def _triangular_profile(
@@ -242,8 +242,8 @@ class TestEndToEndGomezAnchor:
         30-50% T_ion + mix uncertainty)."""
         import sys
         sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "code"))
-        from zpp_mcbride import gomez2020_z_shot, stagnation_profile
-        from zpp_wallplug import wallplug_chain_z_present
+        from zpp.zpp_mcbride import gomez2020_z_shot, stagnation_profile
+        from zpp.zpp_wallplug import wallplug_chain_z_present
 
         inp = gomez2020_z_shot()
         p = stagnation_profile(inp)

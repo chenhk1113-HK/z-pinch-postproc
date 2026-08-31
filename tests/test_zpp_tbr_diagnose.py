@@ -20,8 +20,8 @@ import pytest
 # Make the code directory importable
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "code"))
 
-from zpp_tbr import TBRInputs, compute_TBR, MC_CALIBRATION_TABLE
-from zpp_tbr_diagnose import (
+from zpp.zpp_tbr import TBRInputs, compute_TBR, MC_CALIBRATION_TABLE
+from zpp.zpp_tbr_diagnose import (
     deconstruct_tbr, deconstruction_markdown,
     TBRDeconstruction, ComponentContribution,
     SOBES_ASYMPTOTE_90PCT, MC_PLATEAU_REFLECTIVE,

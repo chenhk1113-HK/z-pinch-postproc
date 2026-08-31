@@ -20,7 +20,7 @@ import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "code"))
 
-from zpp_zn65 import (
+from zpp.zpp_zn65 import (
     ZN_65_DEFAULTS,
     zn_65_sweep,
     fine_grained_sweep,

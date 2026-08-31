@@ -36,21 +36,21 @@ import json
 from dataclasses import dataclass
 from typing import Optional, Callable
 
-from zpp_adapters import (
+from .zpp_adapters import (
     BOPAdapter, TBRAdapter, GeometryAdapter, NeutronicsAdapter,
     ParametricBOPAdapter, ParametricTBRAdapter,
     ParametricGeometryAdapter, ParametricNeutronicsAdapter,
 )
-from zpp_process_bop import (
+from zpp.zpp_process_bop import (
     PlantBOPInputs, compute_process_bop, ProcessBOPResult,
 )
-from zpp_tbr import (
+from zpp.zpp_tbr import (
     TBRInputs, compute_TBR, TBRResult,
 )
-from zpp_geometry import (
+from zpp.zpp_geometry import (
     ZIFERadialBuild, get_build,
 )
-from zpp_pfc_lifetime import (
+from zpp.zpp_pfc_lifetime import (
     PFCDamageInputs, first_wall_lifetime, PFCDamageResult,
 )
 
@@ -61,7 +61,7 @@ from zpp_pfc_lifetime import (
 
 @dataclass
 class UpstreamCodeInfo:
-    """Information about an installed upstream code."""
+    """Information about an installed upstream zpp."""
     name: str
     binary_path: Optional[str]  # path to executable or None if not found
     version: Optional[str]

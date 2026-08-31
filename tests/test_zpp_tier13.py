@@ -22,7 +22,7 @@ class TestTier13FeMaterial:
 
     def test_fe_reflector_in_materials(self):
         """_build_blanket_materials should include 'fe_reflector' key."""
-        from zpp_real_openmc_transport import _build_blanket_materials
+        from zpp.zpp_real_openmc_transport import _build_blanket_materials
         mats = _build_blanket_materials(Li6_enrichment_fraction=0.90)
         assert "fe_reflector" in mats
         # Also verify backward compat: existing keys still present
@@ -31,7 +31,7 @@ class TestTier13FeMaterial:
 
     def test_fe_reflector_density(self):
         """Fe reflector density should be 7.8 g/cm3 (steel density)."""
-        from zpp_real_openmc_transport import _build_blanket_materials
+        from zpp.zpp_real_openmc_transport import _build_blanket_materials
         mats = _build_blanket_materials()
         fe = mats["fe_reflector"]
         # openmc.Material.set_density("g/cm3", val) stores in density attribute
@@ -46,7 +46,7 @@ class TestTier13Geometry:
     def test_no_fe_reflector_backward_compat(self):
         """R_fe_cm=None (default) should give same cells as before
         (no fe_reflector cell)."""
-        from zpp_real_openmc_transport import (
+        from zpp.zpp_real_openmc_transport import (
             _build_blanket_materials, _build_zpinch_geometry,
         )
         mats = _build_blanket_materials()
@@ -61,7 +61,7 @@ class TestTier13Geometry:
     def test_with_fe_reflector_mult_inside(self):
         """R_fe_cm set + mult_inside=True should add fe_reflector cell
         between blanket and structure."""
-        from zpp_real_openmc_transport import (
+        from zpp.zpp_real_openmc_transport import (
             _build_blanket_materials, _build_zpinch_geometry,
         )
         mats = _build_blanket_materials()
@@ -81,7 +81,7 @@ class TestTier13Geometry:
     def test_with_fe_reflector_mult_outside(self):
         """R_fe_cm set + mult_inside=False should add fe_reflector cell
         between Be and structure."""
-        from zpp_real_openmc_transport import (
+        from zpp.zpp_real_openmc_transport import (
             _build_blanket_materials, _build_zpinch_geometry,
         )
         mats = _build_blanket_materials()
@@ -96,7 +96,7 @@ class TestTier13Geometry:
 
     def test_fe_reflector_out_of_range_raises(self):
         """R_fe_cm outside [R_be/R_blanket, R_structure] should raise."""
-        from zpp_real_openmc_transport import (
+        from zpp.zpp_real_openmc_transport import (
             _build_blanket_materials, _build_zpinch_geometry,
         )
         mats = _build_blanket_materials()
@@ -123,7 +123,7 @@ class TestTier13RunRealOpenMCTBR:
     def test_R_fe_cm_parameter_exists(self):
         """run_real_openmc_tbr should accept R_fe_cm parameter."""
         import inspect
-        from zpp_real_openmc_transport import run_real_openmc_tbr
+        from zpp.zpp_real_openmc_transport import run_real_openmc_tbr
         sig = inspect.signature(run_real_openmc_tbr)
         assert "R_fe_cm" in sig.parameters
         # Default should be None (backward compat)
@@ -136,7 +136,7 @@ class TestTier13BackwardCompat:
     def test_no_fe_reflector_same_cells(self):
         """Without R_fe_cm, cells dict should match Tier 6.C exactly:
         plasma, be_mult, blanket, structure (no fe_reflector)."""
-        from zpp_real_openmc_transport import (
+        from zpp.zpp_real_openmc_transport import (
             _build_blanket_materials, _build_zpinch_geometry,
         )
         mats = _build_blanket_materials()

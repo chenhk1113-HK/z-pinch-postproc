@@ -1,0 +1,97 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "zpp"
+version = "1.5.0"
+description = "Z-pinch fusion reactor design toolkit: yield post-processor + blanket neutronics (TBR) calculator"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {file = "LICENSE"}
+authors = [
+    {name = "K Lam", email = "lamkuenai@users.noreply.github.com"},
+]
+keywords = [
+    "z-pinch", "fusion", "tritium-breeding", "neutronics",
+    "openmc", "monte-carlo", "blanket-design",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Physics",
+]
+
+dependencies = [
+    "numpy>=2.0",
+    "scipy>=1.11",
+    "pandas>=2.0",
+    "matplotlib>=3.7",
+    "openmc>=0.16",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "mkdocs>=1.5",
+    "mkdocs-material>=9.4",
+]
+docs = [
+    "mkdocs>=1.5",
+    "mkdocs-material>=9.4",
+]
+
+[project.scripts]
+# Console scripts — `pip install -e .` then run as `zpp-tbr`, etc.
+zpp-tbr = "zpp_cli.tbr:main"
+zpp-version = "zpp_cli.version:main"
+
+[project.urls]
+Homepage = "https://github.com/chenhk1113-HK/z-pinch-postproc"
+Source = "https://github.com/chenhk1113-HK/z-pinch-postproc"
+Issues = "https://github.com/chenhk1113-HK/z-pinch-postproc/issues"
+
+[tool.setuptools]
+# This puts all .py files at top-level importable as 'zpp_*' modules.
+# The package is intentionally flat — no nested packages to keep
+# import paths simple.
+packages = ["code", "code.adapters"]
+package-dir = {"code" = "code", "code.adapters" = "code/adapters"}
+
+[tool.setuptools.package-data]
+"code" = ["py.typed"]
+"code.adapters" = ["py.typed"]
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-ra --strict-markers --strict-config"
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "openmc: marks tests that require OpenMC (deselect with '-m \"not openmc\"')",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["code"]
+omit = [
+    "code/__pycache__/*",
+    "code/adapters/*",  # adapters have their own test coverage
+]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+fail_under = 75
+exclude_lines = [
+    "pragma: no cover",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+]

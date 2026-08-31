@@ -34,23 +34,23 @@ To swap in real OpenMC:
             tbr = sp.get_tally(...).mean
             return TBRResult(...)
 
-See the README for installation instructions for each upstream code.
+See the README for installation instructions for each upstream zpp.
 """
 from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Protocol, runtime_checkable
 
-from zpp_process_bop import (
+from zpp.zpp_process_bop import (
     PlantBOPInputs, compute_process_bop, ProcessBOPResult,
 )
-from zpp_tbr import (
+from zpp.zpp_tbr import (
     TBRInputs, compute_TBR, TBRResult,
 )
-from zpp_geometry import (
+from zpp.zpp_geometry import (
     ZIFERadialBuild, get_build,
 )
-from zpp_pfc_lifetime import (
+from zpp.zpp_pfc_lifetime import (
     PFCDamageInputs, first_wall_lifetime, PFCDamageResult,
 )
 

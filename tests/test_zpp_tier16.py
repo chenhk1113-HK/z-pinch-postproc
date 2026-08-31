@@ -24,7 +24,7 @@ class TestTier16UMaterial:
 
     def test_u238_in_materials(self):
         """_build_blanket_materials should include 'u238' key."""
-        from zpp_real_openmc_transport import _build_blanket_materials
+        from zpp.zpp_real_openmc_transport import _build_blanket_materials
         mats = _build_blanket_materials(Li6_enrichment_fraction=0.90)
         assert "u238" in mats
         # Verify backward compat
@@ -33,7 +33,7 @@ class TestTier16UMaterial:
 
     def test_u238_density(self):
         """U-238 density should be 19.1 g/cm3 (depleted uranium)."""
-        from zpp_real_openmc_transport import _build_blanket_materials
+        from zpp.zpp_real_openmc_transport import _build_blanket_materials
         mats = _build_blanket_materials()
         u = mats["u238"]
         assert abs(u.density - 19.1) < 0.01
@@ -45,7 +45,7 @@ class TestTier16Geometry:
     def test_no_u238_backward_compat(self):
         """R_u238_cm=None (default) should give same cells as Tier 13
         (no u238 cell, no r_u238 surface)."""
-        from zpp_real_openmc_transport import (
+        from zpp.zpp_real_openmc_transport import (
             _build_blanket_materials, _build_zpinch_geometry,
         )
         mats = _build_blanket_materials()
@@ -60,7 +60,7 @@ class TestTier16Geometry:
     def test_with_u238_mult_inside(self):
         """R_u238_cm set + mult_inside=True should add u238 cell
         between blanket and structure (no Fe)."""
-        from zpp_real_openmc_transport import (
+        from zpp.zpp_real_openmc_transport import (
             _build_blanket_materials, _build_zpinch_geometry,
         )
         mats = _build_blanket_materials()
@@ -80,7 +80,7 @@ class TestTier16Geometry:
     def test_with_u238_mult_outside(self):
         """R_u238_cm set + mult_inside=False should add u238 cell
         between Be and structure."""
-        from zpp_real_openmc_transport import (
+        from zpp.zpp_real_openmc_transport import (
             _build_blanket_materials, _build_zpinch_geometry,
         )
         mats = _build_blanket_materials()
@@ -98,7 +98,7 @@ class TestTier16Geometry:
     def test_u238_and_fe_combined(self):
         """R_u238_cm + R_fe_cm should give correct order:
         breeder -> U-238 -> Fe -> structure."""
-        from zpp_real_openmc_transport import (
+        from zpp.zpp_real_openmc_transport import (
             _build_blanket_materials, _build_zpinch_geometry,
         )
         mats = _build_blanket_materials()
@@ -122,7 +122,7 @@ class TestTier16Geometry:
 
     def test_u238_out_of_range_raises(self):
         """R_u238_cm outside [R_be/R_blanket, R_structure/R_fe] should raise."""
-        from zpp_real_openmc_transport import (
+        from zpp.zpp_real_openmc_transport import (
             _build_blanket_materials, _build_zpinch_geometry,
         )
         mats = _build_blanket_materials()
@@ -149,7 +149,7 @@ class TestTier16RunRealOpenMCTBR:
     def test_R_u238_cm_parameter_exists(self):
         """run_real_openmc_tbr should accept R_u238_cm parameter."""
         import inspect
-        from zpp_real_openmc_transport import run_real_openmc_tbr
+        from zpp.zpp_real_openmc_transport import run_real_openmc_tbr
         sig = inspect.signature(run_real_openmc_tbr)
         assert "R_u238_cm" in sig.parameters
         # Default should be None (backward compat)
@@ -161,7 +161,7 @@ class TestTier16Tally:
 
     def test_tally_without_u238(self):
         """_build_tally without u238 cell should NOT include U238."""
-        from zpp_real_openmc_transport import (
+        from zpp.zpp_real_openmc_transport import (
             _build_blanket_materials, _build_zpinch_geometry, _build_tally,
         )
         mats = _build_blanket_materials()
@@ -176,7 +176,7 @@ class TestTier16Tally:
 
     def test_tally_with_u238(self):
         """_build_tally WITH u238 cell should include U238 in nuclides."""
-        from zpp_real_openmc_transport import (
+        from zpp.zpp_real_openmc_transport import (
             _build_blanket_materials, _build_zpinch_geometry, _build_tally,
         )
         mats = _build_blanket_materials()
@@ -195,7 +195,7 @@ class TestTier16BackwardCompat:
 
     def test_no_u238_same_cells_as_v1_3(self):
         """Without R_u238_cm, cells dict should match v1.3.0 exactly."""
-        from zpp_real_openmc_transport import (
+        from zpp.zpp_real_openmc_transport import (
             _build_blanket_materials, _build_zpinch_geometry,
         )
         mats = _build_blanket_materials()

@@ -46,7 +46,7 @@ class TestTier10Infrastructure:
 
     def test_build_blanket_materials_accepts_li6_param(self):
         """_build_blanket_materials() should accept Li6_enrichment_fraction."""
-        from zpp_real_openmc_transport import _build_blanket_materials
+        from zpp.zpp_real_openmc_transport import _build_blanket_materials
         import inspect
         sig = inspect.signature(_build_blanket_materials)
         assert "Li6_enrichment_fraction" in sig.parameters, (
@@ -56,7 +56,7 @@ class TestTier10Infrastructure:
 
     def test_run_real_openmc_tbr_accepts_li6_param(self):
         """run_real_openmc_tbr() should accept Li6_enrichment_fraction."""
-        from zpp_real_openmc_transport import run_real_openmc_tbr
+        from zpp.zpp_real_openmc_transport import run_real_openmc_tbr
         import inspect
         sig = inspect.signature(run_real_openmc_tbr)
         assert "Li6_enrichment_fraction" in sig.parameters, (
@@ -66,7 +66,7 @@ class TestTier10Infrastructure:
 
     def test_run_blanket_sweep_accepts_li6_param(self):
         """run_blanket_sweep() should accept Li6_enrichment_fraction."""
-        from zpp_real_openmc_transport import run_blanket_sweep
+        from zpp.zpp_real_openmc_transport import run_blanket_sweep
         import inspect
         sig = inspect.signature(run_blanket_sweep)
         assert "Li6_enrichment_fraction" in sig.parameters, (

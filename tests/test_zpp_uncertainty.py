@@ -24,7 +24,7 @@ class TestUncertainParameter:
     """Test UncertainParameter dataclass."""
 
     def test_create_basic(self):
-        from zpp_uncertainty import UncertainParameter
+        from zpp.zpp_uncertainty import UncertainParameter
         p = UncertainParameter(name="x", nominal=1.0, stddev=0.1)
         assert p.name == "x"
         assert p.nominal == 1.0
@@ -32,7 +32,7 @@ class TestUncertainParameter:
         assert p.distribution == "normal"  # default
 
     def test_with_bounds(self):
-        from zpp_uncertainty import UncertainParameter
+        from zpp.zpp_uncertainty import UncertainParameter
         p = UncertainParameter(
             name="x", nominal=1.0, stddev=0.1,
             lower_bound=0.5, upper_bound=2.0, distribution="uniform",
@@ -46,15 +46,15 @@ class TestMonteCarloPropagation:
     """Test monte_carlo_propagation()."""
 
     def test_returns_UQResult(self):
-        from zpp_uncertainty import monte_carlo_propagation, DEFAULT_UNCERTAIN_PARAMS_ZN
+        from zpp.zpp_uncertainty import monte_carlo_propagation, DEFAULT_UNCERTAIN_PARAMS_ZN
         result = monte_carlo_propagation(
             DEFAULT_UNCERTAIN_PARAMS_ZN, n_samples=20, random_seed=42,
         )
-        from zpp_uncertainty import UQResult
+        from zpp.zpp_uncertainty import UQResult
         assert isinstance(result, UQResult)
 
     def test_TBR_mean_in_plausible_range(self):
-        from zpp_uncertainty import monte_carlo_propagation, DEFAULT_UNCERTAIN_PARAMS_ZN
+        from zpp.zpp_uncertainty import monte_carlo_propagation, DEFAULT_UNCERTAIN_PARAMS_ZN
         result = monte_carlo_propagation(
             DEFAULT_UNCERTAIN_PARAMS_ZN, n_samples=100, random_seed=42,
         )
@@ -63,7 +63,7 @@ class TestMonteCarloPropagation:
         assert result.TBR_std > 0
 
     def test_TBR_percentiles_monotonic(self):
-        from zpp_uncertainty import monte_carlo_propagation, DEFAULT_UNCERTAIN_PARAMS_ZN
+        from zpp.zpp_uncertainty import monte_carlo_propagation, DEFAULT_UNCERTAIN_PARAMS_ZN
         result = monte_carlo_propagation(
             DEFAULT_UNCERTAIN_PARAMS_ZN, n_samples=200, random_seed=42,
         )
@@ -73,7 +73,7 @@ class TestMonteCarloPropagation:
         assert result.TBR_percentiles[95] < result.TBR_percentiles[99]
 
     def test_reproducible_with_seed(self):
-        from zpp_uncertainty import monte_carlo_propagation, DEFAULT_UNCERTAIN_PARAMS_ZN
+        from zpp.zpp_uncertainty import monte_carlo_propagation, DEFAULT_UNCERTAIN_PARAMS_ZN
         r1 = monte_carlo_propagation(
             DEFAULT_UNCERTAIN_PARAMS_ZN, n_samples=50, random_seed=12345,
         )
@@ -84,7 +84,7 @@ class TestMonteCarloPropagation:
         assert r1.TBR_std == r2.TBR_std
 
     def test_n_samples_consistent(self):
-        from zpp_uncertainty import monte_carlo_propagation, DEFAULT_UNCERTAIN_PARAMS_ZN
+        from zpp.zpp_uncertainty import monte_carlo_propagation, DEFAULT_UNCERTAIN_PARAMS_ZN
         result = monte_carlo_propagation(
             DEFAULT_UNCERTAIN_PARAMS_ZN, n_samples=50, random_seed=42,
         )
@@ -92,7 +92,7 @@ class TestMonteCarloPropagation:
         assert len(result.output_samples["TBR"]) == 50
 
     def test_parameter_samples_within_bounds(self):
-        from zpp_uncertainty import (
+        from zpp.zpp_uncertainty import (
             monte_carlo_propagation, DEFAULT_UNCERTAIN_PARAMS_ZN,
         )
         result = monte_carlo_propagation(
@@ -113,7 +113,7 @@ class TestUQMarkdown:
     """Test uq_markdown() formatting."""
 
     def test_includes_basic_info(self):
-        from zpp_uncertainty import (
+        from zpp.zpp_uncertainty import (
             monte_carlo_propagation, uq_markdown, DEFAULT_UNCERTAIN_PARAMS_ZN,
         )
         result = monte_carlo_propagation(
@@ -127,7 +127,7 @@ class TestUQMarkdown:
         assert "P(TBR >= 1.05)" in md
 
     def test_includes_LCOE_info(self):
-        from zpp_uncertainty import (
+        from zpp.zpp_uncertainty import (
             monte_carlo_propagation, uq_markdown, DEFAULT_UNCERTAIN_PARAMS_ZN,
         )
         result = monte_carlo_propagation(
@@ -152,7 +152,7 @@ class TestStrategicFindings:
         of samples above 1.0 is reasonable (≥60% for a design that
         is at the engineering margin).
         """
-        from zpp_uncertainty import (
+        from zpp.zpp_uncertainty import (
             monte_carlo_propagation, DEFAULT_UNCERTAIN_PARAMS_ZN,
         )
         result = monte_carlo_propagation(
@@ -176,7 +176,7 @@ class TestStrategicFindings:
         cannot deliver commercial LCOE regardless of small
         parameter variations).
         """
-        from zpp_uncertainty import (
+        from zpp.zpp_uncertainty import (
             monte_carlo_propagation, DEFAULT_UNCERTAIN_PARAMS_ZN,
         )
         result = monte_carlo_propagation(

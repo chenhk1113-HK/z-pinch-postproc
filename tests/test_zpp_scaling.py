@@ -20,14 +20,14 @@ import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "code"))
 
-from zpp_scaling import (
+from zpp.zpp_scaling import (
     SweepResult,
     sweep_one_point,
     zn_scaling_sweep,
     break_even_contour,
     scaling_summary,
 )
-from zpp_wallplug import wallplug_chain_zn_design
+from zpp.zpp_wallplug import wallplug_chain_zn_design
 
 
 class TestSweepOnePoint:

@@ -19,7 +19,7 @@ import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "code"))
 
-from zpp_geometry_tbr import (
+from zpp.zpp_geometry_tbr import (
     SaturationCurve, BlanketThicknessSweep,
     tbr_vs_thickness, sweep_blanket_thickness,
     build_compare_at_thickness, compare_table_markdown,
