@@ -1,8 +1,16 @@
 # MODEL ASSUMPTIONS AND LIMITATIONS — z-pinch-postproc
 
-**Version:** v1.1.0 (2026-08-31)
-**Status:** v1.1.0 ships Tier 8 (closed-form albedo correction): `ASYMPTOTE_RATIO_REFLECTIVE = 0.827` and `ALBEDO_BETA_REFLECTIVE = 0.973` are now physics-derived constants in `code/zpp_tbr.py`. The closed-form `f_geom = ASYMPTOTE_RATIO / (1 - beta*(1-f_sat))` replaces the Tier 7+ piecewise-linear interpolation and reproduces all 5 MC calibration points to within ±0.5%. Default `boundary_condition="infinite"` still returns f_geom=1.0 (Sobes regime). 650 tests passing.
-**Per:** `Z_Machine_plan.pdf` (user-uploaded plan, 7,441 chars), `BUCKY 1-D radiation hydrodynamics code reference` (UWFDM-1268, 2005), `An overview of magneto-inertial fusion on the Z machine` (Yager-Elorriaga et al. 2022, Nucl. Fusion 62 042015), `Pulsed power: A precision hammer for high energy density science` (Hansen 2021, Princeton SULI), `Improved formulas for fusion cross-sections and thermal reactivities` (Bosch-Hale 1992), Sobes 2011 (LiPb blanket saturation length 50 cm), Fischer 2020 / Brown 2023 (TBR per neutron reference values), Micklich 1984 (Princeton PhD thesis, OSTI 6022348 — "Control of neutron albedo in toroidal fusion reactors"), Furuta 1987 (J. Nucl. Sci. Technol. 24(4) — neutron leakage from 50 cm Li, Fe spheres with 14 MeV D-T source), 2026-08-31 OpenMC Monte Carlo sweep at `data/results/2026-08-31_tier6c_sweep/`.
+**Version:** v1.4.1 (2026-08-31)
+**Status:** v1.4.1 ships Tier 18 (Li4SiO4 ceramic breeder material), Tier 15-17 (U-238 hybrid blanket sweep, Z-FFR spherical validation, smooth closed-form honest failure), GitHub Actions CI, and MkDocs documentation site. **751 tests passing.**
+
+**Per:** `Z_Machine_plan.pdf` (user-uploaded plan, 7,441 chars), `BUCKY 1-D radiation hydrodynamics code reference` (UWFDM-1268, 2005), `An overview of magneto-inertial fusion on the Z machine` (Yager-Elorriaga et al. 2022, Nucl. Fusion 62 042015), `Pulsed power: A precision hammer for high energy density science` (Hansen 2021, Princeton SULI), `Improved formulas for fusion cross-sections and thermal reactivities` (Bosch-Hale 1992), Sobes 2011 (LiPb blanket saturation length 50 cm), Fischer 2020 / Brown 2023 (TBR per neutron reference values), Micklich 1984 (Princeton PhD thesis, OSTI 6022348 — "Control of neutron albedo in toroidal fusion reactors"), Furuta 1987 (J. Nucl. Sci. Technol. 24(4) — neutron leakage from 50 cm Li, Fe spheres with 14 MeV D-T source), Peng 2014 (Z-FFR conceptual design, High Power Laser & Particle Beams 26(9)), 2026-08-31 OpenMC Monte Carlo sweeps at `data/results/2026-08-31_tier16_hybrid/` and `data/results/2026-08-31_tier17_zffr_spherical/`.
+
+**Honest findings documented in this version:**
+- **Tier 13**: Fe reflector HURTS TBR by 14% at 20 cm in cylindrical geometry (vs Peng 2014's recommendation to add Fe).
+- **Tier 15**: Smooth closed-form for `mult_inside=False` failed. Piecewise-linear lookup table is the correct calibration source.
+- **Tier 16**: U-238 hybrid blanket layer DECREASES TBR by 26% in cylindrical geometry (U-238 (n,γ) competes with Li-6 (n,T) for thermal neutrons). The penalty drops to 1.4% in spherical geometry (Tier 17).
+- **Tier 17**: Z-FFR Peng 2014 spherical geometry validates methodology: TBR=1.44 for full Peng design (target was >1.15, achieved 1.24).
+- **Tier 18.A**: Li4SiO4 ceramic breeder material defined (Peng 2014's actual breeder). Tier 18.B transport benchmark deferred.
 
 ## 1. Scope and intent
 
