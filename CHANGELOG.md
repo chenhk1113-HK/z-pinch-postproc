@@ -5,13 +5,90 @@
 
 ## [Unreleased]
 
-### Planned for v1.1+
+### Planned for v1.2+
 - FISPACT-II install (after UKAEA license acquisition)
 - Paramak D-shape extension for spherical tokamaks
 - Sensitivity ranking via Sobol on MC samples
 - GitHub release (pending user approval)
 
 See `docs/TODO.md` for the full list.
+
+## [1.1.0] — 2026-08-31
+
+### Added
+- **Tier 8 — Closed-form albedo correction** in
+  `code/zpp_tbr.py`:
+  - `ASYMPTOTE_RATIO_REFLECTIVE = 0.827` — captures the 21%
+    gap between the Sobes-infinite-medium prediction (2.25)
+    and the MC plateau (1.86) at 90% Li-6 enrichment. The
+    gap is a setup-dependent constant: the Sobes formula
+    assumes the Be multiplier contributes throughout the
+    whole blanket, but in practice it saturates in a thin
+    ~2 cm inner Be layer.
+  - `ALBEDO_BETA_REFLECTIVE = 0.973` — best-fit geometric-
+    series albedo coefficient. Captures the reflection gain
+    from escaping neutrons that bounce back into the
+    blanket. β ≈ 1.0 is consistent with the white
+    reflecting boundary we set in OpenMC.
+  - `boundary_correction_factor(thickness, "reflective")`
+    now returns the closed-form formula:
+    `f_geom = ASYMPTOTE_RATIO / (1 - beta*(1-f_sat))`
+    instead of the Tier 7+ piecewise-linear interpolation.
+- **Tier 8 — Test updates** in
+  `tests/test_zpp_tbr_regression.py`:
+  - `TestMCPlateauBound.test_reflective_matches_MC_at
+    _calibration_points`: tolerance relaxed from ±0.1%
+    (Tier 7+ interpolation, exact by construction) to
+    ±1% (closed-form, fits to ±0.5% in practice).
+  - `TestBoundaryCorrectionFactor`:
+    - Replaced `test_reflective_at_calibration_points`
+      (was a lookup-table exactness check) with
+      `test_reflective_matches_closed_form_at_calibration
+      _points` (verifies the closed-form expression).
+    - Replaced `test_reflective_clamps_at_extremes` with
+      `test_reflective_extrapolates_smoothly` (the
+      closed-form extrapolates analytically, no clamping).
+    - Updated `test_reflective_interpolation_monotonic`
+      → `test_reflective_monotonic_decreasing` (the
+      closed-form is a smooth function, not a piecewise
+      linear interpolation).
+
+### Fixed
+- **Tier 7+ piecewise-linear interpolation replaced with
+  closed-form**: the old approach was exact at the 5
+  calibration points but had no physical basis. The Tier 8
+  closed-form is derived from the geometric-series albedo
+  model and matches the 5 MC points to within ±0.5%. It
+  extrapolates analytically beyond the calibration range.
+
+### Verified
+- All **650** tests pass (`pytest tests/ -q`): 650 passed,
+  0 failed, 0 skipped.
+- `python -m py_compile code/zpp_tbr.py`: clean.
+- End-to-end: at the 5 calibration points, parametric Tier 5.B
+  with `boundary_condition="reflective"` reproduces OpenMC TBR
+  to within ±0.5% (vs ±0.1% for the Tier 7+ interpolation,
+  vs ±83% / +64% pre-Tier 7+).
+
+### Engineering impact
+- ZN design at 30% Li-6 enrichment:
+  - `boundary_condition="infinite"` (default, real plant):
+    TBR = 1.001 (right at self-sufficiency).
+  - `boundary_condition="reflective"` (theoretical lab
+    best-case): TBR ≈ 8.0 (boundary reflection adds 16×
+    boost vs Sobes). Closed-form extrapolation.
+
+### References
+- Micklich 1984 (Princeton PhD thesis, OSTI 6022348) —
+  "Control of neutron albedo in toroidal fusion reactors".
+  Foundational reference for thin-slab neutron reflection.
+- Furuta 1987 (J. Nucl. Sci. Technol. 24(4)) — neutron
+  leakage from 50 cm Li, Fe, Fe+H2O, double-layer Li+Fe
+  spheres with 14 MeV D-T source. Our exact problem domain,
+  reference MCNP benchmarks.
+- Petkov 2000 (IAEA INIS jdavc-waq76) — accurate albedo
+  BC for 3D nodal diffusion codes via method of
+  characteristics.
 
 ## [1.0.0] — 2026-08-31
 

@@ -20,6 +20,7 @@ new sweep in CHANGELOG and the change in the commit message.
 """
 import os
 import sys
+import math
 import pytest
 
 # Make the code directory importable
@@ -156,27 +157,33 @@ MC_PLATEAU_VALUES = {
 
 
 class TestMCPlateauBound:
-    """Tier 7+ — the parametric Tier 5.B formula with calibrated
+    """Tier 8 — the parametric Tier 5.B formula with calibrated
     boundary_condition='reflective' should match the MC plateau
     to within ±1% at the 5 calibration points (R_b ∈ {12, 50,
-    80, 110, 140} cm) by construction.
+    80, 110, 140} cm) via the closed-form albedo correction.
 
     Pre-Tier 7+ (infinite-medium Sobes): ±60% disagreement at
     R >= 80 cm (overestimate); −83% at R = 12 cm (underestimate
     from missing boundary-reflection gain).
-    Post-Tier 7+: ±0% at the 5 calibration points by construction;
-    bounded by ±10% between points (linear interpolation).
+    Post-Tier 7+ (piecewise-linear interpolation): ±0% at the
+    5 calibration points by construction; bounded by ±10% between
+    points (linear interpolation).
+    Post-Tier 8 (closed-form albedo correction): ±0.5% at all 5
+    calibration points via the formula
+        f_geom = ASYMPTOTE_RATIO / (1 - beta*(1-f_sat))
+    calibrated against MC data.
 
-    Tier 7+ also adds the `boundary_condition="infinite"` case
-    which preserves the Tier 7.C behavior: Sobes-only, ±15% at
-    R >= 50 cm; known limitation at R <= 50 cm.
+    Tier 8 also preserves the `boundary_condition="infinite"` case:
+    Sobes-only, ±15% at R >= 50 cm; known limitation at R <= 50 cm.
     """
 
     @pytest.mark.parametrize("R_b", list(MC_PLATEAU_VALUES.keys()))
     def test_reflective_matches_MC_at_calibration_points(self, R_b):
-        """With boundary_condition='reflective', the parametric should
-        reproduce the MC value to within 0.01 (it interpolates the
-        calibration table at the calibration points exactly)."""
+        """With boundary_condition='reflective', the closed-form
+        albedo correction should reproduce the MC value to within
+        ±1% at the 5 calibration points (vs ±0% for the
+        piecewise-linear interpolation, which was exact by
+        construction)."""
         mc_tbr, mc_rel_std = MC_PLATEAU_VALUES[R_b]
         LiPb_thick = R_b - 6.0
         if LiPb_thick <= 0:
@@ -187,12 +194,12 @@ class TestMCPlateauBound:
         )
         result = compute_TBR(inp_reflective)
         delta_pct = (result.TBR - mc_tbr) / mc_tbr
-        assert abs(delta_pct) <= 0.001, (
+        assert abs(delta_pct) <= 0.01, (
             f"Reflective parametric TBR ({result.TBR:.4f}) should "
-            f"match MC plateau ({mc_tbr:.4f}) to within 0.1% at the "
+            f"match MC plateau ({mc_tbr:.4f}) to within 1% at the "
             f"calibration point R_b={R_b} cm. Got delta={delta_pct*100:+.2f}%"
-            f". Check MC_CALIBRATION_TABLE and boundary_correction_"
-            f"factor interpolation."
+            f". Check ASYMPTOTE_RATIO_REFLECTIVE and ALBEDO_BETA_REFLECTIVE "
+            f"calibration constants."
         )
 
     @pytest.mark.parametrize("R_b", list(MC_PLATEAU_VALUES.keys()))
@@ -248,52 +255,67 @@ class TestBoundaryCorrectionFactor:
         with pytest.raises(ValueError, match="boundary_condition"):
             boundary_correction_factor(50.0, "vacuum")
 
-    def test_reflective_at_calibration_points(self):
-        """At the 5 calibration points, f_geom = MC / Sobes."""
-        from zpp_tbr import boundary_correction_factor, MC_CALIBRATION_TABLE
-        expected = {
-            6.0:   1.5341 / 0.2547,  # R_b=12
-            44.0:  1.8361 / 1.3182,  # R_b=50
-            74.0:  1.8574 / 1.7397,  # R_b=80
-            104.0: 1.8625 / 1.9711,  # R_b=110
-            134.0: 1.8639 / 2.0981,  # R_b=140
-        }
-        for thick, expected_f in expected.items():
+    def test_reflective_matches_closed_form_at_calibration_points(self):
+        """At the 5 calibration points, f_geom should equal
+        ASYMPTOTE_RATIO / (1 - beta*(1-f_sat)) to within ±0.5%.
+
+        This is the closed-form equivalent of the Tier 7+
+        "exact at interpolation points" test.
+        """
+        from zpp_tbr import (
+            boundary_correction_factor, ASYMPTOTE_RATIO_REFLECTIVE,
+            ALBEDO_BETA_REFLECTIVE, MC_CALIBRATION_TABLE,
+        )
+        for R_b, TBR_mc, _ in MC_CALIBRATION_TABLE:
+            thick = R_b - 6.0
+            # f_sat at this thickness (Sobes 2011, L_sat=50 cm)
+            f_sat = 1 - math.exp(-thick / 50.0)
+            expected_f = ASYMPTOTE_RATIO_REFLECTIVE / (
+                1.0 - ALBEDO_BETA_REFLECTIVE * (1.0 - f_sat)
+            )
             f = boundary_correction_factor(thick, "reflective")
-            assert abs(f - expected_f) < 0.01, (
-                f"f_geom at thickness={thick} cm: expected "
-                f"{expected_f:.4f}, got {f:.4f}"
+            assert abs(f - expected_f) < 1e-9, (
+                f"f_geom at thickness={thick} cm: closed-form "
+                f"expected {expected_f:.6f}, got {f:.6f}"
             )
 
-    def test_reflective_clamps_at_extremes(self):
-        """At thickness < min or > max, f_geom should clamp to the
-        boundary value, not extrapolate."""
-        from zpp_tbr import boundary_correction_factor
-        # Below min thickness (6 cm): clamp to f_geom(R_b=12)
-        f_low = boundary_correction_factor(0.0, "reflective")
-        f_min = boundary_correction_factor(6.0, "reflective")
-        assert f_low == pytest.approx(f_min, abs=1e-6), (
-            f"f_geom below min thickness should clamp: "
-            f"f(0)={f_low:.4f}, f(6)={f_min:.4f}"
+    def test_reflective_extrapolates_smoothly(self):
+        """The closed-form albedo correction extrapolates smoothly
+        beyond the calibration range (no clamping artifacts).
+
+        At thickness > 134 cm: f_geom → ASYMPTOTE_RATIO = 0.827
+        (Sobes asymptote correction).
+        At thickness < 6 cm: f_geom → 0.827 / (1-0.973) = 30.6
+        (the geometric-series gain blows up, but for engineering
+        purposes blankets below 6 cm are not used).
+        """
+        from zpp_tbr import (
+            boundary_correction_factor, ASYMPTOTE_RATIO_REFLECTIVE,
         )
-        # Above max thickness (134 cm): clamp to f_geom(R_b=140)
-        f_high = boundary_correction_factor(500.0, "reflective")
-        f_max = boundary_correction_factor(134.0, "reflective")
-        assert f_high == pytest.approx(f_max, abs=1e-6), (
-            f"f_geom above max thickness should clamp: "
-            f"f(500)={f_high:.4f}, f(134)={f_max:.4f}"
+        # Far above calibration range: should approach asymptote_ratio
+        f_far = boundary_correction_factor(10000.0, "reflective")
+        assert f_far == pytest.approx(ASYMPTOTE_RATIO_REFLECTIVE, abs=1e-6), (
+            f"At infinite thickness, f_geom should equal "
+            f"ASYMPTOTE_RATIO_REFLECTIVE={ASYMPTOTE_RATIO_REFLECTIVE:.4f}, "
+            f"got {f_far:.4f}"
+        )
+        # Far below calibration range: should be > ASYMPTOTE_RATIO
+        # (thin blankets get a big reflection boost).
+        f_thin = boundary_correction_factor(1.0, "reflective")
+        assert f_thin > ASYMPTOTE_RATIO_REFLECTIVE * 5, (
+            f"At thickness=1 cm, f_geom should be much greater than "
+            f"ASYMPTOTE_RATIO_REFLECTIVE (= {ASYMPTOTE_RATIO_REFLECTIVE:.4f}), "
+            f"got {f_thin:.4f} (expected > "
+            f"{ASYMPTOTE_RATIO_REFLECTIVE * 5:.4f})"
         )
 
-    def test_reflective_interpolation_monotonic(self):
-        """Between calibration points, f_geom should interpolate
-        monotonically (no spurious oscillations)."""
+    def test_reflective_monotonic_decreasing(self):
+        """The closed-form albedo correction is monotonically
+        decreasing in thickness (thin blankets get more reflection
+        gain than thick ones, since f_sat grows toward 1)."""
         from zpp_tbr import boundary_correction_factor
         thicknesses = [6, 25, 44, 60, 74, 90, 104, 120, 134]
         fs = [boundary_correction_factor(t, "reflective") for t in thicknesses]
-        # Between adjacent calibration points, the value should be
-        # between the two endpoint values.
-        # Specifically, going from R=12 to R=140, f_geom decreases
-        # monotonically from 6.02 to 0.89.
         for i in range(len(fs) - 1):
             assert fs[i] > fs[i+1], (
                 f"f_geom not monotonically decreasing: "
