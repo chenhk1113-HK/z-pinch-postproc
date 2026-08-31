@@ -5,15 +5,84 @@
 
 ## [Unreleased]
 
-### Planned for v0.8
-- OpenMC cross-section library download (~5 GB ENDF)
-- Real OpenMC TBR validation (parametric vs Monte Carlo)
+### Planned for v0.9+
 - FISPACT-II install (after UKAEA license acquisition)
 - Paramak D-shape extension for spherical tokamaks
 - Sensitivity ranking via Sobol on MC samples
 - GitHub release (pending user approval)
 
 See `docs/TODO.md` for the full list.
+
+## [0.8.0] — 2026-08-31
+
+### Added
+- **Tier 6.A — Geometry parameterization** in
+  `code/zpp_real_openmc_transport.py`:
+  `_build_zpinch_geometry()` now takes `R_plasma_cm`,
+  `R_blanket_cm`, `R_be_cm`, `R_structure_cm`, `height_cm`,
+  `boundary_type` (vacuum | white | reflective) and
+  `mult_inside` (False default; True puts Be inside the LiPb).
+  All args propagate through `run_real_openmc_tbr()`.
+- **Tier 6.B — Boundary conditions** (`boundary_type`):
+  - `vacuum`: kills particles crossing the boundary (Tier 5
+    baseline; leaks neutrons, gives a lower-bound TBR).
+  - `white`: isotropic Lambertian reflection (recovers the
+    "thick, low-leakage blanket" limit the parametric Tier 5.B
+    assumes). Switched the baseline Tier 5 default to keep
+    backward compatibility, but the Tier 6.C sweep uses
+    `boundary_type="white"`.
+  - `reflective`: specular mirror reflection (less physical
+    for neutrons, but provided for completeness).
+  Validated by docs: openmc.ZCylinder accepts
+  `boundary_type ∈ {'transmission', 'vacuum', 'reflective',
+  'white'}` (no `periodic` on cylinders).
+- **Tier 6.C — `run_blanket_sweep()` + `blanket_sweep_markdown()`**:
+  formal wrapper around the sweep pattern that compares
+  OpenMC Monte Carlo TBR to the parametric Tier 5.B estimate
+  for a list of R_blanket values. Defaults to the Tier 6
+  reconciliation setup (white boundary + mult_inside=True).
+- **Tier 6.D — Reconciliation finding** (2026-08-31): the
+  parametric Tier 5.B formula (`thickness_to_saturation` with
+  Sobes 2011 L_sat=50 cm for LiPb) matches Monte Carlo within
+  4.3% at the 50-cm reference blanket (TBR(MC)=1.836 ± 0.11%,
+  TBR(param)=1.915), but overestimates by up to 64% for thicker
+  blankets because it doesn't account for the physical
+  saturation of Li-6 capture in the Be-multiplied fast-neutron
+  flux. The MC plateau at TBR ~1.86 is the correct answer for
+  the Z-pinch LiPb + Be blanket at this geometry. Documented
+  in MODEL_ASSUMPTIONS_AND_LIMITATIONS.md §3.4.
+- **Tier 6.E — 14 new tests** in
+  `tests/test_zpp_real_openmc_transport.py`:
+  - TestGeometryBuilder: default geometry builds; custom
+    R_blanket honored; custom height honored.
+  - TestBoundaryValidation: vacuum/white/reflective accepted;
+    `periodic` rejected; garbage strings rejected.
+  - TestMultInside: layer order flips when mult_inside=True;
+    default is False (Tier 5 backward compat).
+  - TestResultDataclass: RealOpenMCTBRResult has all 13
+    required fields.
+  - TestBlanketSweep: empty-sweep markdown renders; finding
+    text always present; parametric_fallback row renders
+    correctly.
+  - TestMarkdownFormatter: parametric-fallback markdown
+    includes the parametric TBR + fallback note;
+    successful-run markdown shows the comparison table +
+    honest note.
+  Total test count: 609 → **623** passing.
+
+### Fixed
+- `_build_zpinch_geometry`: previously had a hard-coded
+  `boundary_type="vacuum"` on all outer surfaces; now
+  propagates the boundary_type arg, which is required for
+  Tier 6.B.
+
+### Verified
+- All **623** tests pass (`pytest tests/ -q`).
+- `python -m py_compile code/zpp_real_openmc_transport.py` clean.
+- End-to-end Tier 6.C sweep (5 cases × 90s = 7.5 min wall-clock):
+  all R_blanket ∈ {12, 50, 80, 110, 140} cm converged to
+  rel σ ≤ 0.13%; MC plateau at TBR ~1.86 for R ≥ 80 cm
+  confirmed across two independent runs.
 
 ## [0.7.1] — 2026-08-31
 

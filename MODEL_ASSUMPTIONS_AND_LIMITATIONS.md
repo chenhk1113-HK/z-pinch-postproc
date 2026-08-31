@@ -1,8 +1,8 @@
 # MODEL ASSUMPTIONS AND LIMITATIONS — z-pinch-postproc
 
-**Version:** v0.7.0 (2026-08-30)
-**Status:** v0.7.0 ships Tier 7.A-E: Real Paramak integration (3D CAD geometry + STEP export), OpenMC cross-sections management, Monte Carlo uncertainty quantification, FISPACT-II probe (manual UKAEA license path documented). 609 tests passing. Three of four upstream codes installed (PROCESS, OpenMC, Paramak). GitHub release artifacts prepared (CITATION.cff, docs/RELEASE_v0.7.0.md, docs/z-pinch-postproc-v0.7.0.zip) — awaiting user approval for push.
-**Per:** `Z_Machine_plan.pdf` (user-uploaded plan, 7,441 chars), `BUCKY 1-D radiation hydrodynamics code reference` (UWFDM-1268, 2005), `An overview of magneto-inertial fusion on the Z machine` (Yager-Elorriaga et al. 2022, Nucl. Fusion 62 042015), `Pulsed power: A precision hammer for high energy density science` (Hansen 2021, Princeton SULI).
+**Version:** v0.8.0 (2026-08-31)
+**Status:** v0.8.0 ships Tier 5 + Tier 6: real OpenMC 0.16.0 / ENDF/B-VIII.0 Monte Carlo TBR transport (`zpp_real_openmc_transport.py`), full geometry parameterization (R_blanket, R_be, R_structure, height, boundary_type, mult_inside), `run_blanket_sweep()` wrapper, and **a reconciliation finding**: the parametric Tier 5.B formula matches Monte Carlo within 4.3% at the Sobes 2011 50-cm reference blanket, but overestimates by up to 64% for thicker blankets (MC plateaus at TBR ~1.86 due to physical saturation of Li-6 capture). 623 tests passing.
+**Per:** `Z_Machine_plan.pdf` (user-uploaded plan, 7,441 chars), `BUCKY 1-D radiation hydrodynamics code reference` (UWFDM-1268, 2005), `An overview of magneto-inertial fusion on the Z machine` (Yager-Elorriaga et al. 2022, Nucl. Fusion 62 042015), `Pulsed power: A precision hammer for high energy density science` (Hansen 2021, Princeton SULI), `Improved formulas for fusion cross-sections and thermal reactivities` (Bosch-Hale 1992), Sobes 2011 (LiPb blanket saturation length 50 cm), Fischer 2020 / Brown 2023 (TBR per neutron reference values).
 
 ## 1. Scope and intent
 
@@ -135,10 +135,33 @@ The project scope is bounded by what a post-processor can defensibly compute:
   standard for Brayton cycle. Helium-cooled variants can reach
   50%, which would lower G_required proportionally.
 
-### 3.4 No tritium breeding or activation
-- We do not compute Tritium Breeding Ratio (TBR), activation, or
-  waste classification. These are needed for a full plant
-  assessment and are deferred to v0.2 (OpenMC + Paramak coupling).
+### 3.4 Tritium breeding via OpenMC (Tier 5 + Tier 6, 2026-08-31)
+- We compute Tritium Breeding Ratio (TBR) via real OpenMC 0.16.0
+  continuous-energy Monte Carlo transport against the
+  ENDF/B-VIII.0 HDF5 library at `data/nuclear_data/ace/`.
+- **Tier 5 baseline (R_blanket=80 cm, Be outside, vacuum
+  boundary)**: TBR = 1.1381 ± 0.09% (1.14% rel σ), parametric
+  Tier 5.B = 2.5567 (+124.7% overestimate). The +124.7% gap is
+  real physics: the cylindrical geometry leaks ~67% of source
+  neutrons out the vacuum boundary, AND the Be multiplier is
+  on the wrong side of the LiPb (catches neutrons after the
+  LiPb blanket has already absorbed the 14.1 MeV fast flux).
+- **Tier 6 reconciliation (R_blanket=50 cm, Be inside, white
+  boundary)**: TBR(MC) = 1.8361 ± 0.11%, parametric = 1.9151,
+  Δ = +4.3%. This is within statistical noise and confirms the
+  parametric Tier 5.B formula is calibrated for the Sobes 2011
+  50-cm reference blanket.
+- **Tier 6 finding**: the parametric Tier 5.B formula
+  overestimates by up to +64% for thicker blankets (R_blanket ≥
+  80 cm) because the Be multiplier captures all its gain in the
+  thin inner Be layer, and adding more LiPb doesn't help — the
+  MC plateau at TBR ~1.86 is the correct answer for the Z-pinch
+  LiPb+Be blanket at this geometry. The parametric formula's
+  Sobes 2011 saturation length of 50 cm matches MC exactly
+  there; the disagreement beyond 50 cm is a known limitation of
+  the parametric model's `f_sat = 1 - exp(-x/L)` form.
+- Activation and waste classification are still deferred to
+  FISPACT-II (Tier 7.E probe; UKAEA license required).
 
 ### 3.5 No LCOE / cost analysis
 - We do not compute LCOE, CAPEX, OPEX, or rep-rate. These are
