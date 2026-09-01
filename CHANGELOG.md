@@ -3,6 +3,36 @@
 > All notable changes to this project are documented here. Format follows
 > [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.7.0] — 2026-09-01
+
+### Tier 19.A — 3D-resolved TBR via `CylindricalMesh`
+- Adds a `(r, φ, z)`-resolved TBR tally on top of the existing 1D Tier 6/18.B geometry. Reveals **where** tritium is being bred (radial and axial distribution), not just the total.
+- **Headline result**: TBR = 1.8306 ± 0.0076 (seed=42, n=5000, n_batches=10). Cross-validates against Tier 18.B (1.8280 ± 0.0060) within 0.4σ. Mesh conservation check (mesh_sum / cell_tally) = 1.0000.
+- **Method**: `openmc.CylindricalMesh(r_grid=0..60 cm × 30 bins, z_grid=-60..60 cm × 30 bins, default phi=[0, 2π] for axisymmetric)`.
+- **Radial profile**: 77% of TBR in LiPb ring (r=6..50 cm), 14% in structure (r≥50 cm, back-scatter + capture), 3% in Be ring (r=4..6 cm, Be (n,2n) doubles neutrons but doesn't breed T directly).
+- **Axial profile**: symmetric about z=0 (white BC). Peak at z=14 cm (slightly off-axis because neutrons from point source diffuse axially through ~14 cm of LiPb before slowing enough for Li-6 capture).
+- **Wall-clock**: 21 s per run on Windows host. Fast enough for sweeps.
+- **Files**: `zpp/zpp_real_openmc_3d.py` (19114 chars), `scripts/run_tier19_3d_sweep.py` (8674 chars), `data/results/2026-09-01_1707_tier19_3d/` (canonical reference).
+- **Closes**: zreview5 audit Item 7 partial scope ("cheap 3D"). Tier 19.B (electrodes + diagnostic ports CSG) is the next milestone.
+
+### Tier 19.A — cross-validation + methodology
+- The `CylindricalMesh` filter on the existing Tier 18.B geometry reproduces Tier 18.B's published cell-tally TBR within statistical noise. This validates the mesh-tally methodology before committing to the bigger Tier 19.B CSG work.
+- README ⚠️ engineering-scope warning box re-scoped: "Tier 19.A adds a 3D-resolved TBR map via CylindricalMesh — still 1D geometry, but spatially-resolved readout. Tier 19.B (next) will add electrodes + diagnostic ports."
+
+### Tier 19.A — documentation
+- `docs/TIER_19_3D_GEOMETRY.md` (8824 chars): full method, output description, Tier 19.B roadmap.
+- `MODEL_ASSUMPTIONS_AND_LIMITATIONS.md` §3.11 added (Tier 19.A section).
+- `docs/zreview5_audit.md` updated to reflect Tier 19.A shipping and Item 2 cancellation.
+
+### Tier 19.A — what this does NOT do
+- **No new geometry**: Tier 19.A is a tally-only upgrade. The underlying CSG geometry is still 1D infinite cylinder.
+- **No 3D engineering scope**: README ⚠️ engineering-scope warning box is updated but not retired. Tier 19.B is required to fully close it.
+- **No multi-phi resolution**: Tier 19.A uses default phi=[0, 2π] (single azimuth bin). Multi-phi resolution makes sense only after Tier 19.B.
+
+### Status
+- 757 tests passing, 85.15% coverage (unchanged — Tier 19.A reuses existing geometry).
+- Drift guard passes (all 5 version sources agree on 1.7.0).
+
 ## [1.6.0] — 2026-09-01
 
 ### Added

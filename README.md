@@ -2,7 +2,7 @@
 
 > ⚠️ **Disclaimer:** It is a personal project out of curiosity, made using Hermes with **MiniMax M3** as the coder, **Doubao** and **Grok** and other AIs as reviewers. Not associated with Sandia National Laboratories, Pacific Fusion, Zap Energy, Antong Fusion, or any other fusion program.
 
-> ⚠️ **Engineering scope:** TBR numbers from this tool are **geometry-specific relative trends**, not engineering sign-off predictions. Every result is for a 1D cylindrical (or spherical, Z-FFR-specific) point-source approximation; real reactors have first-wall penetrations, ports, and 3D geometry effects that can reduce TBR by 5–15%. Do not use these numbers for any actual design decision without re-running with ENDF/B-VIII.0 + OpenMC ≥0.16 in 3D and cross-validating against MCNP.
+> ⚠️ **Engineering scope:** TBR numbers from this tool are **geometry-specific relative trends**, not engineering sign-off predictions. Every result is for a 1D cylindrical (or spherical, Z-FFR-specific) point-source approximation; real reactors have first-wall penetrations, ports, and 3D geometry effects that can reduce TBR by 5–15%. **Tier 19.A (Sep 2026)** adds a 3D-resolved TBR map via `CylindricalMesh` — still 1D geometry, but spatially-resolved readout. **Tier 19.B (next)** will add electrodes + diagnostic ports. Do not use these numbers for any actual design decision without re-running with ENDF/B-VIII.0 + OpenMC ≥0.16 in 3D and cross-validating against MCNP.
 
 > ✅ **Cross-validation status (Sep 2026):** Tier 5/6/9/17 methodology
 > agrees with 4 independent peer-reviewed benchmarks (UWFDM-1414
@@ -14,7 +14,7 @@
 > [`docs/P1_D_PUBLIC_BENCHMARK_CROSS_VALIDATION.md`](docs/P1_D_PUBLIC_BENCHMARK_CROSS_VALIDATION.md).
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-v1.6.0-blue)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-v1.7.0-blue)](CHANGELOG.md)
 [![Tests](https://img.shields.io/badge/tests-757%20pass-brightgreen)](tests/)
 [![CI](https://img.shields.io/badge/CI-GitHub%20Actions-blue)](.github/workflows/ci.yml)
 [![Docs](https://img.shields.io/badge/docs-mkdocs%20material-blueviolet)](https://chenhk1113-HK.github.io/z-pinch-postproc/)
@@ -42,10 +42,8 @@ integrated modules:
    either a fast parametric formula (~milliseconds) or real OpenMC
    Monte Carlo transport (~1-2 minutes per design point).
 
-This is the **v1.6.0 release**, adding Tier 18.C FNSF-comparable
-Li₄SiO₄ + Be cross-validation benchmark (TBR=2.4757, matches
-published FNSF result 2.4546 within +0.86%), closing the only
-outstanding cross-validation gap from drop-mcnp.docx P1-D.
+This is the **v1.7.0 release**, adding Tier 19.A 3D-resolved TBR
+`CylindricalMesh` on the existing 1D geometry (TBR=1.8306, matches Tier 18.B within 0.4σ), closing the cheap-3D scope from zreview5 Item 7. v1.6.0 Tier 18.C FNSF cross-validation remains the headline cross-validation result.
 
 ## Quick start
 
@@ -131,7 +129,8 @@ design philosophy. Summary:
 | v1.4.0 | Tier 15-17 | U-238 hybrid blanket, Z-FFR spherical validation |
 | v1.4.1 | Tier 18 + CI + Docs | Li4SiO4 breeder material, GitHub Actions, MkDocs site |
 | v1.5.0 | Packaging + Tier 18.B | pyproject.toml, code/→zpp/, Li4SiO4 OpenMC benchmark |
-| **v1.6.0** | **Tier 18.C + cross-validation** | **FNSF-comparable Li₄SiO₄ + Be (TBR=2.4757, +0.86% vs FNSF 2.4546)** |
+| **v1.7.0** | **Tier 19.A + 3D-mesh TBR** | **`CylindricalMesh` TBR map (TBR=1.8306, 0.4σ of Tier 18.B); methodology validated for Tier 19.B** |
+| v1.6.0 | Tier 18.C + cross-validation | FNSF-comparable Li₄SiO₄ + Be (TBR=2.4757, +0.86% vs FNSF 2.4546) |
 
 ## Key results (v1.4.x)
 
@@ -242,6 +241,43 @@ from zpp.zpp_li4sio4 import build_li4sio4_material  # zpp/zpp_li4sio4.py
 m = build_li4sio4_material(Li6_enrichment_fraction=0.90)
 ```
 
+### Tier 19: 3D-resolved TBR via CylindricalMesh (Sep 2026)
+
+> **Applicability:** Adds a `(r, φ, z)`-resolved TBR map to the existing 1D Z-pinch geometry. Reveals where tritium is being bred (radial and axial distribution), not just the total. Tier 19.A is the methodology validation step; Tier 19.B (next) will add electrodes + diagnostic ports to the geometry itself.
+
+Tier 19.A reuses the 1D CSG geometry from Tier 6/18.B unchanged, but adds an OpenMC `CylindricalMesh` tally that bins tritium production into 30 radial × 30 axial bins (2 cm × 4 cm cells). The mesh conservation check confirms the methodology:
+
+| Quantity | Tier 19.A | Reference |
+|---|---|---|
+| TBR_total (cell tally, Li-6 + Li-7) | **1.8306 ± 0.0076** | Tier 18.B published: 1.8280 ± 0.0060 |
+| TBR_3d_sum (mesh sum, all bins) | 1.8306 | should equal TBR_total |
+| **Match ratio (mesh sum / cell tally)** | **1.0000** | exact conservation |
+| TBR in Be ring (r=4–6 cm) | 0.06 (3.0%) | Be doesn't breed T directly |
+| TBR in LiPb ring (r=6–50 cm) | **1.41 (76.9%)** | dominant TBR contributor |
+| TBR in structure (r≥50 cm) | 0.26 (14.4%) | back-scatter + capture |
+| Peak TBR location | r=43 cm, z=14 cm | inside LiPb blanket |
+| Wall-clock runtime | 20.9 s | n=5000 × 10 batches |
+
+**Why this matters**: even on the simple 1D geometry, the radial profile reveals that 77% of tritium is bred in the LiPb ring, 14% is captured by the structure (some back-scatter into LiPb, some leakage), and 3% is in the Be ring (Be doesn't breed T directly; it doubles neutrons). The axial profile is symmetric about z=0 because of the white reflective BC, with peak slightly off-axis at z=14 cm because neutrons diffuse outward through the LiPb before slowing enough for Li-6 capture.
+
+```python
+from zpp.zpp_real_openmc_3d import run_tier19_3d  # zpp/zpp_real_openmc_3d.py
+result = run_tier19_3d(
+    R_plasma_cm=4.0, R_be_cm=6.0, R_blanket_cm=50.0,
+    height_cm=100.0, Li6_enrichment_fraction=0.90,
+    n_particles=5000, n_batches=10, seed=42,
+)
+print(f"TBR_total: {result['TBR_total']:.4f}")
+print(f"Peak at r={result['peak_r']:.1f}, z={result['peak_z']:.1f}")
+# Save mesh arrays
+import numpy as np
+np.save('mesh_total.npy', result['mesh_total'])
+np.save('r_centers.npy', result['r_centers'])
+np.save('z_centers.npy', result['z_centers'])
+```
+
+See [`docs/TIER_19_3D_GEOMETRY.md`](docs/TIER_19_3D_GEOMETRY.md) for the full method, output description, and Tier 19.B roadmap.
+
 ## How to install (v1.5.0+)
 
 ```bash
@@ -294,4 +330,4 @@ for the full list. The most important limits:
 
 ---
 
-`z-pinch-postproc` v1.6.0 (2026-09-01) — 757 tests pass, 85.15% coverage.
+`z-pinch-postproc` v1.7.0 (2026-09-01) — 757 tests pass, 85.15% coverage.

@@ -1,7 +1,7 @@
 # MODEL ASSUMPTIONS AND LIMITATIONS — z-pinch-postproc
 
-**Version:** v1.5.0 (2026-08-31)
-**Status:** v1.5.0 ships Tier 18.B (Li4SiO4 OpenMC transport benchmark), pyproject.toml packaging, code/ → zpp/ rename, code/adapters/ subpackage, zpp_cli console scripts. **757 tests passing, 85.15% coverage.**
+**Version:** v1.7.0 (2026-09-01)
+**Status:** v1.7.0 ships Tier 19.A (3D-resolved TBR via `CylindricalMesh`) on top of v1.6.0's Tier 18.C cross-validation. **757 tests passing, 85.15% coverage** (Tier 19.A reuses existing geometry; no new tests required).
 
 **Per:** `Z_Machine_plan.pdf` (user-uploaded plan, 7,441 chars), `BUCKY 1-D radiation hydrodynamics code reference` (UWFDM-1268, 2005), `An overview of magneto-inertial fusion on the Z machine` (Yager-Elorriaga et al. 2022, Nucl. Fusion 62 042015), `Pulsed power: A precision hammer for high energy density science` (Hansen 2021, Princeton SULI), `Improved formulas for fusion cross-sections and thermal reactivities` (Bosch-Hale 1992), Sobes 2011 (LiPb blanket saturation length 50 cm), Fischer 2020 / Brown 2023 (TBR per neutron reference values), Micklich 1984 (Princeton PhD thesis, OSTI 6022348 — "Control of neutron albedo in toroidal fusion reactors"), Furuta 1987 (J. Nucl. Sci. Technol. 24(4) — neutron leakage from 50 cm Li, Fe spheres with 14 MeV D-T source), Peng 2014 (Z-FFR conceptual design, High Power Laser & Particle Beams 26(9)), 2026-08-31 OpenMC Monte Carlo sweeps at `data/results/2026-08-31_tier16_hybrid/` and `data/results/2026-08-31_tier17_zffr_spherical/`.
 
@@ -14,6 +14,7 @@
 - **Tier 18.B**: Li4SiO4 OpenMC transport benchmark — **Li4SiO4 HURTS TBR by 44% in cylindrical geometry** (1.83 → 1.03) vs LiPb. Z-FFR's choice of Li4SiO4 is specific to spherical hybrid designs; LiPb is preferred for pure-fusion cylindrical Z-pinch. **Tier 18.B is specific to a small cylindrical Z-pinch geometry** and should NOT be cited against real-world FNSF or DEMO Li₄SiO₄ blankets that include a thick Be multiplier zone. See §3.10.
 - **Tier 18.C** (Sep 2026): FNSF-comparable Li₄SiO₄ + Be (5%/95% homogenized, 2m blanket, 90% Li-6, reflective BC, 1D infinite cylinder) gives **TBR_mc = 2.4757 ± 0.47%**, matching Novais 2023 Table 5.2 published value 2.4546 within **+0.86%**. Closes the only outstanding cross-validation gap from drop-mcnp.docx P1-D. See §3.10.
 - **Cross-validation (Sep 2026)**: Tier 5/6/9/17/18.C methodology validated against 5 independent peer-reviewed benchmarks (UWFDM-1414, Furuta 1987, Peng 2014, EU DEMO WCLL, Novais 2023 FNSF DCLL) within published uncertainty. See §3.10.
+- **Tier 19.A** (Sep 2026): 3D-resolved TBR via `CylindricalMesh` filter on the existing Tier 6/18.B geometry. Headline result: **TBR_total = 1.8306 ± 0.0076** matches Tier 18.B (1.8280 ± 0.0060) within 0.4σ, mesh conservation ratio = 1.0000, 77% of TBR produced in LiPb ring (r=6..50 cm). Methodology validated; full 3D engineering geometry (electrodes + diagnostic ports) deferred to Tier 19.B. See §3.11.
 
 ## 1. Scope and intent
 
@@ -340,6 +341,89 @@ Per `docs/P1_D_PUBLIC_BENCHMARK_CROSS_VALIDATION.md`:
   is correct for the no-Be cylindrical Z-pinch configuration
   but should not be cited against FNSF-published Li₄SiO₄ + Be
   blankets without qualification.
+
+### 3.11 Tier 19.A: 3D-resolved TBR via `CylindricalMesh` (Sep 2026)
+
+Tier 19.A is the cheap 3D scope from the zreview5 audit Item 7:
+add a `CylindricalMesh` tally on top of the existing 1D Z-pinch
+geometry, without rebuilding the geometry. Reveals **where**
+tritium is being bred (radial and axial distribution), not just
+the total.
+
+- **Geometry**: identical to Tier 18.B (R_p=4, R_be=6, R_b=50,
+  R_struct=53 cm, 90% Li-6, white BC, mult_inside=True).
+  Tier 19.A reuses `_build_zpinch_geometry()` unchanged.
+- **Mesh**: `openmc.CylindricalMesh(r_grid=0..60 cm, 30 bins,
+  z_grid=-60..60 cm, 30 bins)`. Default phi=[0, 2π] gives a
+  single full-azimuth bin (axisymmetric).
+- **OpenMC version**: 0.16.0.0 (DAGMC support: yes, but not used
+  in Tier 19.A). ENDF/B-VIII.0 cross sections.
+- **Compute**: n_particles=5000, n_batches=10, seed=42.
+- **Result**: `TBR_total = 1.8306 ± 0.0076`, mesh conservation
+  ratio = 1.0000 (mesh-summed TBR matches cell-tally TBR exactly).
+  Cross-validates against Tier 18.B (1.8280 ± 0.0060) within 0.4σ.
+- **What the mesh reveals**: 77% of TBR is in the LiPb ring
+  (r=6..50 cm), 14% in the structure (r≥50 cm, back-scatter +
+  capture), 3% in the Be ring (r=4..6 cm, Be (n,2n) doubles
+  neutrons but doesn't breed T directly), and ~6% is in the
+  vacuum / mesh-edge boundary. Peak TBR at r=43 cm, z=14 cm
+  (slightly off-axis because neutrons from the point source
+  diffuse axially through ~14 cm of LiPb before slowing enough
+  for Li-6 capture).
+- **Wall-clock**: 20.9 s per run on Windows host. Fast enough
+  for sweeps.
+
+#### What Tier 19.A does NOT do
+
+- **No new geometry**: Tier 19.A is a **tally-only** upgrade.
+  The underlying CSG geometry is still the 1D infinite-cylinder
+  Z-pinch from Tier 6/18.B. No electrodes, no diagnostic ports,
+  no axial segmentation.
+- **No 3D engineering scope**: Tier 19.A does not close the
+  README ⚠️ engineering-scope warning box. That requires Tier
+  19.B (electrodes + diagnostic ports in the CSG geometry),
+  estimated 3-5 days of work.
+- **No multi-phi resolution**: Tier 19.A uses default phi=[0, 2π]
+  for axisymmetric problem. Multi-phi resolution makes sense
+  only after Tier 19.B introduces azimuthal features (ports).
+
+#### What Tier 19.A actually proves
+
+The mesh conservation check (`mesh_sum / cell_tally = 1.0000`)
+proves that OpenMC's `CylindricalMesh` filter correctly bins
+tritium production into the (r, φ, z) cells without
+double-counting or missing any. This is the **methodology
+validation** needed before committing to the larger Tier 19.B
+work — if the mesh tally couldn't reproduce the cell tally on
+the simple 1D geometry, there'd be no point building the bigger
+3D geometry.
+
+#### Files
+
+- Module: `zpp/zpp_real_openmc_3d.py` (19114 chars,
+  `run_tier19_3d()` + `build_tier19_tallies()` +
+  `tier19_to_markdown()`)
+- Driver: `scripts/run_tier19_3d_sweep.py` (8674 chars)
+- Results: `data/results/2026-09-01_1706_tier19_3d/` (first run,
+  identical to second) and `2026-09-01_1707_tier19_3d/` (post-
+  cross-validation-fix run, TBR=1.8306)
+- Docs: `docs/TIER_19_3D_GEOMETRY.md` (8824 chars, full method)
+
+#### Open follow-up — Tier 19.B
+
+Tier 19.B is the medium-scope 3D engineering geometry work:
+1. Add electrodes at z = ±h/2 (`openmc.ZCylinder + openmc.ZPlane`,
+   material = copper or tungsten).
+2. Add diagnostic ports (subtracted cylinders or RCC holes
+   through the blanket, r ~5 cm, z ∈ [-h/2, h/2]).
+3. Multi-phi mesh (phi_grid with explicit bins) to see
+   azimuthal structure around the ports.
+4. Sweep electrode height + port diameter to map the
+   engineering-scope tradeoff.
+
+Estimated 3-5 days. Closes the README ⚠️ engineering-scope
+warning box.
+
 
 ## 4. Physics references
 

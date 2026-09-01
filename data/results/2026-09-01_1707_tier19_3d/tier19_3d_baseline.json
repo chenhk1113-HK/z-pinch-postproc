@@ -1,0 +1,42 @@
+{
+  "TBR_3d_sum": 1.8305775567228975,
+  "TBR_total": 1.8305775567228837,
+  "TBR_total_stddev": 0.007630868483150266,
+  "fraction_be": 0.030103895884616993,
+  "fraction_lipb": 0.769206737433941,
+  "fraction_structure": 0.144135931593088,
+  "geometry_params": {
+    "Li6_enrichment_fraction": 0.9,
+    "R_be_cm": 6.0,
+    "R_blanket_cm": 50.0,
+    "R_plasma_cm": 4.0,
+    "R_structure_cm": 53.0,
+    "boundary_type": "white",
+    "height_cm": 100.0,
+    "mult_inside": true,
+    "n_axial_bins": 30,
+    "n_batches": 10,
+    "n_particles": 5000,
+    "n_radial_bins": 30,
+    "r_max_cm": 60.0,
+    "z_half_height_cm": 60.0
+  },
+  "match_ratio": 1.0000000000000075,
+  "npy_files": {
+    "mesh_per_nuclide": "data\\results\\2026-09-01_1707_tier19_3d\\mesh_per_nuclide.npy",
+    "mesh_total": "data\\results\\2026-09-01_1707_tier19_3d\\mesh_total.npy",
+    "r_centers": "data\\results\\2026-09-01_1707_tier19_3d\\r_centers.npy",
+    "z_centers": "data\\results\\2026-09-01_1707_tier19_3d\\z_centers.npy"
+  },
+  "nuclides": [
+    "Li6",
+    "Li7"
+  ],
+  "peak_r": 43.0,
+  "peak_value": 0.009193095146897708,
+  "peak_z": 14.0,
+  "runtime_s": 20.861655712127686,
+  "tbr_in_be_ring": 0.055107516176302246,
+  "tbr_in_lipb_ring": 1.4080925900266044,
+  "tbr_in_structure": 0.2638520014916517
+}
