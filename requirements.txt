@@ -1,9 +1,12 @@
 # Core scientific stack
-numpy>=2.0
-scipy>=1.11
-pandas>=2.0
-matplotlib>=3.7
-openmc>=0.16
+# Pinned to a minor-version range so OpenMC / numpy API drift doesn't
+# silently break zpp_real_openmc_transport.py (~700 lines). Bump the
+# upper bound and re-run the Tier 5/6/18 test suite before raising it.
+numpy>=2.0,<3.0
+scipy>=1.11,<2.0
+pandas>=2.0,<3.0
+matplotlib>=3.7,<4.0
+openmc>=0.16.0,<0.17.0
 
 # Testing
 pytest>=7.0

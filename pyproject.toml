@@ -26,11 +26,11 @@ classifiers = [
 ]
 
 dependencies = [
-    "numpy>=2.0",
-    "scipy>=1.11",
-    "pandas>=2.0",
-    "matplotlib>=3.7",
-    "openmc>=0.16",
+    "numpy>=2.0,<3.0",
+    "scipy>=1.11,<2.0",
+    "pandas>=2.0,<3.0",
+    "matplotlib>=3.7,<4.0",
+    "openmc>=0.16.0,<0.17.0",
 ]
 
 [project.optional-dependencies]
@@ -59,12 +59,13 @@ Issues = "https://github.com/chenhk1113-HK/z-pinch-postproc/issues"
 # This puts all .py files at top-level importable as 'zpp_*' modules.
 # The package is intentionally flat — no nested packages to keep
 # import paths simple.
-packages = ["code", "code.adapters"]
-package-dir = {"code" = "code", "code.adapters" = "code/adapters"}
+packages = ["zpp", "zpp.adapters", "zpp_cli"]
+package-dir = {"zpp" = "zpp", "zpp.adapters" = "zpp/adapters", "zpp_cli" = "zpp_cli"}
 
 [tool.setuptools.package-data]
-"code" = ["py.typed"]
-"code.adapters" = ["py.typed"]
+"zpp" = ["py.typed"]
+"zpp.adapters" = ["py.typed"]
+"zpp_cli" = ["py.typed"]
 
 [tool.pytest.ini_options]
 minversion = "7.0"
@@ -80,10 +81,11 @@ markers = [
 
 [tool.coverage.run]
 branch = true
-source = ["code"]
+source = ["zpp"]
 omit = [
-    "code/__pycache__/*",
-    "code/adapters/*",  # adapters have their own test coverage
+    "zpp/__pycache__/*",
+    "zpp/adapters/*",  # adapters have their own test coverage
+    "zpp_cli/*",
 ]
 
 [tool.coverage.report]

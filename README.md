@@ -2,6 +2,8 @@
 
 > ⚠️ **Disclaimer:** It is a personal project out of curiosity, made using Hermes with **MiniMax M3** as the coder, **Doubao** and **Grok** and other AIs as reviewers. Not associated with Sandia National Laboratories, Pacific Fusion, Zap Energy, Antong Fusion, or any other fusion program.
 
+> ⚠️ **Engineering scope:** TBR numbers from this tool are **geometry-specific relative trends**, not engineering sign-off predictions. Every result is for a 1D cylindrical (or spherical, Z-FFR-specific) point-source approximation; real reactors have first-wall penetrations, ports, and 3D geometry effects that can reduce TBR by 5–15%. Do not use these numbers for any actual design decision without re-running with ENDF/B-VIII.0 + OpenMC ≥0.16 in 3D and cross-validating against MCNP.
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/version-v1.5.0-blue)](CHANGELOG.md)
 [![Tests](https://img.shields.io/badge/tests-757%20pass-brightgreen)](tests/)
@@ -31,7 +33,9 @@ integrated modules:
    either a fast parametric formula (~milliseconds) or real OpenMC
    Monte Carlo transport (~1-2 minutes per design point).
 
-This is the **v1.4.1 release**, adding Tier 18 + CI + Docs.
+This is the **v1.5.0 release**, adding packaging (pyproject.toml,
+`zpp-tbr` CLI), the `code/` → `zpp/` rename, and the Tier 18.B
+Li₄SiO₄ OpenMC benchmark (TBR=1.03 vs LiPb 1.83, −44%).
 
 ## Quick start
 
@@ -39,31 +43,33 @@ This is the **v1.4.1 release**, adding Tier 18 + CI + Docs.
 git clone https://github.com/chenhk1113-HK/z-pinch-postproc.git
 cd z-pinch-postproc
 
-# Create venv with the pinned dependencies
-python -m venv .venv
-source .venv/Scripts/activate   # MSYS / git-bash on Windows
-# .venv\Scripts\activate        # cmd.exe / PowerShell
-pip install -r requirements.txt
+# Recommended: editable install (puts `zpp` on PYTHONPATH,
+# provides `zpp-tbr` and `zpp-version` console scripts)
+pip install -e .
 
-# Run the full test suite (751 tests, ~20 seconds)
+# Run the full test suite (757 tests, ~20 seconds)
 pytest tests/ -q
 
-# Run a single TBR sweep (parametric, milliseconds)
+# Run a single TBR sweep via the CLI
+zpp-tbr --R-blanket 80 --Li6 0.90
+
+# Or via Python (no sys.path hacks; the package is installed)
 .venv/Scripts/python.exe -c "
-import sys; sys.path.insert(0, 'code')
-from zpp_tbr import compute_TBR, TBRInputs
-r = compute_TBR(TBRInputs(R_blanket_cm=80, Li6_enrichment_fraction=0.90,
-                          mult_inside=True))
+from zpp.zpp_tbr import compute_TBR, TBRInputs
+r = compute_TBR(TBRInputs(blanket_material='LiPb',
+                          neutron_multiplier='Be',
+                          Li6_enrichment_fraction=0.90,
+                          blanket_thickness_cm=80.0,
+                          geometry='Z-pinch'))
 print(f'TBR = {r.TBR:.4f}')
 "
 
 # Run OpenMC transport (requires downloaded cross sections)
 .venv/Scripts/python.exe scripts/download_cross_sections.py
 .venv/Scripts/python.exe -c "
-import sys; sys.path.insert(0, 'code')
-from zpp_real_openmc_transport import run_real_openmc_tbr
+from zpp.zpp_real_openmc_transport import run_real_openmc_tbr
 r = run_real_openmc_tbr(n_particles=5000, n_batches=10,
-                        R_blanket_cm=50, mult_inside=True,
+                        R_blanket_cm=50, mult_inside=False,
                         Li6_enrichment_fraction=0.90)
 print(f'TBR_mc = {r.openmc_TBR:.4f} +/- {r.openmc_TBR_stddev*100:.2f}%')
 "
@@ -187,7 +193,7 @@ for **pure-fusion cylindrical Z-pinch** (our default geometry), LiPb
 is decisively better. LiPb remains the recommended breeder.
 
 ```python
-from zpp_li4sio4 import build_li4sio4_material  # zpp/zpp_li4sio4.py
+from zpp.zpp_li4sio4 import build_li4sio4_material  # zpp/zpp_li4sio4.py
 m = build_li4sio4_material(Li6_enrichment_fraction=0.90)
 ```
 

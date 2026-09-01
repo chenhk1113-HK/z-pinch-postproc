@@ -6,12 +6,13 @@ encouraged; please document the model and version used in the PR description.
 ## Development setup
 
 ```bash
-git clone https://github.com/chenhk1113/z-pinch-postproc.git
+git clone https://github.com/chenhk1113-HK/z-pinch-postproc.git
 cd z-pinch-postproc
 python -m venv .venv
 source .venv/Scripts/activate   # MSYS / git-bash on Windows
 # .venv\Scripts\activate        # cmd.exe / PowerShell
-pip install -r requirements.txt
+pip install -e .                # editable install (puts zpp on PYTHONPATH,
+                                # registers zpp-tbr + zpp-version CLIs)
 ```
 
 ## Code style
@@ -26,7 +27,7 @@ pip install -r requirements.txt
 ```bash
 pytest tests/ -q                    # full suite (~20s)
 pytest tests/test_zpp_tbr.py -v     # single module
-pytest tests/ --cov=code            # coverage
+pytest tests/ --cov=zpp             # coverage
 ```
 
 The pre-commit hook (`py_compile` + 5 MB file size limit) runs
