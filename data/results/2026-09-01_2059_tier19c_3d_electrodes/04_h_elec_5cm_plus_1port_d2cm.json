@@ -1,0 +1,45 @@
+{
+  "TBR_total": 1.749625770545976,
+  "TBR_total_stddev": 0.007223000913839535,
+  "TBR_3d_sum": 1.7495454268044603,
+  "match_ratio": 0.9999540794706685,
+  "nuclides": [
+    "Li6",
+    "Li7"
+  ],
+  "peak_r": 19.0,
+  "peak_z": 14.0,
+  "peak_value": 0.009910908763971275,
+  "tbr_in_lipb_ring": 1.347288247195654,
+  "tbr_in_be_ring": 0.054802100286071305,
+  "tbr_in_structure": 0.24497574593234767,
+  "fraction_lipb": 0.770043668695637,
+  "fraction_be": 0.03132218398278973,
+  "fraction_structure": 0.14001608232822396,
+  "h_elec_cm": 5.0,
+  "electrode_material": "Cu",
+  "R_electrode_cm": 50.0,
+  "ports": [
+    [
+      20.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "n_ports": 1,
+  "boundary_type": "white",
+  "Li6_enrichment_fraction": 0.9,
+  "R_plasma_cm": 4.0,
+  "R_be_cm": 6.0,
+  "R_blanket_cm": 50.0,
+  "R_structure_cm": 53.0,
+  "height_cm": 100.0,
+  "TBR_total_no_electrode_reference": 1.8306,
+  "TBR_total_no_electrode_reference_stddev": 0.0076,
+  "delta_vs_no_electrode_percent": -4.42337099606818,
+  "n_particles": 5000,
+  "n_batches": 10,
+  "seed": 42,
+  "runtime_s": 24.39607071876526,
+  "tier": "19.C"
+}

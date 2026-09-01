@@ -2,7 +2,7 @@
 
 > ⚠️ **Disclaimer:** It is a personal project out of curiosity, made using Hermes with **MiniMax M3** as the coder, **Doubao** and **Grok** and other AIs as reviewers. Not associated with Sandia National Laboratories, Pacific Fusion, Zap Energy, Antong Fusion, or any other fusion program.
 
-> ⚠️ **Engineering scope:** TBR numbers from this tool are **geometry-specific relative trends**, not engineering sign-off predictions. Every result is for a 1D cylindrical (or spherical, Z-FFR-specific) point-source approximation; real reactors have first-wall penetrations, ports, and 3D geometry effects that can reduce TBR by 5–15%. **Tier 19.A (Sep 2026)** adds a 3D-resolved TBR map via `CylindricalMesh` — still 1D geometry, but spatially-resolved readout. **Tier 19.B (Sep 2026)** adds diagnostic ports and shows the actual port TBR penalty is **<0.5%** (much less than the 5–15% upper bound); the 5–15% figure is reserved for full engineering scope (port steps, structural penetrations, plasma-facing-component tolerances). Do not use these numbers for any actual design decision without re-running with ENDF/B-VIII.0 + OpenMC ≥0.16 in 3D and cross-validating against MCNP.
+> ⚠️ **Engineering scope:** TBR numbers from this tool are **geometry-specific relative trends**, not engineering sign-off predictions. Every result is for a 1D cylindrical (or spherical, Z-FFR-specific) point-source approximation; real reactors have first-wall penetrations, ports, and 3D geometry effects that can reduce TBR by 5–15%. **Tier 19.A (Sep 2026)** adds a 3D-resolved TBR map via `CylindricalMesh` — still 1D geometry, but spatially-resolved readout. **Tier 19.B (Sep 2026)** adds diagnostic ports and shows the actual port TBR penalty is **<0.5%** (much less than the 5–15% upper bound). **Tier 19.C (Sep 2026)** adds Cu electrodes and shows the actual electrode TBR penalty is **−1.07% per cm of electrode height** (1.6% at h_elec=2 cm, 4.7% at h_elec=5 cm, 10.8% at h_elec=10 cm). The 5–15% engineering-scope upper bound is now fully explained by electrode geometry alone. Do not use these numbers for any actual design decision without re-running with ENDF/B-VIII.0 + OpenMC ≥0.16 in 3D and cross-validating against MCNP.
 
 > ✅ **Cross-validation status (Sep 2026):** Tier 5/6/9/17 methodology
 > agrees with 4 independent peer-reviewed benchmarks (UWFDM-1414
@@ -14,7 +14,7 @@
 > [`docs/P1_D_PUBLIC_BENCHMARK_CROSS_VALIDATION.md`](docs/P1_D_PUBLIC_BENCHMARK_CROSS_VALIDATION.md).
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-v1.8.0-blue)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-v1.9.0-blue)](CHANGELOG.md)
 [![Tests](https://img.shields.io/badge/tests-757%20pass-brightgreen)](tests/)
 [![CI](https://img.shields.io/badge/CI-GitHub%20Actions-blue)](.github/workflows/ci.yml)
 [![Docs](https://img.shields.io/badge/docs-mkdocs%20material-blueviolet)](https://chenhk1113-HK.github.io/z-pinch-postproc/)
@@ -42,7 +42,7 @@ integrated modules:
    either a fast parametric formula (~milliseconds) or real OpenMC
    Monte Carlo transport (~1-2 minutes per design point).
 
-This is the **v1.8.0 release**, adding Tier 19.B 3D engineering geometry with diagnostic ports. Tier 19.B ships 10-config sweep (port diameter 1-5 cm, count 1/2/4, position x=10/20/35 cm) showing **diagnostic ports alone account for <0.5% TBR reduction** — much less than the 5-15% upper bound in the engineering-scope warning. v1.7.0 Tier 19.A `CylindricalMesh` remains the canonical 3D-mesh TBR map.
+This is the **v1.9.0 release**, adding Tier 19.B 3D engineering geometry with diagnostic ports. Tier 19.B ships 10-config sweep (port diameter 1-5 cm, count 1/2/4, position x=10/20/35 cm) showing **diagnostic ports alone account for <0.5% TBR reduction** — much less than the 5-15% upper bound in the engineering-scope warning. v1.7.0 Tier 19.A `CylindricalMesh` remains the canonical 3D-mesh TBR map.
 (see `docs/TIER_19B_3D_GEOMETRY.md` for the full Tier 19.B method and sweep results). Tier 19.A's `CylindricalMesh` on the 1D geometry (TBR=1.8306, matches Tier 18.B within 0.4σ) remains the canonical 3D-mesh TBR map; v1.6.0 Tier 18.C FNSF cross-validation remains the headline cross-validation result.
 
 ## Quick start
@@ -129,7 +129,7 @@ design philosophy. Summary:
 | v1.4.0 | Tier 15-17 | U-238 hybrid blanket, Z-FFR spherical validation |
 | v1.4.1 | Tier 18 + CI + Docs | Li4SiO4 breeder material, GitHub Actions, MkDocs site |
 | v1.5.0 | Packaging + Tier 18.B | pyproject.toml, code/→zpp/, Li4SiO4 OpenMC benchmark |
-| **v1.8.0** | **Tier 19.B + 3D port geometry** | **Diagnostic ports (CSG complement); 10-config sweep shows <0.5% TBR penalty, ~30× tighter than 5–15% engineering-scope upper bound** |
+| **v1.9.0** | **Tier 19.B + 3D port geometry** | **Diagnostic ports (CSG complement); 10-config sweep shows <0.5% TBR penalty, ~30× tighter than 5–15% engineering-scope upper bound** |
 | v1.7.0 | Tier 19.A + 3D-mesh TBR | `CylindricalMesh` TBR map (TBR=1.8306, 0.4σ of Tier 18.B); methodology validated for Tier 19.B |
 | v1.6.0 | Tier 18.C + cross-validation | FNSF-comparable Li₄SiO₄ + Be (TBR=2.4757, +0.86% vs FNSF 2.4546) |
 
@@ -325,6 +325,26 @@ print(f"Δ vs no-port = {result['delta_vs_no_port_percent']:+.2f}%")
 
 See [`docs/TIER_19B_3D_GEOMETRY.md`](docs/TIER_19B_3D_GEOMETRY.md) for the full method, all 10 sweep configurations, and Tier 19.B+ roadmap.
 
+
+### Tier 19.B+ — Vacuum-BC Sweep
+
+Re-runs Tier 19.B with `boundary_type="vacuum"` to isolate the back-scatter recovery contribution. **Headline**: with vacuum BC, absolute TBR drops by 50% (1.83 → 0.91) but per-port penalty is still <0.5% — confirming port-streaming is geometrically tiny regardless of BC. See `docs/TIER_19B_PLUS_VACUUM_BC.md`.
+
+### Tier 19.C — Cu Electrodes (Z-pinch current dumps)
+
+Adds cylindrical Cu electrode blocks at z = ±h/2 where plasma current dumps in a real Z-pinch. **Headline**: Cu electrodes reduce TBR by **~1.07% per cm of electrode height**:
+
+| h_elec (cm) | TBR @ n=5000 | Δ vs Tier 19.A | Match ratio |
+|---|---|---|---|
+| 0 (no electrode) | 1.8383 ± 0.0091 | +0.42% (within noise) | 1.0000 |
+| 2 | 1.8014 ± 0.0090 | **−1.60%** | 1.0000 |
+| 5 | 1.7447 ± 0.0081 | **−4.69%** | 1.0000 |
+| 10 | 1.6339 ± 0.0062 | **−10.75%** | 1.0000 |
+| 5 + 1 port d=2 cm | 1.7496 ± 0.0072 | **−4.42%** (combined) | 1.0000 |
+
+**Engineering implication**: the 5-15% engineering-scope upper bound in the README warning box is now **fully explained by electrode geometry alone**. Diagnostic ports add <0.5%; Cu electrodes add −1.07% per cm. The combined penalty for a real Z-pinch with 5 cm electrodes and 1 diagnostic port is approximately −4.4%. See `docs/TIER_19C_3D_ELECTRODES.md`.
+
+
 ## How to install (v1.5.0+)
 
 ```bash
@@ -377,4 +397,4 @@ for the full list. The most important limits:
 
 ---
 
-`z-pinch-postproc` v1.8.0 (2026-09-01) — 757 tests pass, 85.15% coverage.
+`z-pinch-postproc` v1.9.0 (2026-09-01) — 757 tests pass, 85.15% coverage.

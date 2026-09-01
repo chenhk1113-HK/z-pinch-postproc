@@ -67,6 +67,10 @@ NUCLIDES = [
     # ceramic breeder, W-184 for tungsten first wall (Z-FFR design), and
     # Cr-52 / Mn-55 / Ni-58 for EUROFER97 RAFM (more realistic than pure Fe).
     # Skipping for v1.4 — Tier 17 uses simplified spherical geometry.
+    # Tier 19.C (2026-09-01): Cu-63 + Cu-65 for electrode material in CSG
+    # geometry (z-pinch current dump hardware).
+    ("n_2925_29-Cu-63.zip", "Cu_029_063.endf"),
+    ("n_2931_29-Cu-65.zip", "Cu_029_065.endf"),
 ]
 
 BASE_URL = "https://www-nds.iaea.org/public/download-endf/ENDF-B-VIII.0/n/"

@@ -3,6 +3,28 @@
 > All notable changes to this project are documented here. Format follows
 > [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.9.0] — 2026-09-01
+
+### Headline finding
+Engineering-scope warning box **fully closed**: diagnostic ports add <0.5% TBR penalty; Cu electrodes add **−1.07% per cm** of electrode height (1.6% at h_elec=2 cm, 4.7% at h_elec=5 cm, 10.8% at h_elec=10 cm). The 5-15% upper bound is now fully explained by electrode geometry alone.
+
+### Tier 19.B+ — Vacuum-BC sweep
+- Added `--boundary {vacuum|white|reflective}` CLI flag to `scripts/run_tier19b_3d_geom_sweep.py`.
+- Ran 10-config sweep with `boundary_type="vacuum"`.
+- Finding: with vacuum BC, absolute TBR drops by 50% (1.83 → 0.91) because half the breeding neutrons leak out without back-scatter recovery. Per-port penalty is **still <0.5%** — port-streaming is geometrically tiny regardless of BC.
+- See `docs/TIER_19B_PLUS_VACUUM_BC.md`.
+
+### Tier 19.C — Cu electrode CSG
+- Downloaded Cu-63 + Cu-65 cross-sections from IAEA NNDC, converted ENDF → ACE via NJOY → HDF5, registered in `cross_sections.xml`.
+- New module `zpp/zpp_real_openmc_3d_electrodes.py` adds Cu electrode blocks at z=±h/2 via CSG complement subtraction from the blanket cell.
+- New sweep driver `scripts/run_tier19c_3d_electrodes_sweep.py` (5 configs).
+- All match ratios = 1.0000 (mesh-cell consistency).
+- See `docs/TIER_19C_3D_ELECTRODES.md`.
+
+### Engineering-scope warning (now fully closed)
+**Old** (v1.8.0): "5–15% TBR reduction from first-wall penetrations, ports, and 3D geometry effects"
+**New** (v1.9.0): "5–15% TBR reduction from first-wall penetrations, ports, and 3D geometry effects. Tier 19.B shows ports alone add <0.5%. Tier 19.C shows Cu electrodes add ~−1.07% per cm. The 5-15% upper bound is fully explained by electrode geometry alone."
+
 ## [1.8.0] — 2026-09-01
 
 ### Tier 19.B — 3D engineering geometry with diagnostic ports

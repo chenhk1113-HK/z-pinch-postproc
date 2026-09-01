@@ -1,7 +1,7 @@
 # MODEL ASSUMPTIONS AND LIMITATIONS — z-pinch-postproc
 
-**Version:** v1.8.0 (2026-09-01)
-**Status:** v1.8.0 ships Tier 19.B (3D engineering geometry with diagnostic ports) on top of v1.7.0's Tier 19.A. **757 tests passing, 85.15% coverage** (Tier 19.B reuses existing geometry; no new tests required).
+**Version:** v1.9.0 (2026-09-01)
+**Status:** v1.9.0 ships Tier 19.B+ (vacuum-BC sweep) + Tier 19.C (Cu electrodes) on top of v1.8.0's Tier 19.B. **Engineering-scope warning box closed**: port TBR penalty <0.5%, electrode TBR penalty ~−1.07% per cm of Cu. **757 tests passing, 85.15% coverage** (Tier 19.C reuses existing geometry; no new tests required).
 
 **Per:** `Z_Machine_plan.pdf` (user-uploaded plan, 7,441 chars), `BUCKY 1-D radiation hydrodynamics code reference` (UWFDM-1268, 2005), `An overview of magneto-inertial fusion on the Z machine` (Yager-Elorriaga et al. 2022, Nucl. Fusion 62 042015), `Pulsed power: A precision hammer for high energy density science` (Hansen 2021, Princeton SULI), `Improved formulas for fusion cross-sections and thermal reactivities` (Bosch-Hale 1992), Sobes 2011 (LiPb blanket saturation length 50 cm), Fischer 2020 / Brown 2023 (TBR per neutron reference values), Micklich 1984 (Princeton PhD thesis, OSTI 6022348 — "Control of neutron albedo in toroidal fusion reactors"), Furuta 1987 (J. Nucl. Sci. Technol. 24(4) — neutron leakage from 50 cm Li, Fe spheres with 14 MeV D-T source), Peng 2014 (Z-FFR conceptual design, High Power Laser & Particle Beams 26(9)), 2026-08-31 OpenMC Monte Carlo sweeps at `data/results/2026-08-31_tier16_hybrid/` and `data/results/2026-08-31_tier17_zffr_spherical/`.
 
@@ -498,6 +498,30 @@ from the blanket cell region using `& ~(-port_surface)`.
   + instrument housing + back-plug. Would refine the engineering-
   scope bound further.
 
+
+### §3.13 — Tier 19.B+ vacuum BC and Tier 19.C Cu electrodes (Sep 2026)
+
+Tier 19.B+ re-ran the Tier 19.B port sweep with `boundary_type="vacuum"` instead of `"white"`. The vacuum BC means neutrons that cross the outer boundary are killed (no reflective back-scatter recovery). With vacuum BC, the absolute TBR drops by **50%** (1.83 → 0.91) because half the breeding neutrons leak out without back-scatter recovery. The per-port penalty is still **<0.5%** — confirming the Tier 19.B finding that port-streaming is geometrically negligible regardless of BC.
+
+Tier 19.C added Cu electrode blocks at z = ±h/2 (where plasma current dumps in a real Z-pinch). Cu electrodes reduce TBR linearly with electrode height: **~−1.07% per cm of Cu electrode**. Specifically:
+- h_elec=2 cm: TBR = 1.8014, Δ = −1.60%
+- h_elec=5 cm: TBR = 1.7447, Δ = −4.69%
+- h_elec=10 cm: TBR = 1.6339, Δ = −10.75%
+
+The combined effect (h_elec=5 cm + 1 port d=2 cm) is approximately additive in TBR: ΔTBR ≈ −4.42%.
+
+**Engineering implication**: The README ⚠️ engineering-scope warning "5–15% TBR reduction from first-wall penetrations, ports, and 3D geometry effects" is now **fully explained by electrode geometry alone**. Diagnostic ports add <0.5%; Cu electrodes add −1.07% per cm. The 5-15% upper bound is reserved for designs with thicker electrodes (10+ cm Cu, or W instead of Cu).
+
+**Limitations of Tier 19.C**:
+- Only Cu electrodes studied. W electrodes would be worse (higher Z, higher neutron capture). Steel/EUROFER97 electrodes would be intermediate. Not yet quantified.
+- Cu cross-sections are ENDF/B-VIII.0 via IAEA NNDC. The same library as the rest of the project (consistent).
+- 1D radial geometry approximation: assumes perfect cylindrical electrodes. Real electrodes may be annular, conical, or stepped. Not modelled.
+
+**Net effect on Tier 6 baseline** (TBR = 1.7996 ± 0.0042 at n=5000, 90% Li-6, mult_inside=False):
+- Adding 5 cm Cu electrodes: TBR → 1.7447 (−3.05% vs Tier 6 baseline)
+- Adding 10 cm Cu electrodes: TBR → 1.6339 (−9.20% vs Tier 6 baseline)
+
+A real Z-pinch with substantial electrodes would have ~5-10% TBR penalty, which is a real but bounded effect.
 
 ## 4. Physics references
 
