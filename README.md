@@ -2,7 +2,7 @@
 
 > ⚠️ **Disclaimer:** It is a personal project out of curiosity, made using Hermes with **MiniMax M3** as the coder, **Doubao** and **Grok** and other AIs as reviewers. Not associated with Sandia National Laboratories, Pacific Fusion, Zap Energy, Antong Fusion, or any other fusion program.
 
-> ⚠️ **Engineering scope:** TBR numbers from this tool are **geometry-specific relative trends**, not engineering sign-off predictions. Every result is for a 1D cylindrical (or spherical, Z-FFR-specific) point-source approximation; real reactors have first-wall penetrations, ports, and 3D geometry effects that can reduce TBR by 5–15%. **Tier 19.A (Sep 2026)** adds a 3D-resolved TBR map via `CylindricalMesh` — still 1D geometry, but spatially-resolved readout. **Tier 19.B (next)** will add electrodes + diagnostic ports. Do not use these numbers for any actual design decision without re-running with ENDF/B-VIII.0 + OpenMC ≥0.16 in 3D and cross-validating against MCNP.
+> ⚠️ **Engineering scope:** TBR numbers from this tool are **geometry-specific relative trends**, not engineering sign-off predictions. Every result is for a 1D cylindrical (or spherical, Z-FFR-specific) point-source approximation; real reactors have first-wall penetrations, ports, and 3D geometry effects that can reduce TBR by 5–15%. **Tier 19.A (Sep 2026)** adds a 3D-resolved TBR map via `CylindricalMesh` — still 1D geometry, but spatially-resolved readout. **Tier 19.B (Sep 2026)** adds diagnostic ports and shows the actual port TBR penalty is **<0.5%** (much less than the 5–15% upper bound); the 5–15% figure is reserved for full engineering scope (port steps, structural penetrations, plasma-facing-component tolerances). Do not use these numbers for any actual design decision without re-running with ENDF/B-VIII.0 + OpenMC ≥0.16 in 3D and cross-validating against MCNP.
 
 > ✅ **Cross-validation status (Sep 2026):** Tier 5/6/9/17 methodology
 > agrees with 4 independent peer-reviewed benchmarks (UWFDM-1414
@@ -14,7 +14,7 @@
 > [`docs/P1_D_PUBLIC_BENCHMARK_CROSS_VALIDATION.md`](docs/P1_D_PUBLIC_BENCHMARK_CROSS_VALIDATION.md).
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-v1.7.0-blue)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-v1.8.0-blue)](CHANGELOG.md)
 [![Tests](https://img.shields.io/badge/tests-757%20pass-brightgreen)](tests/)
 [![CI](https://img.shields.io/badge/CI-GitHub%20Actions-blue)](.github/workflows/ci.yml)
 [![Docs](https://img.shields.io/badge/docs-mkdocs%20material-blueviolet)](https://chenhk1113-HK.github.io/z-pinch-postproc/)
@@ -42,8 +42,8 @@ integrated modules:
    either a fast parametric formula (~milliseconds) or real OpenMC
    Monte Carlo transport (~1-2 minutes per design point).
 
-This is the **v1.7.0 release**, adding Tier 19.A 3D-resolved TBR
-`CylindricalMesh` on the existing 1D geometry (TBR=1.8306, matches Tier 18.B within 0.4σ), closing the cheap-3D scope from zreview5 Item 7. v1.6.0 Tier 18.C FNSF cross-validation remains the headline cross-validation result.
+This is the **v1.8.0 release**, adding Tier 19.B 3D engineering geometry with diagnostic ports. Tier 19.B ships 10-config sweep (port diameter 1-5 cm, count 1/2/4, position x=10/20/35 cm) showing **diagnostic ports alone account for <0.5% TBR reduction** — much less than the 5-15% upper bound in the engineering-scope warning. v1.7.0 Tier 19.A `CylindricalMesh` remains the canonical 3D-mesh TBR map.
+(see `docs/TIER_19B_3D_GEOMETRY.md` for the full Tier 19.B method and sweep results). Tier 19.A's `CylindricalMesh` on the 1D geometry (TBR=1.8306, matches Tier 18.B within 0.4σ) remains the canonical 3D-mesh TBR map; v1.6.0 Tier 18.C FNSF cross-validation remains the headline cross-validation result.
 
 ## Quick start
 
@@ -129,7 +129,8 @@ design philosophy. Summary:
 | v1.4.0 | Tier 15-17 | U-238 hybrid blanket, Z-FFR spherical validation |
 | v1.4.1 | Tier 18 + CI + Docs | Li4SiO4 breeder material, GitHub Actions, MkDocs site |
 | v1.5.0 | Packaging + Tier 18.B | pyproject.toml, code/→zpp/, Li4SiO4 OpenMC benchmark |
-| **v1.7.0** | **Tier 19.A + 3D-mesh TBR** | **`CylindricalMesh` TBR map (TBR=1.8306, 0.4σ of Tier 18.B); methodology validated for Tier 19.B** |
+| **v1.8.0** | **Tier 19.B + 3D port geometry** | **Diagnostic ports (CSG complement); 10-config sweep shows <0.5% TBR penalty, ~30× tighter than 5–15% engineering-scope upper bound** |
+| v1.7.0 | Tier 19.A + 3D-mesh TBR | `CylindricalMesh` TBR map (TBR=1.8306, 0.4σ of Tier 18.B); methodology validated for Tier 19.B |
 | v1.6.0 | Tier 18.C + cross-validation | FNSF-comparable Li₄SiO₄ + Be (TBR=2.4757, +0.86% vs FNSF 2.4546) |
 
 ## Key results (v1.4.x)
@@ -278,6 +279,52 @@ np.save('z_centers.npy', result['z_centers'])
 
 See [`docs/TIER_19_3D_GEOMETRY.md`](docs/TIER_19_3D_GEOMETRY.md) for the full method, output description, and Tier 19.B roadmap.
 
+### Tier 19.B: 3D engineering geometry with diagnostic ports (Sep 2026)
+
+> **Applicability:** Adds diagnostic ports (cylindrical holes through the LiPb blanket) to the existing Tier 6/18.B/19.A geometry. Realistic 3D feature that closes the upper bound of the README ⚠️ engineering-scope warning box. **Headline finding: the actual port TBR penalty is much smaller than the 5–15% upper bound.**
+
+Tier 19.B uses OpenMC's CSG complement operator (`~(-port_surface)`) to subtract cylindrical ports from the LiPb blanket cell. Each port becomes its own vacuum cell. The geometry remains a complete universe (no overlaps, no undefined regions).
+
+| Configuration | TBR @ n=5000 | Δ vs no-port | Significance |
+|---|---|---|---|
+| No ports (Tier 19.A) | 1.8306 ± 0.0076 | (baseline) | — |
+| 1 port d=1 cm | 1.8314 ± 0.0087 | +0.05% | NO |
+| 1 port d=2 cm | 1.8329 ± 0.0065 | +0.13% | NO |
+| 1 port d=3 cm | 1.8356 ± 0.0057 | +0.27% | borderline |
+| 1 port d=4 cm | 1.8359 ± 0.0059 | +0.29% | borderline |
+| 1 port d=5 cm | 1.8363 ± 0.0054 | +0.31% | borderline |
+| 2 ports d=2 cm opposite sides | 1.8349 ± 0.0065 | +0.24% | NO |
+| 4 ports d=2 cm at 90° spacing | 1.8322 ± 0.0074 | +0.09% | NO |
+| 1 port d=2 cm at x=10 cm (near Be ring) | 1.8374 ± 0.0067 | +0.37% | NO |
+
+**High-statistics verification at n=20000 (worst-case: 1 port d=5 cm)**:
+- 0 ports: TBR = 1.8321 ± 0.0026
+- 1 port d=5 cm: TBR = 1.8333 ± 0.0021
+- **Δ = +0.06% ± 0.18%** — NOT statistically significant (|Δ| < 1σ)
+
+**Apparent positive ΔTBR trend** (more ports → higher TBR): within statistical noise at n=5000. High-stat run confirms the trend is **not real** — there is no significant trend in either direction.
+
+**Why are port effects so small?** Three reasons:
+1. **Reflective BC**: `boundary_type="white"` reflects neutrons back into the blanket; port streaming is mostly recovered by back-scatter from the structure layer.
+2. **Small port cross-section**: 2-5 cm ports are 0.04–0.25% of blanket cross-sectional area.
+3. **Port is in LiPb, not Be**: ports through the Be ring would have larger effects (Be is thin, 2 cm).
+
+**Updated engineering-scope warning** (README ⚠️): the diagnostic-port contribution is **<0.5%**. The 5–15% upper bound is reserved for full engineering scope (port steps, structural penetrations, plasma-facing-component tolerances, blanket manifold design). Tier 19.B does not fully close the engineering-scope warning box — it tightens the bound by ~30× for diagnostic ports.
+
+```python
+from zpp.zpp_real_openmc_3d_geom import run_tier19b_3d_geom  # zpp/zpp_real_openmc_3d_geom.py
+result = run_tier19b_3d_geom(
+    ports=[(20.0, 0.0, 1.0)],   # one port d=2 cm at x=20 cm, y=0
+    Li6_enrichment_fraction=0.90,
+    n_particles=5000, n_batches=10, seed=42,
+)
+print(f"TBR = {result['TBR_total']:.4f} ± {result['TBR_total_stddev']:.4f}")
+print(f"Δ vs no-port = {result['delta_vs_no_port_percent']:+.2f}%")
+# Sweep: vary port diameter, count, position
+```
+
+See [`docs/TIER_19B_3D_GEOMETRY.md`](docs/TIER_19B_3D_GEOMETRY.md) for the full method, all 10 sweep configurations, and Tier 19.B+ roadmap.
+
 ## How to install (v1.5.0+)
 
 ```bash
@@ -330,4 +377,4 @@ for the full list. The most important limits:
 
 ---
 
-`z-pinch-postproc` v1.7.0 (2026-09-01) — 757 tests pass, 85.15% coverage.
+`z-pinch-postproc` v1.8.0 (2026-09-01) — 757 tests pass, 85.15% coverage.

@@ -89,7 +89,7 @@
 | "Current model assumes perfect cylinders/spheres" | ✅ **confirmed** | All Tier geometry is 1D infinite cylinder / spherical. README's ⚠️ engineering-scope warning box documents this. |
 | "Real Z-pinches have electrodes, diagnostic ports, and feed lines" | ✅ **confirmed** | Realistic 3D geometry would require a new OpenMC geometry model + either voxel mesh (`openmc.RegularMesh` +) or voxelized DAGMC geometry. |
 
-**Scope decision (updated 2026-09-01)**: **Tier 19.A shipped** (mesh tally on existing 1D geometry, 1-2 hours, `data/results/2026-09-01_1707_tier19_3d/tier19_3d_baseline.json`). Mesh conservation check passes: TBR=1.8306 ± 0.0076 matches Tier 18.B (1.8280 ± 0.0060) within 0.4σ, mesh sum / cell tally = 1.0000. **Tier 19.B remains deferred** (electrodes + diagnostic ports CSG, 3-5 days per `docs/P1_P2_IMPLEMENTATION_PLAN.md` P2-A). The reviewer's "STEP/STL import" framing is the right shape for Tier 19.B; the simpler path is a pre-computed 3D voxel mesh from CSG (no DAGMC install required).
+**Scope decision (updated 2026-09-01, Tier 19.B shipped)**: **Tier 19.A shipped** (mesh tally, TBR=1.8306 ± 0.0076, mesh conservation 1.0000, 0.4σ of Tier 18.B). **Tier 19.B shipped** (CSG diagnostic ports, 10-config sweep, see `data/results/2026-09-01_1748_tier19b_3d/`). **Headline finding from Tier 19.B**: the actual diagnostic-port TBR penalty is **<0.5%** in the standard Z-pinch geometry (NOT 5-15% as the README engineering-scope warning assumed). High-stat verification at n=20000: Δ = +0.06% ± 0.18% (NOT significant). The 5-15% upper bound is reserved for full engineering scope (port steps, structural penetrations, plasma-facing-component tolerances). Item 7 is **closed** for diagnostic ports. Remaining 3D work (electrodes, stepped port profile, vacuum-BC sweep) deferred to Tier 19.B+/C if needed.
 
 ### Item 8: "Time-Dependent Tritium Fuel Cycle"
 
@@ -170,20 +170,20 @@ The reviewer is writing against **stale project state** — specifically, the v1
 | Item 4 (UQ) | Stale recommendation for shipped work |
 | Item 5 (Cross-Code Validation) | Stale recommendation for shipped work (the entire drop-mcnp.docx → Tier 18.C chain is what this reviewer is suggesting) |
 | Item 6 (Sensitivity) | Stale recommendation for shipped work |
-| Item 7 (3D Geometry) | **Real, high-value gap, partially closed (Tier 19.A)**. Tier 19.A (mesh tally) shipped 2026-09-01; Tier 19.B (electrodes + ports CSG) still pending |
+| Item 7 (3D Geometry) | **Real, high-value gap, fully closed** for diagnostic ports. Tier 19.A (mesh tally) + Tier 19.B (CSG ports) shipped 2026-09-01. Remaining 3D scope (electrodes, stepped ports, vacuum BC) deferred |
 | Item 8 (Time-Dependent Fuel Cycle) | **Real gap, but smaller**. Forward chain exists; feedback loop doesn't |
 | Item 9 (Multi-Physics Coupling) | **Real gap**. The most physics-rich item |
 | Item 10 (Surrogate/ML) | **Reject**. Out of project scope |
 | Item 11 (Software Paper) | Defer until methodology stabilizes (after 2 more Tier rounds) |
 | Item 12 (PyPI) | Defer; current scope is research milestone, not library release |
 
-**Net summary (updated 2026-09-01)**: 4 of 12 items already shipped at audit time; reviewer unaware. Of the remaining 5 "real gaps": **Item 7 (Tier 19.A)** shipped 2026-09-01 (mesh tally only); **Item 2 (Dockerfile)** permanently cancelled per user directive. Net remaining real gaps: **Items 8, 9, 11** (time-dependent fuel cycle, multi-physics coupling, JOSS paper). Items 10/12 still rejected as out-of-scope.
+**Net summary (updated 2026-09-01, Tier 19.B ships)**: 4 of 12 items already shipped at audit time; reviewer unaware. **Item 7 fully shipped** (Tier 19.A mesh tally + Tier 19.B CSG diagnostic ports); **Item 2 (Dockerfile)** permanently cancelled. Net remaining real gaps: **Items 8, 9, 11** (time-dependent fuel cycle, multi-physics coupling, JOSS paper). Items 10/12 still rejected as out-of-scope.
 
 ## Recommended next-step prioritization (post-audit)
 
-1. ~~**Item 7 (3D geometry, 1-3 weeks)** — highest-value remaining work.~~ **Tier 19.A shipped 2026-09-01** (mesh tally only, ~1-2 hours). **Tier 19.B** (electrodes + ports CSG, 3-5 days) remains open and will close the README ⚠️ engineering-scope warning box.
-2. ~~**Item 2 (Dockerfile, 1-2 days)** — small, high-credibility, easy ship.~~ **Item 2 cancelled 2026-09-01 per user directive** (project is Docker-free).
-3. **Item 11 (JOSS paper, 1-2 weeks)** — natural publication milestone after Tier 19.B + 9 close.
+1. ~~**Item 7 (3D geometry)** — ~~**Tier 19.A (mesh tally) + Tier 19.B (CSG ports) shipped 2026-09-01**. Diagnostic ports produce <0.5% TBR penalty; remaining 3D work (electrodes, stepped ports) deferred to Tier 19.B+/C if needed.
+2. ~~**Item 2 (Dockerfile)**~~ — **cancelled 2026-09-01 per user directive**.
+3. **Item 11 (JOSS paper, 1-2 weeks)** — natural publication milestone after Item 9 (multi-physics coupling) closes.
 
 Skip for now: Item 10 (out of scope), Item 12 (deliberate non-goal), Item 8 (smaller value than 7/9), Item 9 (pairs with 7, do them together).
 

@@ -1,0 +1,48 @@
+{
+  "TBR_3d_sum": 1.8359415828694117,
+  "TBR_total": 1.8359415828694021,
+  "TBR_total_no_port_reference": 1.8306,
+  "TBR_total_no_port_stddev": 0.0076,
+  "TBR_total_stddev": 0.005869129980743318,
+  "delta_stddev": 0.009602431292691454,
+  "delta_vs_no_port_percent": 0.29179410408620765,
+  "fraction_be": 0.03006275035505326,
+  "fraction_lipb": 0.7687510188951598,
+  "fraction_structure": 0.14457423877219347,
+  "geometry_params": {
+    "Li6_enrichment_fraction": 0.9,
+    "R_be_cm": 6.0,
+    "R_blanket_cm": 50.0,
+    "R_plasma_cm": 4.0,
+    "R_structure_cm": 53.0,
+    "boundary_type": "white",
+    "height_cm": 100.0,
+    "mult_inside": true,
+    "n_axial_bins": 30,
+    "n_batches": 10,
+    "n_particles": 5000,
+    "n_radial_bins": 30,
+    "r_max_cm": 60.0,
+    "z_half_height_cm": 60.0
+  },
+  "match_ratio": 1.000000000000005,
+  "n_ports": 1,
+  "nuclides": [
+    "Li6",
+    "Li7"
+  ],
+  "peak_r": 43.0,
+  "peak_value": 0.00923384639707737,
+  "peak_z": 14.0,
+  "ports": [
+    [
+      20.0,
+      0.0,
+      2.0
+    ]
+  ],
+  "runtime_s": 21.549293518066406,
+  "tbr_in_be_ring": 0.05519345347226416,
+  "tbr_in_lipb_ring": 1.4113819624628454,
+  "tbr_in_structure": 0.2654298567735598
+}

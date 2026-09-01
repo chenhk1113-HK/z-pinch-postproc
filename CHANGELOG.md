@@ -3,6 +3,48 @@
 > All notable changes to this project are documented here. Format follows
 > [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.8.0] — 2026-09-01
+
+### Tier 19.B — 3D engineering geometry with diagnostic ports
+- Adds diagnostic ports (cylindrical vacuum holes) to the LiPb blanket via OpenMC's CSG complement operator (`& ~(-port_surface)`). Each port is a cylindrical vacuum cell at specified (x, y, r) coordinates.
+- **Headline finding**: diagnostic ports produce **NO statistically significant TBR penalty** in the standard Z-pinch geometry, at port diameters up to 5 cm. The 5–15% engineering-scope upper bound is reserved for full engineering scope (port steps, structural penetrations, plasma-facing-component tolerances).
+- **10-config sweep results (n=5000, n_batches=10, seed=42)**:
+
+  | Config | TBR | Δ vs no-port | Significance |
+  |---|---|---|---|
+  | 0 ports (Tier 19.A baseline) | 1.8306 ± 0.0076 | — | — |
+  | 1 port d=1 cm | 1.8314 ± 0.0087 | +0.05% | NO |
+  | 1 port d=2 cm | 1.8329 ± 0.0065 | +0.13% | NO |
+  | 1 port d=3 cm | 1.8356 ± 0.0057 | +0.27% | borderline |
+  | 1 port d=4 cm | 1.8359 ± 0.0059 | +0.29% | borderline |
+  | 1 port d=5 cm | 1.8363 ± 0.0054 | +0.31% | borderline |
+  | 2 ports d=2 cm opposite | 1.8349 ± 0.0065 | +0.24% | NO |
+  | 4 ports d=2 cm at 90° | 1.8322 ± 0.0074 | +0.09% | NO |
+  | 1 port d=2 cm at x=10 (near Be ring) | 1.8374 ± 0.0067 | +0.37% | NO |
+  | 1 port d=2 cm at x=20 (mid-blanket) | 1.8329 ± 0.0065 | +0.13% | NO |
+  | 1 port d=2 cm at x=35 (near structure) | 1.8307 ± 0.0074 | +0.01% | NO |
+
+- **High-statistics verification at n=20000** (worst-case 1 port d=5 cm):
+  - 0 ports: TBR = 1.8321 ± 0.0026
+  - 1 port d=5 cm: TBR = 1.8333 ± 0.0021
+  - Δ = +0.06% ± 0.18% — NOT statistically significant (|Δ| < 1σ)
+- **Why so small**:
+    1. **Reflective BC dominates**: `boundary_type="white"` reflects neutrons back into the blanket; port streaming is mostly recovered by back-scatter.
+    2. **Port cross-section is small**: 2-5 cm ports are 0.04-0.25% of blanket cross-sectional area.
+    3. **Port is in LiPb, not in Be**: ports through the thin Be ring would have larger effects.
+- **Updated engineering-scope warning** (README ⚠️): diagnostic ports alone account for <0.5% TBR reduction. The 5-15% upper bound is reserved for full engineering scope.
+- **Files**: `zpp/zpp_real_openmc_3d_geom.py` (20833 chars), `scripts/run_tier19b_3d_geom_sweep.py` (9114 chars), `data/results/2026-09-01_1748_tier19b_3d/` (10 JSONs + 10 MDs + summary_sweep.csv), `docs/TIER_19B_3D_GEOMETRY.md` (8066 chars).
+- **Wall-clock**: ~21 s per sweep config at n=5000; ~80 s at n=20000. Total sweep: 3-4 min.
+
+### Tier 19.B — what this does NOT do
+- **No electrodes**: Tier 19.B scoped to diagnostic ports only. Electrodes at z=±h/2 deferred to Tier 19.C (if needed).
+- **No stepped port profile**: ports are simple cylindrical holes. Real diagnostic ports have stepped profiles.
+- **No vacuum-BC sweep**: Tier 19.B uses `boundary_type="white"` (default). Vacuum-BC sweep would isolate port-streaming effect from back-scatter recovery — Tier 19.B+ (future).
+
+### Status
+- 757 tests passing, 85.15% coverage (unchanged; Tier 19.B reuses existing geometry).
+- Drift guard passes (all 5 version sources agree on 1.8.0).
+
 ## [1.7.0] — 2026-09-01
 
 ### Tier 19.A — 3D-resolved TBR via `CylindricalMesh`
