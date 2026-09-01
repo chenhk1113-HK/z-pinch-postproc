@@ -1,0 +1,29 @@
+{
+  "TBR_mc": 2.4756763482454187,
+  "TBR_stddev": 0.011540923085417383,
+  "rel_std_percent": 0.4661725307347529,
+  "n_particles": 5000,
+  "n_batches": 10,
+  "total_source_particles": 50000,
+  "R_plasma_cm": 100.0,
+  "R_blanket_outer_cm": 300.0,
+  "breeder_volume_fraction": 0.05,
+  "multiplier_volume_fraction": 0.95,
+  "breeder": "Li4SiO4 (90% Li-6)",
+  "multiplier": "Be (pure Be-9)",
+  "geometry": "1D infinite cylinder, FNSF ROM (Novais 2023 Ch. 5)",
+  "Li6_enrichment_fraction": 0.9,
+  "boundary_type": "white (reflective)",
+  "source": "14.1 MeV uniform in plasma r=0..100 cm",
+  "novais_2023_table_5_2_published": 2.4546,
+  "novais_2023_table_5_2_delta_percent": 0.8586469585846409,
+  "provenance": {
+    "openmc_version": "0.16.0.0",
+    "endf_release": "ENDF/B-VIII.0",
+    "n_particles": 5000,
+    "n_batches": 10,
+    "total_source_particles": 50000,
+    "timestamp": "2026-09-01T06:43:17Z",
+    "stamped_by": "scripts/run_tier18c_sweep.py"
+  }
+}

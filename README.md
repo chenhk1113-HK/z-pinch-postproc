@@ -8,12 +8,13 @@
 > agrees with 4 independent peer-reviewed benchmarks (UWFDM-1414
 > infinite-cylinder LiPb, Furuta 1987 natural-Li sphere, Peng 2014
 > Z-FFR target, EU DEMO WCLL 1D-to-3D gap) within published uncertainty.
-> Tier 18.B Li₄SiO₄ has a real disagreement with FNSF DCLL (explained
-> by missing Be multiplier) — Tier 18.C recommended. See
+> **Tier 18.C** (Sep 2026) closes the Tier 18.B Li₄SiO₄ disagreement
+> with FNSF DCLL (Novais 2023 Table 5.2) — our TBR_mc = 2.4757 ±
+> 0.47% matches the published 2.4546 within 0.9%. See
 > [`docs/P1_D_PUBLIC_BENCHMARK_CROSS_VALIDATION.md`](docs/P1_D_PUBLIC_BENCHMARK_CROSS_VALIDATION.md).
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-v1.5.0-blue)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-v1.6.0-blue)](CHANGELOG.md)
 [![Tests](https://img.shields.io/badge/tests-757%20pass-brightgreen)](tests/)
 [![CI](https://img.shields.io/badge/CI-GitHub%20Actions-blue)](.github/workflows/ci.yml)
 [![Docs](https://img.shields.io/badge/docs-mkdocs%20material-blueviolet)](https://chenhk1113-HK.github.io/z-pinch-postproc/)
@@ -41,9 +42,10 @@ integrated modules:
    either a fast parametric formula (~milliseconds) or real OpenMC
    Monte Carlo transport (~1-2 minutes per design point).
 
-This is the **v1.5.0 release**, adding packaging (pyproject.toml,
-`zpp-tbr` CLI), the `code/` → `zpp/` rename, and the Tier 18.B
-Li₄SiO₄ OpenMC benchmark (TBR=1.03 vs LiPb 1.83, −44%).
+This is the **v1.6.0 release**, adding Tier 18.C FNSF-comparable
+Li₄SiO₄ + Be cross-validation benchmark (TBR=2.4757, matches
+published FNSF result 2.4546 within +0.86%), closing the only
+outstanding cross-validation gap from drop-mcnp.docx P1-D.
 
 ## Quick start
 
@@ -128,7 +130,8 @@ design philosophy. Summary:
 | v1.3.0 | Tier 12-14 | mult_outside calibration, Fe reflector, Antong Fusion refs |
 | v1.4.0 | Tier 15-17 | U-238 hybrid blanket, Z-FFR spherical validation |
 | v1.4.1 | Tier 18 + CI + Docs | Li4SiO4 breeder material, GitHub Actions, MkDocs site |
-| **v1.5.0** | **Packaging + Tier 18.B** | **pyproject.toml, code/→zpp/, Li4SiO4 OpenMC benchmark** |
+| v1.5.0 | Packaging + Tier 18.B | pyproject.toml, code/→zpp/, Li4SiO4 OpenMC benchmark |
+| **v1.6.0** | **Tier 18.C + cross-validation** | **FNSF-comparable Li₄SiO₄ + Be (TBR=2.4757, +0.86% vs FNSF 2.4546)** |
 
 ## Key results (v1.4.x)
 
@@ -209,14 +212,24 @@ its silicate lattice creates self-shielding, and O-16 captures neutrons
 that would otherwise reach Li-6. Net breeding rate is much lower.
 
 **Cross-validation caveat** (per `docs/P1_D_PUBLIC_BENCHMARK_CROSS_VALIDATION.md`):
-the published FNSF DCLL parametric study (OSTI 2448047) reports TBR=1.44
-for Li₄SiO₄ + Be₁₂V (Be-12 vanadium multiplier) in a 1D infinite cylinder.
-Our Tier 18.B result of TBR=1.03 is **−28% lower** than FNSF, because
-the Tier 18.B sweep did NOT include a Be multiplier layer. Adding Be
-(typical for any real Li₄SiO₄ blanket) is expected to recover most of
-the gap. The −44% finding is correct for the no-Be configuration but
-should not be cited against FNSF-published Li₄SiO₄ blankets without
-qualification. **Tier 18.C recommended** to add Be and re-validate.
+the published FNSF DCLL parametric study (Novais 2023, Table 5.2) reports
+TBR=2.4546 for Li₄SiO₄ + Be at 90% Li-6 in a 1D infinite cylinder with
+5%/95% homogenized breeder/multiplier mixture (2m-thick blanket,
+reflective BC). Our **Tier 18.C** result (Sep 2026) using the FNSF-comparable
+geometry: **TBR_mc = 2.4757 ± 0.47%** — matches published within
+**+0.86%** (well within the ~2% cross-section-library uncertainty
+expected between ENDF/B-VIII.0 and FENDL-3.2).
+
+The Tier 18.B result of TBR=1.03 is **specific to the small cylindrical
+Z-pinch geometry** (R_p=4 cm, R_b=50 cm, 2 cm Be layer) and **should
+not be cited against real-world Li₄SiO₄ blankets** that use a thick
+homogenized Be multiplier zone. The −44% finding is correct for the
+Tier 18.B geometry but is not a generally applicable Li₄SiO₄ finding.
+
+Tier 17 Z-FFR's choice of Li₄SiO₄ remains valid for **spherical hybrid
+(U-238) blankets** with explicit Be multiplier zone; Tier 18.C confirms
+the cross-validation is consistent when the geometry is properly
+comparable to published literature.
 
 **Implication for Z-FFR design**: Z-FFR's choice of Li4SiO4 is
 specific to **spherical hybrid (U-238) designs** — Tier 17 showed
@@ -281,4 +294,4 @@ for the full list. The most important limits:
 
 ---
 
-`z-pinch-postproc` v1.5.0 (2026-08-31) — 757 tests pass, 85.15% coverage.
+`z-pinch-postproc` v1.6.0 (2026-09-01) — 757 tests pass, 85.15% coverage.

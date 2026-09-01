@@ -109,5 +109,5 @@ The LiPb+Be only design wins for tritium self-sufficiency.
 - **ENDF release:** ENDF/B-VIII.0 (declared)
 - **Cross-section source:** openmc-anywhere / IAEA (per scripts/download_cross_sections.py)
 - **Source particles / batch:** `5000` (10 batches, 2 inactive)
-- **Stamped:** 2026-09-01T04:15:21Z by `scripts/stamp_provenance.py`
+- **Stamped:** 2026-09-01T06:43:41Z by `scripts/stamp_provenance.py`
 

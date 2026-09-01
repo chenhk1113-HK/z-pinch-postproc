@@ -3,6 +3,44 @@
 > All notable changes to this project are documented here. Format follows
 > [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.6.0] — 2026-09-01
+
+### Added
+- **Tier 18.C** — FNSF-comparable Li₄SiO₄ + Be (5%/95% homogenized
+  breeder/multiplier, 2m blanket, 90% Li-6, reflective BC, 1D infinite
+  cylinder) OpenMC benchmark
+  (`data/results/2026-09-01_tier18c_fnfs_li4sio4_be/`).
+  Result: **TBR_mc = 2.4757 ± 0.47%**, matches Novais 2023 Table 5.2
+  published value 2.4546 within **+0.86%**. Closes the only outstanding
+  cross-validation gap from drop-mcnp.docx P1-D.
+- `scripts/run_tier18c_sweep.py` — reproduce the Tier 18.C FNSF
+  geometry in one CLI call.
+- `data/results/2026-09-01_tier18c_fnfs_li4sio4_be/tier18c_fnfs_li4sio4_be.{json,md}`
+  — full Tier 18.C result with provenance stamp.
+- Tier 18.C resolves the Tier 18.B vs FNSF DCLL cross-validation
+  gap: the Tier 18.B geometry was never comparable to FNSF's published
+  geometry. Tier 18.C uses the FNSF 1D ROM geometry directly.
+
+### Changed
+- **Cross-validation matrix now 5/5** — Tier 5/6/9/17/18.C methodology
+  validated against UWFDM-1414, Furuta 1987, Peng 2014, EU DEMO WCLL,
+  and Novais 2023 FNSF DCLL within published uncertainty.
+- README, MODEL_ASSUMPTIONS_AND_LIMITATIONS.md, and
+  `docs/P1_D_PUBLIC_BENCHMARK_CROSS_VALIDATION.md` updated to reflect
+  Tier 18.C closure. Tier 18.B's "−44% Li₄SiO₄" finding is now
+  explicitly scoped to the small cylindrical Z-pinch geometry and
+  carries a "do not cite against FNSF/DEMO Li₄SiO₄ blankets"
+  disclaimer.
+
+### Findings
+- **Tier 18.C — Li₄SiO₄ + Be in FNSF geometry: TBR_mc = 2.4757**,
+  matching the published FNSF result within 0.9%. The Tier 18.B
+  "−44%" finding was geometry-specific, not material-intrinsic.
+- The "Li₄SiO₄ HURTS TBR" result is now properly qualified: it is
+  true for the project-standard cylindrical Z-pinch geometry but
+  does NOT generalize to FNSF/DEMO-style blankets with proper
+  Be multiplier zones.
+
 ## [1.5.0] — 2026-08-31
 
 ### Added

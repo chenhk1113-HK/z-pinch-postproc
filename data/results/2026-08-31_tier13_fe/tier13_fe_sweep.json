@@ -6,7 +6,7 @@
     "n_particles": 5000,
     "n_batches": 10,
     "n_inactive": 2,
-    "timestamp": "2026-09-01T04:15:21Z",
+    "timestamp": "2026-09-01T06:43:41Z",
     "stamped_by": "scripts/stamp_provenance.py"
   },
   "results": [

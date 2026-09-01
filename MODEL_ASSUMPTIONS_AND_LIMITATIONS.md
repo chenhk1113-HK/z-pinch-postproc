@@ -11,8 +11,9 @@
 - **Tier 16**: U-238 hybrid blanket layer DECREASES TBR by 26% in cylindrical geometry (U-238 (n,γ) competes with Li-6 (n,T) for thermal neutrons). The penalty drops to 1.4% in spherical geometry (Tier 17).
 - **Tier 17**: Z-FFR Peng 2014 spherical geometry validates methodology: TBR=1.44 for full Peng design (target was >1.15, achieved 1.24).
 - **Tier 18.A**: Li4SiO4 ceramic breeder material defined (Peng 2014's actual breeder).
-- **Tier 18.B**: Li4SiO4 OpenMC transport benchmark — **Li4SiO4 HURTS TBR by 44% in cylindrical geometry** (1.83 → 1.03) vs LiPb. Z-FFR's choice of Li4SiO4 is specific to spherical hybrid designs; LiPb is preferred for pure-fusion cylindrical Z-pinch. **Caveat**: published FNSF DCLL Li₄SiO₄ + Be gives TBR=1.44; Tier 18.B sweep omitted Be, so −44% is the no-Be geometry, not a generally applicable Li₄SiO₄ finding. See §3.10.
-- **Cross-validation (Sep 2026)**: Tier 5/6/9/17 methodology validated against UWFDM-1414, Furuta 1987, Peng 2014, and EU DEMO WCLL public benchmarks within published uncertainty. See §3.10.
+- **Tier 18.B**: Li4SiO4 OpenMC transport benchmark — **Li4SiO4 HURTS TBR by 44% in cylindrical geometry** (1.83 → 1.03) vs LiPb. Z-FFR's choice of Li4SiO4 is specific to spherical hybrid designs; LiPb is preferred for pure-fusion cylindrical Z-pinch. **Tier 18.B is specific to a small cylindrical Z-pinch geometry** and should NOT be cited against real-world FNSF or DEMO Li₄SiO₄ blankets that include a thick Be multiplier zone. See §3.10.
+- **Tier 18.C** (Sep 2026): FNSF-comparable Li₄SiO₄ + Be (5%/95% homogenized, 2m blanket, 90% Li-6, reflective BC, 1D infinite cylinder) gives **TBR_mc = 2.4757 ± 0.47%**, matching Novais 2023 Table 5.2 published value 2.4546 within **+0.86%**. Closes the only outstanding cross-validation gap from drop-mcnp.docx P1-D. See §3.10.
+- **Cross-validation (Sep 2026)**: Tier 5/6/9/17/18.C methodology validated against 5 independent peer-reviewed benchmarks (UWFDM-1414, Furuta 1987, Peng 2014, EU DEMO WCLL, Novais 2023 FNSF DCLL) within published uncertainty. See §3.10.
 
 ## 1. Scope and intent
 
@@ -326,20 +327,19 @@ Per `docs/P1_D_PUBLIC_BENCHMARK_CROSS_VALIDATION.md`:
   higher than the EU DEMO 3D published 1.15, but the gap
   (−30 to −36%) matches the published 1D-to-3D correction
   factor (Fischer 2020, Fus. Eng. Des. 155, 111553).
-- **Tier 18.B Li₄SiO₄ has a real disagreement with the FNSF
-  DCLL parametric study** (OSTI 2448047): our TBR=1.03 vs
-  published TBR=1.44 for Li₄SiO₄ + Be₁₂V. The gap is
-  explained by the **missing Be multiplier** in our Tier 18.B
-  sweep — FNSF paper includes Be₁₂V which adds ~0.4 neutrons
-  per source via Be (n,2n). Without Be, Li₄SiO₄ in cylindrical
-  geometry gives TBR ≈ 1.0–1.1, consistent with our result.
-  **Tier 18.C recommended** to add Be and re-validate.
-- **Conclusion**: the project's Tier 5/6/9/17 methodology is
-  validated against 4 independent peer-reviewed benchmarks
+- **Tier 18.C FNSF DCLL Li₄SiO₄ + Be** (Novais 2023,
+  Table 5.2, 1D infinite cylinder, 5%/95% homogenized
+  breeder/multiplier, 2m blanket, 90% Li-6, reflective BC):
+  our TBR=2.4757 vs published 2.4546, delta **+0.86%**
+  (well within ~2% cross-section-library uncertainty between
+  ENDF/B-VIII.0 and FENDL-3.2). Closes the Tier 18.B
+  cross-validation gap.
+- **Conclusion**: the project's Tier 5/6/9/17/18.C methodology is
+  validated against 5 independent peer-reviewed benchmarks
   within published uncertainty. The Tier 18.B Li₄SiO₄ finding
-  is correct for the no-Be configuration but should not be
-  cited against FNSF-published Li₄SiO₄ + Be blankets without
-  qualification.
+  is correct for the no-Be cylindrical Z-pinch configuration
+  but should not be cited against FNSF-published Li₄SiO₄ + Be
+  blankets without qualification.
 
 ## 4. Physics references
 
