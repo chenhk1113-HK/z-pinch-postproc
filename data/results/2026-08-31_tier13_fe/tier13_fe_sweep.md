@@ -56,3 +56,12 @@ sweep to see if the sign flips.
 For comparison, Tier 6.A baseline at R_b=50, mult_inside=True,
 no Fe reflector gave TBR = 1.8306 ± 0.42% (this Tier 13 result
 matches it within statistical error).
+
+## Provenance
+
+- **OpenMC version:** `0.16.0.0`
+- **ENDF release:** ENDF/B-VIII.0 (declared)
+- **Cross-section source:** openmc-anywhere / IAEA (per scripts/download_cross_sections.py)
+- **Source particles / batch:** `5000` (10 batches, 2 inactive)
+- **Stamped:** 2026-09-01T04:15:21Z by `scripts/stamp_provenance.py`
+

@@ -126,6 +126,11 @@ design philosophy. Summary:
 
 ### Tier 16: Hybrid fission blanket (U-238 layer)
 
+> **Applicability:** Cylindrical pure-fusion geometry only. In
+> **spherical hybrid (Z-FFR)** geometry the U-238 penalty drops to
+> ~4% (Tier 17). Do not extrapolate this −26% number to spherical or
+> non-pure-fusion designs.
+
 The intuitive design — add a U-238 fission blanket OUTS the LiPb breeder
 to multiply fusion neutrons via U-238 fast fission — **decreases** TBR
 by 26% in cylindrical geometry:
@@ -163,6 +168,10 @@ known limit.
 
 ### Tier 13: Fe reflector hurts in cylindrical Z-pinch
 
+> **Applicability:** Cylindrical pure-fusion geometry only. In
+> **spherical hybrid (Z-FFR)** geometry the Fe reflector penalty drops
+> from 14% to 2.6%. The geometry-dependence is the headline finding.
+
 Counterintuitive: Fe reflector (Z-FFR design recommendation) HURTS
 TBR in cylindrical geometry by 14% at 20 cm thickness. In spherical
 geometry the penalty drops to 2.6%. This is the **first documented
@@ -170,6 +179,11 @@ geometry correction** between Z-pinch cylindrical and Z-pinch
 spherical blanket designs.
 
 ### Tier 18: Li4SiO4 ceramic breeder — counter-intuitive Tier 18.B finding
+
+> **Applicability:** Cylindrical pure-fusion geometry only. In
+> **spherical hybrid (Z-FFR)** geometry Li4SiO4 gives TBR=1.50 (Tier 17)
+> — adequate for the design where it's actually used. Do not extrapolate
+> the −44% number to spherical or non-pure-fusion designs.
 
 Tier 18.A added the material definition for Li4SiO4 (lithium
 orthosilicate) — the breeder used in Z-FFR Peng 2014's design.

@@ -58,3 +58,12 @@ geometry).
 The Tier 18.A material definition remains in the codebase as an
 alternative option, but the Tier 18.B benchmark shows it should only
 be used in spherical hybrid geometries.
+
+## Provenance
+
+- **OpenMC version:** `0.16.0.0`
+- **ENDF release:** ENDF/B-VIII.0 (declared)
+- **Cross-section source:** openmc-anywhere / IAEA (per scripts/download_cross_sections.py)
+- **Source particles / batch:** `5000` (10 batches, 2 inactive)
+- **Stamped:** 2026-09-01T04:15:21Z by `scripts/stamp_provenance.py`
+

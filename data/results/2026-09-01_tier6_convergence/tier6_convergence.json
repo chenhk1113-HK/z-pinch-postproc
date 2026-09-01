@@ -1,0 +1,61 @@
+{
+  "provenance": {
+    "openmc_version": "0.16.0.0",
+    "endf_release": "ENDF/B-VIII.0",
+    "ace_source": "openmc-anywhere / IAEA",
+    "geometry": "Tier 6 LiPb cylindrical baseline (R_p=4, R_be=52, R_b=50, R_struct=53 cm, 90% Li-6, mult_inside=False, white BC)",
+    "timestamp": "2026-09-01T04:11:15Z",
+    "stamped_by": "scripts/run_tier6_convergence.py"
+  },
+  "results": [
+    {
+      "n_particles": 500,
+      "n_batches": 10,
+      "TBR_mc": 1.80844,
+      "TBR_rel_stddev_pct": 1.1689,
+      "wall_sec": 4.82
+    },
+    {
+      "n_particles": 1000,
+      "n_batches": 10,
+      "TBR_mc": 1.800925,
+      "TBR_rel_stddev_pct": 0.7062,
+      "wall_sec": 5.59
+    },
+    {
+      "n_particles": 2000,
+      "n_batches": 10,
+      "TBR_mc": 1.802302,
+      "TBR_rel_stddev_pct": 0.4359,
+      "wall_sec": 7.72
+    },
+    {
+      "n_particles": 5000,
+      "n_batches": 10,
+      "TBR_mc": 1.799605,
+      "TBR_rel_stddev_pct": 0.2329,
+      "wall_sec": 14.45
+    },
+    {
+      "n_particles": 10000,
+      "n_batches": 10,
+      "TBR_mc": 1.801398,
+      "TBR_rel_stddev_pct": 0.0946,
+      "wall_sec": 25.04
+    },
+    {
+      "n_particles": 20000,
+      "n_batches": 10,
+      "TBR_mc": 1.800543,
+      "TBR_rel_stddev_pct": 0.0988,
+      "wall_sec": 47.84
+    },
+    {
+      "n_particles": 50000,
+      "n_batches": 10,
+      "TBR_mc": 1.796759,
+      "TBR_rel_stddev_pct": 0.0791,
+      "wall_sec": 113.22
+    }
+  ]
+}

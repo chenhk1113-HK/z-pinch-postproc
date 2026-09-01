@@ -1,0 +1,9 @@
+{
+  "label": "tier6_lipb_baseline",
+  "breeder": "LiPb",
+  "TBR_mc": 1.7996054,
+  "TBR_rel_stddev": 0.002329,
+  "geometry": "R_plasma=4, R_be=52 (Be outside), R_blanket=50, R_struct=53 cm, Li-6=90%, mult_inside=False, reflective BC",
+  "n_particles": 5000,
+  "n_batches": 10
+}

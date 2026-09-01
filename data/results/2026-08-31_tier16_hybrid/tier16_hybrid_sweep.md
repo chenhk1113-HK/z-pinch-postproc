@@ -102,3 +102,12 @@ For comparison:
 Our hybrid sweep at 10 cm U-238 (TBR=1.36) exceeds Z-FFR's
 design target, but is still below our pure-LiPb design (TBR=1.83).
 The LiPb+Be only design wins for tritium self-sufficiency.
+
+## Provenance
+
+- **OpenMC version:** `0.16.0.0`
+- **ENDF release:** ENDF/B-VIII.0 (declared)
+- **Cross-section source:** openmc-anywhere / IAEA (per scripts/download_cross_sections.py)
+- **Source particles / batch:** `5000` (10 batches, 2 inactive)
+- **Stamped:** 2026-09-01T04:15:21Z by `scripts/stamp_provenance.py`
+
