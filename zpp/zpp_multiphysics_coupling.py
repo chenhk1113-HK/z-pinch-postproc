@@ -125,6 +125,11 @@ def coupled_multiphysics_loop(
     n_batches: int = 10,
     seed: int = 42,
     verbose: bool = False,
+    # Tier 22: real heating + active cooling
+    use_heating_tally: bool = False,
+    h_W_per_m2K: float = 0.0,
+    T_coolant_C: float = 400.0,
+    delta_wall_m: float = 0.005,
 ) -> CoupledLoopResult:
     """Iterate OpenMC -> thermal -> density update until convergence.
 
@@ -192,12 +197,7 @@ def coupled_multiphysics_loop(
         if verbose:
             print(f"--- Iteration {k} (rho={rho_current:.3f} g/cm^3) ---")
 
-        # 1. Run OpenMC with current LiPb density
-        # NOTE: run_tier19_3d doesn't accept a density override yet.
-        # For now, we run with default density and use the resulting
-        # heating profile; density effect is tracked through post-hoc
-        # TBR adjustment in Step 5 below.
-        # TODO: extend run_tier19_3d to accept rho_lipb_g_per_cc.
+        # 1. Run OpenMC with current LiPb density (Tier 21)
         tier19_result = run_tier19_3d(
             R_plasma_cm=R_plasma, R_be_cm=R_be,
             R_blanket_cm=R_blanket, R_structure_cm=R_structure,
@@ -207,6 +207,8 @@ def coupled_multiphysics_loop(
             mult_inside=mult_inside,
             n_particles=n_particles, n_batches=n_batches,
             seed=seed,
+            lipb_density_g_per_cc=rho_current,  # Tier 21: density feedback
+            include_heating_tally=use_heating_tally,  # Tier 22
         )
 
         TBR_k = tier19_result["TBR_total"]
@@ -224,35 +226,39 @@ def coupled_multiphysics_loop(
         # Cell volume for axisymmetric CylindricalMesh:
         #     V_cell = 2π × r_avg × dr × dz  [cm³]
         #
-        # This is an APPROXIMATION: real heating includes gamma heating,
-        # (n,gamma) capture gamma energy deposition, and neutron heating
-        # from non-breeding reactions. For Item 9's first iteration, the
-        # approximation is sufficient (within ~10% of detailed heating
-        # tallies; Tier 19.A doesn't include a separate heating tally).
-        #
-        # TODO (Tier 21+): add a separate heating tally in OpenMC
-        # (score = "heating" or "heating-local") for higher fidelity.
-        mesh_heating = tier19_result["mesh_total"]  # shape (n_r, n_z)
+        # Determine heating source:
+        # - Tier 22: use real heating tally if available (eV/source)
+        # - Tier 20 (default): use TBR proxy × 14.1 MeV
         E_DT_MeV = 14.1
         MeV_to_J = 1.602e-13
 
-        # Compute radial-bin volumes from r_centers
         r_centers_mesh = tier19_result["r_centers"]  # cm
         # r_grid = linspace(0, r_max, n_r+1); r_centers = midpoints
         dr = float(r_centers_mesh[1] - r_centers_mesh[0])  # cm (uniform)
-        n_z = mesh_heating.shape[1]
+        n_z_mesh = tier19_result["mesh_total"].shape[1]
 
-        # mesh_heating(r, z) is TBR per source neutron per CELL.
-        # Sum over z to get TBR per source per RADIAL BIN (summed over z).
-        # Then divide by full bin volume V_bin = 2π × r × dr × height to
-        # get TBR density [T/cm³/source].
-        # Then Q [W/cm³] = TBR_density × E × MeV_to_J × burn_rate.
-        mesh_heating_r_sum = mesh_heating.sum(axis=1)  # shape (n_r,)
-        V_bin_cm3 = 2.0 * np.pi * r_centers_mesh * dr * height  # shape (n_r,) - full cylinder
-        tbr_density_per_cm3 = mesh_heating_r_sum / V_bin_cm3  # shape (n_r,)
-        Q_W_per_cm3_full = (
-            tbr_density_per_cm3 * E_DT_MeV * MeV_to_J * plasma_burn_rate_n_per_s
-        )
+        if use_heating_tally and tier19_result.get("heating_total") is not None:
+            # Tier 22 path: real heating in eV/source per cell
+            heating_ev_per_source = tier19_result["heating_total"]  # (n_r, n_z)
+            # Convert eV/source -> W/cm³
+            # heat_density_per_cm3 = (heating_ev/source) / V_cell_cm3 × MeV_to_J / 1e6 × burn_rate
+            V_bin_cm3 = 2.0 * np.pi * r_centers_mesh * dr * height  # full bin volume
+            heat_density_per_cm3 = (
+                heating_ev_per_source.sum(axis=1) / V_bin_cm3 * MeV_to_J * plasma_burn_rate_n_per_s
+            )
+            Q_W_per_cm3 = heat_density_per_cm3
+            tier22_real_heating = True
+        else:
+            # Tier 20 path: TBR × 14.1 MeV proxy
+            mesh_heating = tier19_result["mesh_total"]  # shape (n_r, n_z)
+            mesh_heating_r_sum = mesh_heating.sum(axis=1)
+            V_bin_cm3 = 2.0 * np.pi * r_centers_mesh * dr * height
+            tbr_density_per_cm3 = mesh_heating_r_sum / V_bin_cm3
+            Q_W_per_cm3 = (
+                tbr_density_per_cm3 * E_DT_MeV * MeV_to_J * plasma_burn_rate_n_per_s
+            )
+            tier22_real_heating = False
+        n_z = tier19_result["mesh_total"].shape[1]
 
         # Slice to LiPb region only (r > R_be = 6 cm). The thermal solver
         # only handles the LiPb breeder region between R_be and R_blanket.
@@ -264,7 +270,7 @@ def coupled_multiphysics_loop(
         r_be_cm = R_be  # 6 cm default
         r_blanket_cm = R_blanket  # 50 cm default
         lipb_mask = (r_centers_mesh >= r_be_cm) & (r_centers_mesh < r_blanket_cm)
-        Q_W_per_cm3 = Q_W_per_cm3_full[lipb_mask]
+        Q_W_per_cm3 = Q_W_per_cm3[lipb_mask]
         # Convert to W/m^3
         Q_W_per_m3 = Q_W_per_cm3 * 1e6
         # Update thermal solver R_inner to R_be (start at Be/LiPb interface)
@@ -272,21 +278,37 @@ def coupled_multiphysics_loop(
         R_outer_m_solver = r_blanket_cm / 100.0  # 0.50 m
 
         # 3. Solve 1D radial thermal for T(r) in LiPb region
-        thermal_result = solve_1d_radial_thermal(
-            R_inner_m=R_inner_m_solver, R_outer_m=R_outer_m_solver,
-            n_bins=len(Q_W_per_m3),
-            Q_W_per_m3=Q_W_per_m3,
-            T_inner_C=T_inner_C, T_outer_C=T_outer_C,
-        )
+        # Tier 22: with active cooling if h_W_per_m2K > 0
+        if h_W_per_m2K > 0:
+            from zpp.zpp_thermal_solver import solve_1d_radial_thermal_with_cooling
+            thermal_result = solve_1d_radial_thermal_with_cooling(
+                R_inner_m=R_inner_m_solver, R_outer_m=R_outer_m_solver,
+                n_bins=len(Q_W_per_m3),
+                Q_W_per_m3=Q_W_per_m3,
+                T_inner_C=T_inner_C, T_outer_C=T_outer_C,
+                T_coolant_C=T_coolant_C,
+                h_W_per_m2K=h_W_per_m2K,
+                delta_wall_m=delta_wall_m,
+            )
+        else:
+            thermal_result = solve_1d_radial_thermal(
+                R_inner_m=R_inner_m_solver, R_outer_m=R_outer_m_solver,
+                n_bins=len(Q_W_per_m3),
+                Q_W_per_m3=Q_W_per_m3,
+                T_inner_C=T_inner_C, T_outer_C=T_outer_C,
+            )
         T_r = thermal_result.T_C
         max_T_k = float(np.max(T_r))
         max_T_ever = max(max_T_ever, max_T_k)
 
         # 4. Compute new LiPb density from mean T(r)
         T_mean_C = float(np.mean(T_r))
-        rho_iterated = float(LiPb_density_g_per_cc(T_mean_C))
-
-        # 5. Apply damping for stability
+        # 5. Compute new LiPb density from T(r) with safety floor
+        RHO_FLOOR_G_PER_CC = 1.0
+        rho_iterated = max(
+            float(LiPb_density_g_per_cc(T_mean_C)), RHO_FLOOR_G_PER_CC
+        )
+        rho_new = damping_factor * rho_iterated + (1 - damping_factor) * rho_prev
         rho_new = damping_factor * rho_iterated + (1 - damping_factor) * rho_prev
 
         if verbose:

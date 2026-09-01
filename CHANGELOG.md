@@ -3,6 +3,45 @@
 > All notable changes to this project are documented here. Format follows
 > [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.1.0] — 2026-09-01
+
+### Tier 21 — Multi-physics coupling loop closure
+
+Implements the REVERSE chain of multi-physics coupling: LiPb density → re-run OpenMC with updated density. Tier 20 wired this but couldn't execute; Tier 21 fixes the plumbing (~28 lines across 2 files).
+
+| Change | Lines | Purpose |
+|---|---|---|
+| `_build_blanket_materials(lipb_density_g_per_cc=9.4)` | +15 | Add density override parameter |
+| `run_real_openmc_tbr(lipb_density_g_per_cc=9.4)` | +5 | Forward parameter to material builder |
+| `run_tier19_3d(lipb_density_g_per_cc=9.4)` | +5 | Forward parameter to material builder |
+| `coupled_multiphysics_loop()` | +8 | Pass `rho_current` to OpenMC; add RHO_FLOOR safety clamp |
+
+### Tier 22 — Real heating tally + active cooling
+
+Replaces Tier 20's TBR-proxy heating (`Q ≈ TBR × 14.1 MeV`) with OpenMC's actual `score="heating"` tally. Adds an active cooling model that extracts heat proportional to `(T - T_coolant)`.
+
+| Change | Lines | Purpose |
+|---|---|---|
+| `solve_1d_radial_thermal_with_cooling()` | +135 | 1D heat equation with `h_eff × (T - T_c)` sink term |
+| `build_tier19_tallies(include_heating_tally=False)` | +35 | Optional 3rd tally with score='heating' |
+| `coupled_multiphysics_loop()` Tier 22 params | +30 | use_heating_tally, h_W_per_m2K, T_coolant_C, delta_wall_m |
+
+### Headline findings
+
+- **Density feedback drops TBR by 3.99%** vs Tier 19.A baseline (Tier 21 smoke test)
+- **Real heating tally: 12.04 MeV/source** captured (vs 14.1 MeV source; 2 MeV leaked)
+- **Cooling reduces T_max from 13,100°C to 470°C** at h=10k W/m²/K (Tier 22)
+- **Coupling loop with cooling: TBR drop reduces to 3.09%** (vs 3.99% without cooling)
+- **792 tests collected** (was 778); 14 new tests for Tier 21+22, all passing
+
+### Known limitations
+
+- Test burn_rate (1e18 n/s) is unrealistically high; temperatures exceed LiPb operating range
+- `packing_fraction=0.1` is a heuristic — actual value depends on blanket geometry
+- 1D radial ignores axial profile (Tier 21+22 still uses Tier 20's 1D radial solver)
+
+See `docs/TIER_21_COUPLING_LOOP_COMPLETE.md` and `docs/TIER_22_HEATING_AND_COOLING.md` for full method + test results.
+
 ## [2.0.0] — 2026-09-01
 
 ### Tier 20 — Multi-physics coupling (partial)

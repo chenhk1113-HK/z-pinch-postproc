@@ -97,11 +97,18 @@ def cross_sections_status():
     return info
 
 
-def _build_blanket_materials(Li6_enrichment_fraction=0.90):
+def _build_blanket_materials(Li6_enrichment_fraction=0.90, lipb_density_g_per_cc=9.4):
     """Build openmc.Material for LiPb, Be, RAFM steel.
 
     Tier 10 (2026-08-31): added Li6_enrichment_fraction parameter.
     Defaults to 0.90 for backward compatibility with Tier 5/6.
+
+    Tier 21 (2026-09-01): added lipb_density_g_per_cc parameter for
+    multi-physics coupling. Default 9.4 g/cm³ preserves backward
+    compatibility with all prior Tier results. The thermal solver
+    (zpp_thermal_solver.py) computes a T-dependent density using
+    Schubert 2012 linear expansion; this parameter passes that
+    density back into OpenMC for re-evaluation.
     """
     import openmc
     # Lithium-Lead (Li17Pb83, parameterized Li-6 enrichment)
@@ -119,7 +126,7 @@ def _build_blanket_materials(Li6_enrichment_fraction=0.90):
     lipb.add_nuclide("Pb206", 0.83 * 0.241)
     lipb.add_nuclide("Pb207", 0.83 * 0.221)
     lipb.add_nuclide("Pb208", 0.83 * 0.524)
-    lipb.set_density("g/cm3", 9.4)
+    lipb.set_density("g/cm3", lipb_density_g_per_cc)
     # Beryllium multiplier
     be = openmc.Material(name="Be")
     be.add_nuclide("Be9", 1.0)
@@ -400,7 +407,8 @@ def run_real_openmc_tbr(n_particles=5000, n_batches=10,
                          height_cm=100.0, boundary_type="vacuum",
                          mult_inside=False,
                          Li6_enrichment_fraction=0.90,
-                         R_fe_cm=None, R_u238_cm=None):
+                         R_fe_cm=None, R_u238_cm=None,
+                         lipb_density_g_per_cc=9.4):
     """Run a real OpenMC TBR simulation.
 
     Returns RealOpenMCTBRResult with TBR + stddev from the tally.
@@ -465,8 +473,12 @@ def run_real_openmc_tbr(n_particles=5000, n_batches=10,
 
         # Build geometry (Tier 6.A: propagate all geometry params)
         try:
+            # Tier 21 (2026-09-01): propagate LiPb density override for
+            # multi-physics coupling (Tier 20 zpp_thermal_solver passes
+            # back a T-dependent density via this parameter).
             materials = _build_blanket_materials(
-                Li6_enrichment_fraction=Li6_enrichment_fraction
+                Li6_enrichment_fraction=Li6_enrichment_fraction,
+                lipb_density_g_per_cc=lipb_density_g_per_cc,
             )
             geometry, cells, surfaces = _build_zpinch_geometry(
                 materials,

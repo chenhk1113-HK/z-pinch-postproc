@@ -75,6 +75,7 @@ def build_tier19_tallies(
     n_axial_bins: int = 30,
     z_half_height_cm: float = 60.0,
     nuclides: tuple = ("Li6", "Li7"),
+    include_heating_tally: bool = False,
 ):
     """Build a Tallies object with the cell-filtered TBR + CylindricalMesh TBR.
 
@@ -102,15 +103,24 @@ def build_tier19_tallies(
         the dominant tritium-producers. Add ``"Be9"`` to include the
         (n,2n) contribution in the mesh map; add ``"U238"`` for hybrid
         blankets.
+    include_heating_tally : bool
+        Tier 22: if True, also build a ``heating_3d_mesh`` tally with
+        score ``"heating"`` (neutron + photon heating in eV/source per
+        cell). Requires OpenMC 0.13+ with ACE files that have heating
+        data; will silently skip if the score is unavailable.
 
     Returns
     -------
     tallies : openmc.Tallies
-        Contains two tallies:
+        Contains two or three tallies:
         - ``TBR_total``: cell-filtered total TBR (sum over nuclides).
           Use this to cross-validate against Tier 6.
         - ``TBR_3d_mesh``: CylindricalMesh-filtered TBR with shape
           ``(n_nuclides, n_r, n_phi=1, n_z)``.
+        - ``heating_3d_mesh`` (Tier 22, optional): CylindricalMesh-filtered
+          heating [eV/source] with same shape as TBR_3d_mesh. Use this
+          for Tier 22 multi-physics coupling instead of the TBR-proxy
+          approximation used in Tier 20.
     """
     import openmc
 
@@ -136,7 +146,19 @@ def build_tier19_tallies(
     mesh_tally.nuclides = list(nuclides)
     mesh_tally.scores = ["(n,Xt)"]
 
-    tallies = openmc.Tallies([tally_total, mesh_tally])
+    tally_list = [tally_total, mesh_tally]
+
+    # Tier 22: heating tally (real volumetric heating instead of TBR proxy)
+    if include_heating_tally:
+        heating_tally = openmc.Tally(name="heating_3d_mesh")
+        heating_tally.filters = [openmc.MeshFilter(mesh)]
+        # Use 'heating' score (total heating: neutron + photon in eV/source)
+        # Don't restrict nuclides -- 'heating' is a material-integrated score
+        heating_tally.nuclides = ["total"]
+        heating_tally.scores = ["heating"]
+        tally_list.append(heating_tally)
+
+    tallies = openmc.Tallies(tally_list)
     return tallies
 
 
@@ -159,6 +181,8 @@ def run_tier19_3d(
     include_u238: bool = False,
     seed: int | None = None,
     timeout_s: int = 600,
+    lipb_density_g_per_cc: float = 9.4,
+    include_heating_tally: bool = False,
 ) -> dict:
     """Run a Tier 19 3D-mesh TBR calculation.
 
@@ -226,7 +250,10 @@ def run_tier19_3d(
     start = time.time()
 
     # 1. Build materials + geometry (reuse existing 1D machinery)
-    materials = _build_blanket_materials(Li6_enrichment_fraction=Li6_enrichment_fraction)
+    materials = _build_blanket_materials(
+        Li6_enrichment_fraction=Li6_enrichment_fraction,
+        lipb_density_g_per_cc=lipb_density_g_per_cc,
+    )
     geometry, cells, surfaces = _build_zpinch_geometry(
         materials,
         R_plasma_cm=R_plasma_cm, R_be_cm=R_be_cm,
@@ -248,6 +275,7 @@ def run_tier19_3d(
         n_radial_bins=n_radial_bins, r_max_cm=r_max_cm,
         n_axial_bins=n_axial_bins, z_half_height_cm=z_half_height_cm,
         nuclides=tuple(nuclides),
+        include_heating_tally=include_heating_tally,  # Tier 22
     )
 
     # 4. Settings
@@ -338,6 +366,15 @@ def run_tier19_3d(
                 r_centers = 0.5 * (r_edges[1:] + r_edges[:-1])
                 z_centers = 0.5 * (z_edges[1:] + z_edges[:-1])
 
+                # Tier 22: heating tally (eV/source per cell, shape (n_r, n_z))
+                heating_total = None
+                if include_heating_tally:
+                    th = sp.get_tally(name="heating_3d_mesh")
+                    heating_raw = th.mean.flatten()
+                    # heating tally is total (no nuclide split), shape (n_r, n_z)
+                    # Sum nuclide axis which is 1 in this case
+                    heating_total = heating_raw.reshape(1, n_r, 1, n_z).squeeze(axis=(0, 2))
+
                 # Peak location
                 i_max = np.unravel_index(np.argmax(mesh_total), mesh_total.shape)
                 peak_r = float(r_centers[i_max[0]])
@@ -375,6 +412,8 @@ def run_tier19_3d(
                     "fraction_lipb": tbr_in_lipb_ring / tbr_total,
                     "fraction_be": tbr_in_be_ring / tbr_total,
                     "fraction_structure": tbr_in_structure / tbr_total,
+                    # Tier 22: real heating tally (eV/source per cell, shape (n_r, n_z))
+                    "heating_total": heating_total,
                     "geometry_params": {
                         "R_plasma_cm": R_plasma_cm,
                         "R_be_cm": R_be_cm,
