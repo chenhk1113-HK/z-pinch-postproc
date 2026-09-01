@@ -3,6 +3,39 @@
 > All notable changes to this project are documented here. Format follows
 > [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.0.0] — 2026-09-01
+
+### Tier 20 — Multi-physics coupling (partial)
+
+Implements the FORWARD chain of multi-physics coupling (OpenMC mesh tally → volumetric heating → 1D radial thermal → temperature profile). Reverse chain (LiPb density update → re-run OpenMC) is wired but requires a Tier 21 extension.
+
+### What was shipped
+
+| Module | Lines | Purpose |
+|---|---|---|
+| `zpp/zpp_lipb_properties.py` | 230 | LiPb17 density (T-dependent), thermal conductivity, specific heat, atom densities |
+| `zpp/zpp_thermal_solver.py` | 290 | 1D radial cylindrical heat equation solver (Thomas algorithm, conservative FD, Dirichlet BCs) |
+| `zpp/zpp_multiphysics_coupling.py` | 320 | Iterative coupling loop architecture |
+| `tests/test_zpp_lipb_properties.py` | 130 | 12 tests for LiPb properties (Sawan 2011 + Schubert 2012) |
+| `tests/test_zpp_thermal_solver.py` | 175 | 9 tests for thermal solver (analytical Q=0 + heating) |
+
+**Test count**: 778 (was 757). 21 new tests, all passing.
+
+### Headline findings
+
+- **Thermal solver validated**: zero-heating case matches analytical logarithmic T(r) with max error <3°C.
+- **Realistic heating**: 0.1 W/cm³ in LiPb gives max_T ~725°C (within operating range).
+- **OpenMC → heating conversion**: total power extracted = 2.26 MW at burn_rate=1e18 n/s ✓ (matches analytical).
+
+### Known limitations (Tier 21+)
+
+- Reverse chain requires Tier 19.A extension to accept `lipb_density_g_per_cc`
+- Heating approximated from TBR mesh (real heating includes gamma + neutron heating, ~30% under-estimate)
+- No active cooling model (Dirichlet BCs at fixed T_inner, T_outer)
+- 1D radial ignores axial profile
+
+See `docs/TIER_20_MULTIPHYSICS.md` for full method + validation.
+
 ## [1.9.0] — 2026-09-01
 
 ### Headline finding

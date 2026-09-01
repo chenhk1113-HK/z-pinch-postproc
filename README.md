@@ -14,7 +14,7 @@
 > [`docs/P1_D_PUBLIC_BENCHMARK_CROSS_VALIDATION.md`](docs/P1_D_PUBLIC_BENCHMARK_CROSS_VALIDATION.md).
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-v1.9.0-blue)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-v2.0.0-blue)](CHANGELOG.md)
 [![Tests](https://img.shields.io/badge/tests-757%20pass-brightgreen)](tests/)
 [![CI](https://img.shields.io/badge/CI-GitHub%20Actions-blue)](.github/workflows/ci.yml)
 [![Docs](https://img.shields.io/badge/docs-mkdocs%20material-blueviolet)](https://chenhk1113-HK.github.io/z-pinch-postproc/)
@@ -42,7 +42,7 @@ integrated modules:
    either a fast parametric formula (~milliseconds) or real OpenMC
    Monte Carlo transport (~1-2 minutes per design point).
 
-This is the **v1.9.0 release**, adding Tier 19.B 3D engineering geometry with diagnostic ports. Tier 19.B ships 10-config sweep (port diameter 1-5 cm, count 1/2/4, position x=10/20/35 cm) showing **diagnostic ports alone account for <0.5% TBR reduction** — much less than the 5-15% upper bound in the engineering-scope warning. v1.7.0 Tier 19.A `CylindricalMesh` remains the canonical 3D-mesh TBR map.
+This is the **v2.0.0 release**, adding Tier 19.B 3D engineering geometry with diagnostic ports. Tier 19.B ships 10-config sweep (port diameter 1-5 cm, count 1/2/4, position x=10/20/35 cm) showing **diagnostic ports alone account for <0.5% TBR reduction** — much less than the 5-15% upper bound in the engineering-scope warning. v1.7.0 Tier 19.A `CylindricalMesh` remains the canonical 3D-mesh TBR map.
 (see `docs/TIER_19B_3D_GEOMETRY.md` for the full Tier 19.B method and sweep results). Tier 19.A's `CylindricalMesh` on the 1D geometry (TBR=1.8306, matches Tier 18.B within 0.4σ) remains the canonical 3D-mesh TBR map; v1.6.0 Tier 18.C FNSF cross-validation remains the headline cross-validation result.
 
 ## Quick start
@@ -129,7 +129,7 @@ design philosophy. Summary:
 | v1.4.0 | Tier 15-17 | U-238 hybrid blanket, Z-FFR spherical validation |
 | v1.4.1 | Tier 18 + CI + Docs | Li4SiO4 breeder material, GitHub Actions, MkDocs site |
 | v1.5.0 | Packaging + Tier 18.B | pyproject.toml, code/→zpp/, Li4SiO4 OpenMC benchmark |
-| **v1.9.0** | **Tier 19.B + 3D port geometry** | **Diagnostic ports (CSG complement); 10-config sweep shows <0.5% TBR penalty, ~30× tighter than 5–15% engineering-scope upper bound** |
+| **v2.0.0** | **Tier 19.B + 3D port geometry** | **Diagnostic ports (CSG complement); 10-config sweep shows <0.5% TBR penalty, ~30× tighter than 5–15% engineering-scope upper bound** |
 | v1.7.0 | Tier 19.A + 3D-mesh TBR | `CylindricalMesh` TBR map (TBR=1.8306, 0.4σ of Tier 18.B); methodology validated for Tier 19.B |
 | v1.6.0 | Tier 18.C + cross-validation | FNSF-comparable Li₄SiO₄ + Be (TBR=2.4757, +0.86% vs FNSF 2.4546) |
 
@@ -397,4 +397,4 @@ for the full list. The most important limits:
 
 ---
 
-`z-pinch-postproc` v1.9.0 (2026-09-01) — 757 tests pass, 85.15% coverage.
+`z-pinch-postproc` v2.0.0 (2026-09-01) — 757 tests pass, 85.15% coverage.
