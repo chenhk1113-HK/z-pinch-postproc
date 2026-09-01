@@ -29,7 +29,11 @@ Output:
         summary_sweep.csv         (all configs in one CSV)
 
 Usage:
+    # Default: white BC (Tier 19.B baseline)
     .venv/Scripts/python.exe scripts/run_tier19b_3d_geom_sweep.py
+
+    # Tier 19.B+ vacuum-BC sweep (isolates port-streaming effect)
+    .venv/Scripts/python.exe scripts/run_tier19b_3d_geom_sweep.py --boundary vacuum
 """
 
 from __future__ import annotations
@@ -55,7 +59,16 @@ from zpp.zpp_real_openmc_3d_geom import (
 # Same timestamp policy as Tier 18.C and Tier 19.A
 TZ_BEIJING = timezone(timedelta(hours=8))
 TIMESTAMP = datetime.now(TZ_BEIJING).strftime("%Y-%m-%d_%H%M")
-RESULT_DIR = PROJECT_ROOT / "data" / "results" / f"{TIMESTAMP}_tier19b_3d"
+
+
+def _make_result_dir(boundary: str) -> Path:
+    bc_tag = boundary if boundary == "white" else f"bc_{boundary}"
+    return (
+        PROJECT_ROOT / "data" / "results" / f"{TIMESTAMP}_tier19b_3d_{bc_tag}"
+    )
+
+
+RESULT_DIR = None  # initialized in main() after argparse
 
 
 def build_sweep_configs(args):
@@ -133,12 +146,21 @@ def main():
     p.add_argument("--n_batches", type=int, default=10)
     p.add_argument("--seed", type=int, default=42)
     p.add_argument("--height", type=float, default=100.0)
+    p.add_argument(
+        "--boundary", type=str, default="white",
+        choices=["vacuum", "white", "reflective"],
+        help="Outer BC. Default 'white'. Use 'vacuum' to isolate port-streaming "
+             "effect from back-scatter recovery (Tier 19.B+ sweep).",
+    )
     args = p.parse_args()
 
+    # Initialize RESULT_DIR now that args.boundary is known
+    global RESULT_DIR
+    RESULT_DIR = _make_result_dir(args.boundary)
     configs = build_sweep_configs(args)
 
     print("=" * 72)
-    print(f"Tier 19.B — 3D Engineering Geometry Sweep")
+    print(f"Tier 19.B+ — 3D Engineering Geometry Sweep (boundary_type={args.boundary})")
     print("=" * 72)
     print(f"  Li-6: {args.Li6*100:.0f}%, n_particles × n_batches = {args.n_particles:,} × {args.n_batches}")
     print(f"  Sweep: {len(configs)} configurations")
@@ -162,6 +184,7 @@ def main():
             n_particles=args.n_particles,
             n_batches=args.n_batches,
             height_cm=args.height,
+            boundary_type=args.boundary,
             seed=args.seed,
         )
         # Save
