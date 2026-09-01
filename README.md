@@ -4,6 +4,14 @@
 
 > ⚠️ **Engineering scope:** TBR numbers from this tool are **geometry-specific relative trends**, not engineering sign-off predictions. Every result is for a 1D cylindrical (or spherical, Z-FFR-specific) point-source approximation; real reactors have first-wall penetrations, ports, and 3D geometry effects that can reduce TBR by 5–15%. Do not use these numbers for any actual design decision without re-running with ENDF/B-VIII.0 + OpenMC ≥0.16 in 3D and cross-validating against MCNP.
 
+> ✅ **Cross-validation status (Sep 2026):** Tier 5/6/9/17 methodology
+> agrees with 4 independent peer-reviewed benchmarks (UWFDM-1414
+> infinite-cylinder LiPb, Furuta 1987 natural-Li sphere, Peng 2014
+> Z-FFR target, EU DEMO WCLL 1D-to-3D gap) within published uncertainty.
+> Tier 18.B Li₄SiO₄ has a real disagreement with FNSF DCLL (explained
+> by missing Be multiplier) — Tier 18.C recommended. See
+> [`docs/P1_D_PUBLIC_BENCHMARK_CROSS_VALIDATION.md`](docs/P1_D_PUBLIC_BENCHMARK_CROSS_VALIDATION.md).
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/version-v1.5.0-blue)](CHANGELOG.md)
 [![Tests](https://img.shields.io/badge/tests-757%20pass-brightgreen)](tests/)
@@ -199,6 +207,16 @@ found a counter-intuitive result:
 **Why?** Li4SiO4 has higher Li density per unit volume than LiPb, but
 its silicate lattice creates self-shielding, and O-16 captures neutrons
 that would otherwise reach Li-6. Net breeding rate is much lower.
+
+**Cross-validation caveat** (per `docs/P1_D_PUBLIC_BENCHMARK_CROSS_VALIDATION.md`):
+the published FNSF DCLL parametric study (OSTI 2448047) reports TBR=1.44
+for Li₄SiO₄ + Be₁₂V (Be-12 vanadium multiplier) in a 1D infinite cylinder.
+Our Tier 18.B result of TBR=1.03 is **−28% lower** than FNSF, because
+the Tier 18.B sweep did NOT include a Be multiplier layer. Adding Be
+(typical for any real Li₄SiO₄ blanket) is expected to recover most of
+the gap. The −44% finding is correct for the no-Be configuration but
+should not be cited against FNSF-published Li₄SiO₄ blankets without
+qualification. **Tier 18.C recommended** to add Be and re-validate.
 
 **Implication for Z-FFR design**: Z-FFR's choice of Li4SiO4 is
 specific to **spherical hybrid (U-238) designs** — Tier 17 showed

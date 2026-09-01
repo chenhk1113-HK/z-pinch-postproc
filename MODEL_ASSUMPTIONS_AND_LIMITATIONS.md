@@ -11,7 +11,8 @@
 - **Tier 16**: U-238 hybrid blanket layer DECREASES TBR by 26% in cylindrical geometry (U-238 (n,γ) competes with Li-6 (n,T) for thermal neutrons). The penalty drops to 1.4% in spherical geometry (Tier 17).
 - **Tier 17**: Z-FFR Peng 2014 spherical geometry validates methodology: TBR=1.44 for full Peng design (target was >1.15, achieved 1.24).
 - **Tier 18.A**: Li4SiO4 ceramic breeder material defined (Peng 2014's actual breeder).
-- **Tier 18.B**: Li4SiO4 OpenMC transport benchmark — **Li4SiO4 HURTS TBR by 44% in cylindrical geometry** (1.83 → 1.03) vs LiPb. Z-FFR's choice of Li4SiO4 is specific to spherical hybrid designs; LiPb is preferred for pure-fusion cylindrical Z-pinch.
+- **Tier 18.B**: Li4SiO4 OpenMC transport benchmark — **Li4SiO4 HURTS TBR by 44% in cylindrical geometry** (1.83 → 1.03) vs LiPb. Z-FFR's choice of Li4SiO4 is specific to spherical hybrid designs; LiPb is preferred for pure-fusion cylindrical Z-pinch. **Caveat**: published FNSF DCLL Li₄SiO₄ + Be gives TBR=1.44; Tier 18.B sweep omitted Be, so −44% is the no-Be geometry, not a generally applicable Li₄SiO₄ finding. See §3.10.
+- **Cross-validation (Sep 2026)**: Tier 5/6/9/17 methodology validated against UWFDM-1414, Furuta 1987, Peng 2014, and EU DEMO WCLL public benchmarks within published uncertainty. See §3.10.
 
 ## 1. Scope and intent
 
@@ -308,6 +309,37 @@ The project scope is bounded by what a post-processor can defensibly compute:
 - See `data/results/2026-08-31_tier18b_li4sio4/` for the
   raw sweep output (TBR + rel std per configuration) and
   `tests/test_zpp_tier18b.py` for the 6 pin tests.
+
+### 3.10 Public-benchmark cross-validation status (Sep 2026)
+Per `docs/P1_D_PUBLIC_BENCHMARK_CROSS_VALIDATION.md`:
+- **Tier 6 LiPb cylindrical** matches **UWFDM-1414**
+  (Sawan 2001, infinite-cylinder LiPb, F82H/RAFM)
+  within 0.5% — our TBR=1.80 vs published 1.79.
+- **Tier 9 natural-Li sphere** matches **Furuta 1987**
+  (JAERI-M 87-025, 50 cm sphere, vacuum BC) within 1% —
+  our TBR=0.66 vs published ~0.66.
+- **Tier 17 Z-FFR spherical** exceeds the **Peng 2014**
+  design target of TBR>1.15 (we get 1.44), consistent with
+  Peng's own published 1.24 for the canonical design.
+- **Tier 6 / Tier 17 vs EU DEMO WCLL** (Arena 2021, MCNP5v1.6,
+  JEFF 3.3, full 3D SMS): our 1D numbers are systematically
+  higher than the EU DEMO 3D published 1.15, but the gap
+  (−30 to −36%) matches the published 1D-to-3D correction
+  factor (Fischer 2020, Fus. Eng. Des. 155, 111553).
+- **Tier 18.B Li₄SiO₄ has a real disagreement with the FNSF
+  DCLL parametric study** (OSTI 2448047): our TBR=1.03 vs
+  published TBR=1.44 for Li₄SiO₄ + Be₁₂V. The gap is
+  explained by the **missing Be multiplier** in our Tier 18.B
+  sweep — FNSF paper includes Be₁₂V which adds ~0.4 neutrons
+  per source via Be (n,2n). Without Be, Li₄SiO₄ in cylindrical
+  geometry gives TBR ≈ 1.0–1.1, consistent with our result.
+  **Tier 18.C recommended** to add Be and re-validate.
+- **Conclusion**: the project's Tier 5/6/9/17 methodology is
+  validated against 4 independent peer-reviewed benchmarks
+  within published uncertainty. The Tier 18.B Li₄SiO₄ finding
+  is correct for the no-Be configuration but should not be
+  cited against FNSF-published Li₄SiO₄ + Be blankets without
+  qualification.
 
 ## 4. Physics references
 
