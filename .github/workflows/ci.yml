@@ -58,3 +58,13 @@ jobs:
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
         run: |
           pytest tests/ -q --cov=code --cov-report=term-missing --cov-fail-under=50
+
+  version-drift:
+    name: Version-drift guard
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check VERSION == pyproject.toml == CITATION.cff
+        run: |
+          python scripts/check_version_drift.py

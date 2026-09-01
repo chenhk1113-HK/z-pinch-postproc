@@ -2,7 +2,7 @@ cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
 type: software
 title: "z-pinch-postproc: A Python toolkit for Z-pinch fusion reactor design"
-version: 1.4.0
+version: 1.5.0
 date-released: 2026-08-31
 license: MIT
 authors:
@@ -29,7 +29,7 @@ abstract: >
   1D radiation-MHD profile data; and a blanket neutronics calculator
   (TBR — tritium breeding ratio) using both a fast parametric formula
   (~milliseconds) calibrated against real OpenMC Monte Carlo transport
-  (~1-2 minutes per design point). The v1.4.0 release includes
+  (~1-2 minutes per design point). The v1.5.0 release includes
   hybrid fission blanket support (U-238 layer), Z-FFR (Peng 2014)
   spherical geometry validation, and three documented honest negative
   findings (Fe reflector hurts in cylindrical, U-238 HURTS TBR, no

@@ -3,8 +3,8 @@
 > ⚠️ **Disclaimer:** It is a personal project out of curiosity, made using Hermes with **MiniMax M3** as the coder, **Doubao** and **Grok** and other AIs as reviewers. Not associated with Sandia National Laboratories, Pacific Fusion, Zap Energy, Antong Fusion, or any other fusion program.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-v1.4.1-blue)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/tests-751%20pass-brightgreen)](tests/)
+[![Version](https://img.shields.io/badge/version-v1.5.0-blue)](CHANGELOG.md)
+[![Tests](https://img.shields.io/badge/tests-757%20pass-brightgreen)](tests/)
 [![CI](https://img.shields.io/badge/CI-GitHub%20Actions-blue)](.github/workflows/ci.yml)
 [![Docs](https://img.shields.io/badge/docs-mkdocs%20material-blueviolet)](https://chenhk1113-HK.github.io/z-pinch-postproc/)
 

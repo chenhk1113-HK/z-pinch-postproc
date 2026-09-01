@@ -272,6 +272,43 @@ The project scope is bounded by what a post-processor can defensibly compute:
 - See `tests/test_zpp_tier10_sweep.py` and
   `tests/test_zpp_tbr_diagnose.py` for the new tests.
 
+### 3.9 Tier 18 ceramic breeder validation (Li4SiO4, 2026-08-31)
+- **Tier 18.A** added the Li4SiO4 (lithium orthosilicate)
+  ceramic breeder as a registered material — the breeder
+  Peng 2014 actually chose for the Z-FFR hybrid blanket.
+  Si-28/29/30 + O-16 cross sections were downloaded from
+  IAEA, converted via NJOY, and registered as nuclides 17-20
+  in `data/nuclear_data/ace/cross_sections.xml`.
+- **Tier 18.B** ran a real OpenMC 0.16.0 transport benchmark
+  in the cylindrical Z-pinch geometry used by Tiers 5/6
+  (R_plasma=4, R_be=6, R_blanket=50, R_struct=53 cm, 90%
+  Li-6 enrichment, white BC). Result:
+  - `tier6_lipb_baseline` (LiPb):  TBR_mc = 1.8280 ± 0.42%
+  - `tier18b_li4sio4`  (Li4SiO4): TBR_mc = 1.0296 ± 0.48%
+  - **ΔTBR = -43.7%** (Li4SiO4 is 44% worse than LiPb in
+    cylindrical Z-pinch geometry).
+- **Why Li4SiO4 underperforms in cylindrical geometry**:
+  - **Self-shielding**: Li-6 atoms are bound in a silicate
+    crystal lattice; neutrons must penetrate the O/Si matrix
+    to reach Li-6, increasing effective path length.
+  - **O-16 (n,α) at 14 MeV** (0.6 barns) competes with
+    Li-6 (n,T) for the D-T neutron.
+  - **No liquid circulation**: LiPb can be purged to extract
+    tritium; Li4SiO4 is solid and accumulates burnup.
+- **Why Z-FFR Peng 2014 used Li4SiO4 anyway**: the
+  spherical-hybrid Z-FFR geometry (Tier 17) gives
+  `tier17_li4sio4_spherical TBR=1.4992` — Li4SiO4 *is*
+  adequate as a breeder when paired with a U-238 fission
+  blanket in spherical geometry. The Tier 18.B result is
+  specific to **pure-fusion cylindrical Z-pinch**, where
+  LiPb remains the better choice.
+- **Engineering rule of thumb**: use LiPb for pure-fusion
+  cylindrical Z-pinch; use Li4SiO4 only for spherical
+  hybrid (Z-FFR) blankets.
+- See `data/results/2026-08-31_tier18b_li4sio4/` for the
+  raw sweep output (TBR + rel std per configuration) and
+  `tests/test_zpp_tier18b.py` for the 6 pin tests.
+
 ## 4. Physics references
 
 ### 4.1 D-T reactivity
