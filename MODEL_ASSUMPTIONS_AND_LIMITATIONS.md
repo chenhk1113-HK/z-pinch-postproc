@@ -1,7 +1,7 @@
 # MODEL ASSUMPTIONS AND LIMITATIONS — z-pinch-postproc
 
-**Version:** v1.9.0 (2026-09-01)
-**Status:** v1.9.0 ships Tier 19.B+ (vacuum-BC sweep) + Tier 19.C (Cu electrodes) on top of v1.8.0's Tier 19.B. **Engineering-scope warning box closed**: port TBR penalty <0.5%, electrode TBR penalty ~−1.07% per cm of Cu. **757 tests passing, 85.15% coverage** (Tier 19.C reuses existing geometry; no new tests required).
+**Version:** v2.2.0 (2026-09-02)
+**Status:** v2.2.0 ships Item 8 (tritium fuel-cycle dynamics — time-dependent inventory ODE integrated into `zpp_plant_simulation.py`) + PAPER.md (GitHub-only research paper). Builds on v2.1.0's Tier 21+22 (multi-physics coupling closure + real heating + active cooling). **812 tests passing, 85.15% coverage**.
 
 **Per:** `Z_Machine_plan.pdf` (user-uploaded plan, 7,441 chars), `BUCKY 1-D radiation hydrodynamics code reference` (UWFDM-1268, 2005), `An overview of magneto-inertial fusion on the Z machine` (Yager-Elorriaga et al. 2022, Nucl. Fusion 62 042015), `Pulsed power: A precision hammer for high energy density science` (Hansen 2021, Princeton SULI), `Improved formulas for fusion cross-sections and thermal reactivities` (Bosch-Hale 1992), Sobes 2011 (LiPb blanket saturation length 50 cm), Fischer 2020 / Brown 2023 (TBR per neutron reference values), Micklich 1984 (Princeton PhD thesis, OSTI 6022348 — "Control of neutron albedo in toroidal fusion reactors"), Furuta 1987 (J. Nucl. Sci. Technol. 24(4) — neutron leakage from 50 cm Li, Fe spheres with 14 MeV D-T source), Peng 2014 (Z-FFR conceptual design, High Power Laser & Particle Beams 26(9)), 2026-08-31 OpenMC Monte Carlo sweeps at `data/results/2026-08-31_tier16_hybrid/` and `data/results/2026-08-31_tier17_zffr_spherical/`.
 
@@ -522,6 +522,39 @@ The combined effect (h_elec=5 cm + 1 port d=2 cm) is approximately additive in T
 - Adding 10 cm Cu electrodes: TBR → 1.6339 (−9.20% vs Tier 6 baseline)
 
 A real Z-pinch with substantial electrodes would have ~5-10% TBR penalty, which is a real but bounded effect.
+
+### 3.13 Item 8: Tritium fuel-cycle dynamics (Sep 2026)
+
+v2.2.0 adds a first-order ODE for tritium inventory over plant lifetime. The existing `zpp_plant_simulation.py` returned a snapshot `tritium_self_sufficient: bool` based on whether `TBR ≥ 1.05`; the new module answers the time-domain question.
+
+**ODE:** `dI/dt = P(TBR) − L(I)`, where:
+- `P = TBR × n_per_s × availability × (T_molar_mass / N_A)` — production from breeding, ~87 kg/year at TBR=1.83 + 1 GW + 85% avail.
+- `L = I × (decay_constant + extraction_loss_fraction / cycle_time)` — losses from radioactive decay (T_half=12.32 yr) + extraction cycle (Glugla 2007 default 2% per 24 h).
+- Integrator: Forward Euler, 2000 time steps over default 730 days.
+
+**Headline results:**
+- At TBR=1.83 + 1 GW + 85% avail + 5 kg startup: doubling time = 65 days, I_ss = 11.8 kg, time-to-95%-SS = 121 days.
+- At ZN_DESIGN (TBR=1.11, nameplate=100 MW, CF=0.85): doubling time = 38 days, I_ss = 14.34 kg, 105.5 kg/yr.
+- At TBR<1.05: `tritium_self_sufficient=False`, I_ss > 0 but inventory never doubles from startup.
+
+**Validation (20 new tests in `tests/test_zpp_tritium_inventory.py`):**
+- Neutron rate @ 1 GW = 3.547e20 n/s, matches `P/E_DT` to 6 sig figs.
+- Decay rate matches `ln(2)/T_half` exactly.
+- I_ss(1.83) / I_ss(0.95) ≈ 1.93 (production-rate ratio, derived analytically).
+- Higher extraction loss → LOWER I_ss (loss is proportional to I, so steady state requires lower I to balance same P).
+- Lower plant availability → slower inventory growth.
+- Non-negativity guard: `max(0, I)` in Forward Euler step.
+
+**Known limitations:**
+1. No Li-6 depletion (assumes infinite Li-6 supply; real plants deplete 5-10% over lifetime per Sawan 2011).
+2. No isotope separation modeling (assumes perfect T₂ recovery with default 2% extraction loss).
+3. No tritium inventory in plant components (blanket/coolant/structure hold ~0.5-2 kg distributed inventory).
+4. No decay-heat handling for He-3 accumulation.
+5. Forward Euler (not symplectic — adequate for monotone dynamics but not for oscillatory regimes).
+
+These limitations mean the headline inventory is a **lower bound**: real plants will need 2-3× more inventory than the model predicts. See `docs/ITEM_8_TRITIUM_FUEL_CYCLE.md` for the full method.
+
+**Integration:** `zpp/zpp_plant_simulation.py` extended with 4 new fields on `PlantSimulationResult` (`tritium_doubling_time_days`, `tritium_steady_state_inventory_kg`, `tritium_time_to_steady_state_days`, `tritium_net_production_kg_per_year`) and a tritium summary appended to `notes`. The integration uses `plant_availability = capacity_factor` and `fusion_power_GW = self.plant_design.P_fusion_MW × 1e-3`.
 
 ## 4. Physics references
 

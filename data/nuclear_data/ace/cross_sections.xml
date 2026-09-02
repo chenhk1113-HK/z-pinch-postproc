@@ -2,6 +2,8 @@
 <cross_sections>
   <library materials="Be7" path="Be_004_007.h5" type="neutron"/>
   <library materials="Be9" path="Be_004_009.h5" type="neutron"/>
+  <library materials="Cu63" path="Cu_029_063.h5" type="neutron"/>
+  <library materials="Cu65" path="Cu_029_065.h5" type="neutron"/>
   <library materials="Fe54" path="Fe_026_054.h5" type="neutron"/>
   <library materials="Fe55" path="Fe_026_055.h5" type="neutron"/>
   <library materials="Fe56" path="Fe_026_056.h5" type="neutron"/>

@@ -3,6 +3,50 @@
 > All notable changes to this project are documented here. Format follows
 > [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.2.0] — 2026-09-02
+
+### Item 8 — Tritium fuel-cycle dynamics (time-dependent inventory)
+
+Adds a first-order ODE for tritium inventory over plant lifetime, integrated into `zpp_plant_simulation.py`. Closes the zreview5-audit Item 8 ("time-dependent fuel cycle") that was previously deferred.
+
+| Module | Lines | Purpose |
+|---|---|---|
+| `zpp/zpp_tritium_inventory.py` (NEW) | 336 | Production rate (TBR × n/s × avail), loss rate (decay + extraction), Forward Euler ODE, steady-state + doubling-time metrics |
+| `tests/test_zpp_tritium_inventory.py` (NEW) | 280 | 20 tests: analytic doubling, sub-threshold dynamics, decay-vs-extraction decomposition, plant-availability sensitivity, non-negativity guard |
+| `zpp/zpp_plant_simulation.py` (MODIFIED) | +35 | `PlantSimulationResult` extended with 4 fields (`tritium_doubling_time_days`, `tritium_steady_state_inventory_kg`, `tritium_time_to_steady_state_days`, `tritium_net_production_kg_per_year`); `simulate()` now computes the inventory end-to-end |
+| `docs/ITEM_8_TRITIUM_FUEL_CYCLE.md` (NEW) | 179 | Full method + validation + literature references |
+| `PAPER.md` (NEW) | 439 | GitHub-only paper — 8 sections, ~2,800 words, methodology + headline findings + 5-benchmark cross-validation matrix + limitations |
+
+### Headline findings
+
+At TBR=1.83, 1 GW fusion power, 85% plant availability, 5 kg startup inventory:
+- **Tritium doubling time**: 65 days (~2 months from startup)
+- **Steady-state inventory**: 11.8 kg
+- **Time to 95% steady-state**: 121 days (~4 months)
+- **Net production rate**: 87 kg/year
+
+At ZN_DESIGN (TBR=1.11, nameplate_MW=100, CF=0.85):
+- Doubling time: 38 days
+- Steady-state inventory: 14.34 kg
+- Net production: 105.5 kg/year
+
+### Validation
+
+- 20 new tests, all passing
+- 812 total tests collected (was 792)
+- Hand-calc verification: neutron rate at 1 GW = 3.547e20 n/s matches `P/E_DT` to 6 sig figs
+- Decay rate matches `ln(2)/T_half` exactly
+- Industry 1.05 self-sufficiency threshold: documented in `tritium_self_sufficient()`
+
+### Known limitations
+
+- No Li-6 depletion (assumes infinite Li-6 supply)
+- No isotope separation modeling (assumes perfect T₂ recovery)
+- No tritium inventory in plant components (blanket/coolant/structure)
+- Forward Euler (not symplectic — adequate for monotone dynamics but not for oscillatory regimes)
+
+See [`docs/ITEM_8_TRITIUM_FUEL_CYCLE.md`](docs/ITEM_8_TRITIUM_FUEL_CYCLE.md) and [`PAPER.md`](PAPER.md) for full method + cross-validation + limitations.
+
 ## [2.1.0] — 2026-09-01
 
 ### Tier 21 — Multi-physics coupling loop closure

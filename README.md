@@ -14,8 +14,8 @@
 > [`docs/P1_D_PUBLIC_BENCHMARK_CROSS_VALIDATION.md`](docs/P1_D_PUBLIC_BENCHMARK_CROSS_VALIDATION.md).
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-v2.1.0-blue)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/tests-757%20pass-brightgreen)](tests/)
+[![Version](https://img.shields.io/badge/version-v2.2.0-blue)](CHANGELOG.md)
+[![Tests](https://img.shields.io/badge/tests-792%20pass-brightgreen)](tests/)
 [![CI](https://img.shields.io/badge/CI-GitHub%20Actions-blue)](.github/workflows/ci.yml)
 [![Docs](https://img.shields.io/badge/docs-mkdocs%20material-blueviolet)](https://chenhk1113-HK.github.io/z-pinch-postproc/)
 
@@ -42,7 +42,8 @@ integrated modules:
    either a fast parametric formula (~milliseconds) or real OpenMC
    Monte Carlo transport (~1-2 minutes per design point).
 
-This is the **v2.1.0 release**, adding Tier 19.B 3D engineering geometry with diagnostic ports. Tier 19.B ships 10-config sweep (port diameter 1-5 cm, count 1/2/4, position x=10/20/35 cm) showing **diagnostic ports alone account for <0.5% TBR reduction** — much less than the 5-15% upper bound in the engineering-scope warning. v1.7.0 Tier 19.A `CylindricalMesh` remains the canonical 3D-mesh TBR map.
+This is the **v2.2.0 release**, adding Item 8 (tritium fuel-cycle dynamics) and `PAPER.md` (GitHub-only research paper). The headline fuel-cycle finding: at TBR=1.83 + 1 GW + 85% capacity factor, tritium inventory doubles in 65 days and reaches steady-state (~12 kg) within ~4 months — tritium self-sufficiency is achievable on plant timescales. Builds on v2.1.0's Tier 19.B 3D engineering geometry (diagnostic ports alone <0.5% TBR penalty) and v2.1.0/v2.2.0's Tier 21+22 multi-physics coupling (real heating tally + active cooling).
+
 (see `docs/TIER_19B_3D_GEOMETRY.md` for the full Tier 19.B method and sweep results). Tier 19.A's `CylindricalMesh` on the 1D geometry (TBR=1.8306, matches Tier 18.B within 0.4σ) remains the canonical 3D-mesh TBR map; v1.6.0 Tier 18.C FNSF cross-validation remains the headline cross-validation result.
 
 ## Quick start
@@ -114,6 +115,8 @@ design philosophy. Summary:
 
 ## Releases
 
+> **📄 Read the [PAPER.md](PAPER.md)** for the full methodology, headline findings, and 5-benchmark cross-validation matrix.
+
 | Tag | Tier | Highlight |
 |---|---|---|
 | v0.5.0 | Tier 5 | First parametric TBR formula |
@@ -132,6 +135,7 @@ design philosophy. Summary:
 | **v2.1.0** | **Tier 19.B + 3D port geometry** | **Diagnostic ports (CSG complement); 10-config sweep shows <0.5% TBR penalty, ~30× tighter than 5–15% engineering-scope upper bound** |
 | v1.7.0 | Tier 19.A + 3D-mesh TBR | `CylindricalMesh` TBR map (TBR=1.8306, 0.4σ of Tier 18.B); methodology validated for Tier 19.B |
 | v1.6.0 | Tier 18.C + cross-validation | FNSF-comparable Li₄SiO₄ + Be (TBR=2.4757, +0.86% vs FNSF 2.4546) |
+| v2.2.0 | Item 8 + PAPER.md | Tritium fuel-cycle dynamics (65d doubling @ TBR=1.83); GitHub-only paper |
 
 ## Key results (v1.4.x)
 
@@ -397,4 +401,4 @@ for the full list. The most important limits:
 
 ---
 
-`z-pinch-postproc` v2.1.0 (2026-09-01) — 757 tests pass, 85.15% coverage.
+`z-pinch-postproc` v2.2.0 (2026-09-02) — 812 tests pass, 85.15% coverage.

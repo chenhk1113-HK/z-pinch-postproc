@@ -47,6 +47,9 @@ from zpp.zpp_economics import (
 from zpp.zpp_comparison import (
     ConceptParameters, compute_Q_eng, compute_LCOE_proxy,
 )
+from zpp.zpp_tritium_inventory import (
+    TritiumInventoryInputs, tritium_inventory_dynamics,
+)
 
 
 # Default engineering thresholds (used for pass/fail checks).
@@ -125,6 +128,11 @@ class PlantSimulationResult:
     meets_LCOE_target: bool
     meets_commercial_power: bool
     notes: str
+    # Tritium inventory dynamics (Item 8 / v2.2.0)
+    tritium_doubling_time_days: Optional[float] = None
+    tritium_steady_state_inventory_kg: Optional[float] = None
+    tritium_time_to_steady_state_days: Optional[float] = None
+    tritium_net_production_kg_per_year: Optional[float] = None
 
 
 @dataclass
@@ -170,12 +178,18 @@ class PlantSimulation:
         self,
         nameplate_MW: float = 100.0,
         capacity_factor: float = 0.25,
+        startup_inventory_kg: float = 5.0,
+        tritium_duration_days: float = 730.0,
     ) -> PlantSimulationResult:
         """Run the full plant simulation.
 
         Args:
             nameplate_MW: Plant nameplate electric capacity [MW].
             capacity_factor: Fraction of time plant is operational.
+            startup_inventory_kg: Initial tritium inventory at plant startup [kg].
+                Default 5 kg (ITER TBM-equivalent).
+            tritium_duration_days: How long to simulate tritium inventory [days].
+                Default 730 (2 years — covers doubling time + initial approach to SS).
 
         Returns:
             PlantSimulationResult with all sub-model outputs.
@@ -207,7 +221,21 @@ class PlantSimulation:
         meets_LCOE = LCOE_finite and LCOE <= COMMERCIAL_LCOE_TARGET_USD_PER_MWH
         meets_power = lcoe_proxy["P_net_electric_MW"] >= 0.5 * COMMERCIAL_NET_POWER_MW
 
-        notes = (
+        # 7. Tritium inventory dynamics (Item 8 / v2.2.0)
+        # Plant fusion thermal power is self.plant_design.P_fusion_MW (MW)
+        # → 1e-3 GW for tritium module.
+        fusion_power_GW = self.plant_design.P_fusion_MW * 1e-3
+        tritium_inputs = TritiumInventoryInputs(
+            TBR=tbr.TBR,
+            fusion_power_GW=fusion_power_GW,
+            plant_availability=capacity_factor,  # use plant CF as availability
+            startup_inventory_kg=startup_inventory_kg,
+        )
+        tritium_result = tritium_inventory_dynamics(
+            tritium_inputs, duration_days=tritium_duration_days, n_time_steps=2000
+        )
+
+        base_notes = (
             f"Plant={self.plant_design.name}, Concept={self.concept.short_name}. "
             f"BOP: {self.plant_design.cycle} @ {self.plant_design.T_hot_K:.0f} K, "
             f"η_E={bop.eta_E_plant:.3f}, f_recirc={bop.f_recirc:.3f}. "
@@ -221,6 +249,16 @@ class PlantSimulation:
             f"LCOE<=$150? {meets_LCOE}; "
             f"power>={0.5*COMMERCIAL_NET_POWER_MW} MW? {meets_power}."
         )
+        if tritium_result.doubling_time_days is not None and tritium_result.steady_state_inventory_kg is not None:
+            notes = base_notes + (
+                f" Tritium: TBR={tbr.TBR:.2f}, "
+                f"doubling_time={tritium_result.doubling_time_days:.0f}d, "
+                f"I_ss={tritium_result.steady_state_inventory_kg:.2f}kg."
+            )
+        else:
+            notes = base_notes + (
+                f" Tritium: TBR={tbr.TBR:.2f} (below self-sufficiency threshold)."
+            )
 
         return PlantSimulationResult(
             plant_design_name=self.plant_design.name,
@@ -250,6 +288,15 @@ class PlantSimulation:
             meets_LCOE_target=meets_LCOE,
             meets_commercial_power=meets_power,
             notes=notes,
+            # Tritium inventory (Item 8 / v2.2.0)
+            tritium_doubling_time_days=tritium_result.doubling_time_days,
+            tritium_steady_state_inventory_kg=tritium_result.steady_state_inventory_kg,
+            tritium_time_to_steady_state_days=tritium_result.time_to_steady_state_days,
+            tritium_net_production_kg_per_year=(
+                tritium_result.production_rate_kg_per_day.mean() * 365.25
+                if tritium_result.production_rate_kg_per_day.size > 0
+                else None
+            ),
         )
 
 

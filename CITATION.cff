@@ -2,8 +2,8 @@ cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
 type: software
 title: "z-pinch-postproc: A Python toolkit for Z-pinch fusion reactor design"
-version: 2.1.0
-date-released: 2026-09-01
+version: 2.2.0
+date-released: 2026-09-02
 license: MIT
 authors:
   - family-names: "Lam"
